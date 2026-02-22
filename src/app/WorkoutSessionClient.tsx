@@ -9,7 +9,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Exercises } from "./types";
 
-export function WorkoutSessionClient({ exercises, addSet, changeWeight, changeReps, toggleDone }: { exercises: Exercises, addSet: (exIdx: number) => void, changeWeight: (exIdx: number, setIdx: number, delta: number) => void, changeReps: (exIdx: number, setIdx: number, delta: number) => void, toggleDone: (exIdx: number, setIdx: number) => void }) {
+export function WorkoutSessionClient({ exercises, addSet, changeWeight, changeReps, toggleDone, displayUnit }: { exercises: Exercises, addSet: (exIdx: number) => void, changeWeight: (exIdx: number, setIdx: number, delta: number) => void, changeReps: (exIdx: number, setIdx: number, delta: number) => void, toggleDone: (exIdx: number, setIdx: number) => void, displayUnit: "kg" | "lb" }) {
 
     return (
         <main className="p-2">
@@ -38,7 +38,7 @@ export function WorkoutSessionClient({ exercises, addSet, changeWeight, changeRe
                                             key={ex.id}
                                             exerciseIndex={i}
                                             setIndex={j}
-                                            weight={set.weight}
+                                            weight={displayUnit === "kg" ? set.weight+"kg" : kgToLb(set.weight).toString()+"lb"}
                                             reps={set.reps}
                                             done={set.done}
                                             onWeightDelta={changeWeight}
@@ -54,6 +54,11 @@ export function WorkoutSessionClient({ exercises, addSet, changeWeight, changeRe
             })}
         </main>
     );
+
+    function kgToLb(kg: number) {
+        return Math.round(kg * 2.205);
+    }
+
     function PlusButton({
         exerciseIndex,
         addSet,
@@ -86,7 +91,7 @@ export function WorkoutSessionClient({ exercises, addSet, changeWeight, changeRe
     }: {
         exerciseIndex: number;
         setIndex: number;
-        weight: number;
+        weight: string;
         reps: number;
         done: boolean;
         onWeightDelta: (exIdx: number, setIdx: number, delta: number) => void;
