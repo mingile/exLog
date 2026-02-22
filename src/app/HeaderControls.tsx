@@ -1,9 +1,8 @@
 'use client';
 
 import { Button } from "@/components/ui/button";
-import { Exercises, Session } from "./types";
+import type { Exercises, Session, SavedExercise } from "./types";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { savedExercise } from "./types";
 
 export function HeaderControls({ onSavedHistory, selectedPart, clearDoneStatus, exercises, onSelectPart, date, displayUnit, setDisplayUnit, showHistory, setShowHistory }: { onSavedHistory: () => void, selectedPart: ('back' | 'chest' | 'legs' | 'shoulders'), clearDoneStatus: () => void, exercises: Exercises, onSelectPart: (part: ('back' | 'chest' | 'legs' | 'shoulders')) => void, date: string, displayUnit: "kg" | "lb", setDisplayUnit: (unit: "kg" | "lb") => void, showHistory: boolean, setShowHistory: (show: boolean) => void}){
 
@@ -45,7 +44,7 @@ export function HeaderControls({ onSavedHistory, selectedPart, clearDoneStatus, 
     function saveSession() {
         const savedAt = new Date().toISOString();
         const dayKey = new Date().toLocaleDateString('ko-KR', { year: 'numeric', month: '2-digit', day: '2-digit' }).slice(2, 12 );
-        const savedExercises = exercises
+        const savedExercises: SavedExercise[] = exercises
             .map((ex) => {
                 const doneSets = ex.sets
                     .map((set, i) => {
@@ -74,11 +73,11 @@ export function HeaderControls({ onSavedHistory, selectedPart, clearDoneStatus, 
                     }),
                 };
             });
-        const payload: Session = {
+        const payload = {
             id: `${dayKey}_${selectedPart}`,
             savedAt,
             part: selectedPart,            
-            exercises: savedExercises as savedExercise[],
+            exercises: savedExercises,
         };
         if (savedExercises.length > 0) {
             const sessionKey = "workout.sessions.v1";

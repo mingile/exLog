@@ -6,9 +6,9 @@ export type Session = {
     id: string;
     savedAt: string;
     part: Part; 
-    exercises: savedExercise
+    exercises: SavedExercise[];
 };
-export type savedExercise = {
+export type SavedExercise = {
     id: string;
     name: string;
     sets: {
