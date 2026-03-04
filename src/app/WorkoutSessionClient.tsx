@@ -9,7 +9,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Exercises } from "./types";
 
-export function WorkoutSessionClient({ exercises, addSet, changeWeight, changeReps, toggleDone, displayUnit }: { exercises: Exercises, addSet: (exIdx: number) => void, changeWeight: (exIdx: number, setIdx: number, delta: number) => void, changeReps: (exIdx: number, setIdx: number, delta: number) => void, toggleDone: (exIdx: number, setIdx: number) => void, displayUnit: "kg" | "lb" }) {
+export function WorkoutSessionClient({ exercises, addSet, changeWeight, changeReps, toggleDone, displayUnit, setDisplayUnit, setShowHistory, showHistory }: { exercises: Exercises, addSet: (exIdx: number) => void, changeWeight: (exIdx: number, setIdx: number, delta: number) => void, changeReps: (exIdx: number, setIdx: number, delta: number) => void, toggleDone: (exIdx: number, setIdx: number) => void, displayUnit: "kg" | "lb", setDisplayUnit: (unit: "kg" | "lb") => void, setShowHistory: (show: boolean) => void, showHistory: boolean }) {
 
     return (
         <main className="p-2">
@@ -51,7 +51,15 @@ export function WorkoutSessionClient({ exercises, addSet, changeWeight, changeRe
                         </AccordionItem>
                     </Accordion>
                 );
-            })}
+            })}            
+            <div className="mt-4 flex gap-1">
+                <Button className="px-3" onClick={() => setDisplayUnit(displayUnit === "kg" ? "lb" : "kg")}>
+                    단위변환
+                </Button>
+                <Button className="px-3" onClick={() => setShowHistory(!showHistory)}>
+                    지난기록
+                </Button>
+                </div>
         </main>
     );
 

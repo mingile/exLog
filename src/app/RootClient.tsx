@@ -299,8 +299,8 @@ export function RootClient() {
 
     return (
         <div className="flex flex-col h-100vh min-h-screen">
-            <HeaderControls onSavedHistory={onSavedHistory} date={date} selectedPart={selectedPart} onSelectPart={onSelectPart} clearDoneStatus={clearDoneStatus} exercises={exercises} displayUnit={displayUnit} setDisplayUnit={setDisplayUnit} showHistory={showHistory} setShowHistory={setShowHistory} />
-            <WorkoutSessionClient exercises={exercises} changeReps={changeReps} changeWeight={changeWeight} toggleDone={toggleDone} addSet={addSet} displayUnit={displayUnit} />
+            <HeaderControls onSavedHistory={onSavedHistory} date={date} selectedPart={selectedPart} onSelectPart={onSelectPart} clearDoneStatus={clearDoneStatus} exercises={exercises} />
+            <WorkoutSessionClient exercises={exercises} changeReps={changeReps} changeWeight={changeWeight} toggleDone={toggleDone} addSet={addSet} displayUnit={displayUnit} setDisplayUnit={setDisplayUnit} setShowHistory={setShowHistory} showHistory={showHistory} />
             <div className="overflow-y-auto flex-grow pb-16">
             <WorkoutHistoryClient showHistory={showHistory} historyVersion={historyVersion} displayUnit={displayUnit}/>
             </div>

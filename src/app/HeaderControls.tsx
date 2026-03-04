@@ -4,11 +4,11 @@ import { Button } from "@/components/ui/button";
 import type { Exercises, Session, SavedExercise } from "./types";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
-export function HeaderControls({ onSavedHistory, selectedPart, clearDoneStatus, exercises, onSelectPart, date, displayUnit, setDisplayUnit, showHistory, setShowHistory }: { onSavedHistory: () => void, selectedPart: ('back' | 'chest' | 'legs' | 'shoulders'), clearDoneStatus: () => void, exercises: Exercises, onSelectPart: (part: ('back' | 'chest' | 'legs' | 'shoulders')) => void, date: string, displayUnit: "kg" | "lb", setDisplayUnit: (unit: "kg" | "lb") => void, showHistory: boolean, setShowHistory: (show: boolean) => void}){
+export function HeaderControls({ onSavedHistory, selectedPart, clearDoneStatus, exercises, onSelectPart, date }: { onSavedHistory: () => void, selectedPart: ('back' | 'chest' | 'legs' | 'shoulders'), clearDoneStatus: () => void, exercises: Exercises, onSelectPart: (part: ('back' | 'chest' | 'legs' | 'shoulders')) => void, date: string}){
 
     return (
         <header className="sticky top-0 z-50 bg-background/95 backdrop-blur border-b supports-[backdrop-filter]:bg-background/60">
-            <div className="flex justify-start items-center px-4 py-2 gap-4">
+            <div className="flex justify-start flex-wrap items-center px-4 py-2 gap-2">
                 <Select value={selectedPart} onValueChange={(value) => onSelectPart(value as ('back' | 'chest' | 'legs' | 'shoulders'))}>
                     <SelectTrigger>
                         <SelectValue placeholder="부위를 선택하세요" />
@@ -20,16 +20,8 @@ export function HeaderControls({ onSavedHistory, selectedPart, clearDoneStatus, 
                         <SelectItem value="shoulders">어깨</SelectItem>
                     </SelectContent>
                 </Select>
-                <span className="text-sm text-muted-foreground w-34">{date}</span>
-                <div className="flex gap-1">
-                <Button className="px-3" onClick={() => setDisplayUnit(displayUnit === "kg" ? "lb" : "kg")}>
-                    단위변환
-                </Button>
-                <Button className="px-3" onClick={() => setShowHistory(!showHistory)}>
-                    지난기록
-                </Button>
-                </div>
-                <div className="flex items-center justify-end w-full gap-2">
+                <span className="text-xs text-muted-foreground">{date}</span>
+                <div className="ml-auto flex items-center justify-end gap-0.5">
                     <Button onClick={saveSession}>
                         저장
                     </Button>

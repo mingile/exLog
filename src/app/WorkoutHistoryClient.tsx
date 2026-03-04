@@ -27,7 +27,7 @@ export function WorkoutHistoryClient({showHistory, historyVersion, displayUnit}:
             localStorage.removeItem("workout.sessions.v1");
         }
     }, [showHistory, historyVersion]);
-    
+     
     function groupByDay(sessions: Session[]){
         const groupedSessions: {[dayKey: string]: Session[]} = {};
         sessions.forEach(session => {
