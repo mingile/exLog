@@ -28,7 +28,7 @@ export async function GET() {
 
     console.log("AUTHORIZE:", process.env.NOTION_AUTHORIZE_URL);
     // Notion authorize URL 구성
-    const authUrl = new URL('https://api.notion.com/v1/oauth/authorize?client_id=319d872b-594c-8114-bf2c-00379ce0d20e&response_type=code&owner=user&redirect_uri=https%3A%2F%2Fex-log-five.vercel.app%2Fapi%2Fnotion%2Fcallback');
+    const authUrl = new URL(process.env.NOTION_AUTHORIZE_URL ?? "");
     // client_id
     authUrl.searchParams.set("client_id", process.env.NOTION_CLIENT_ID ?? "");
     // redirect_uri
