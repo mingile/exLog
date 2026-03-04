@@ -32,7 +32,12 @@ const exerciseTemplate: Record<Part, Exercises> = {
             id: "facepull",
             name: "Face-Pull",
             sets: [{ weight: 40, reps: 12, done: false }]
-        }
+        },
+        {
+            id: "seatedcablerow",
+            name: "Seated-Cable-Row",
+            sets: [{ weight: 30, reps: 12, done: false }],
+        },
     ],
     chest: [
         {
@@ -96,6 +101,11 @@ const exerciseTemplate: Record<Part, Exercises> = {
             id: "bulgariansplitsquat",
             name: "Bulgarian-Split-Squat",
             sets: [{ weight: 8, reps: 12, done: false }],
+        },
+        {
+            id: "glutekickback",
+            name: "Glute-Kickback",
+            sets: [{ weight: 20, reps: 12, done: false }],
         }
     ],
     shoulders: [

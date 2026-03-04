@@ -8,8 +8,11 @@ import {
 } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
 import { Exercises } from "./types";
+import { useRouter } from "next/navigation";
 
 export function WorkoutSessionClient({ exercises, addSet, changeWeight, changeReps, toggleDone, displayUnit, setDisplayUnit, setShowHistory, showHistory }: { exercises: Exercises, addSet: (exIdx: number) => void, changeWeight: (exIdx: number, setIdx: number, delta: number) => void, changeReps: (exIdx: number, setIdx: number, delta: number) => void, toggleDone: (exIdx: number, setIdx: number) => void, displayUnit: "kg" | "lb", setDisplayUnit: (unit: "kg" | "lb") => void, setShowHistory: (show: boolean) => void, showHistory: boolean }) {
+
+    const router = useRouter();
 
     return (
         <main className="p-2">
@@ -59,7 +62,17 @@ export function WorkoutSessionClient({ exercises, addSet, changeWeight, changeRe
                 <Button className="px-3" onClick={() => setShowHistory(!showHistory)}>
                     지난기록
                 </Button>
-                </div>
+                <Button className="px-3" onClick={() => {
+                    router.push("/api/notion/auth");
+                }}>
+                    Notion 연동
+                </Button>
+                <Button
+  onClick={() => router.push("/settings/notion")}
+>
+  Notion 설정
+</Button>
+            </div>
         </main>
     );
 

@@ -33,7 +33,7 @@ export function HeaderControls({ onSavedHistory, selectedPart, clearDoneStatus, 
         </header>
     )
 
-    function saveSession() {
+    async function saveSession() {
         const savedAt = new Date().toISOString();
         const dayKey = new Date().toLocaleDateString('ko-KR', { year: 'numeric', month: '2-digit', day: '2-digit' }).slice(2, 12 );
         const savedExercises: SavedExercise[] = exercises
@@ -67,7 +67,7 @@ export function HeaderControls({ onSavedHistory, selectedPart, clearDoneStatus, 
             });
         const payload = {
             id: `${dayKey}_${selectedPart}`,
-            savedAt,
+            saved_at: savedAt,
             part: selectedPart,            
             exercises: savedExercises,
         };
@@ -95,10 +95,12 @@ export function HeaderControls({ onSavedHistory, selectedPart, clearDoneStatus, 
             const nextSessions = [payload, ...filtered];
             // 새로운 세션을 저장
             localStorage.setItem(sessionKey, JSON.stringify(nextSessions));
+            await fetch("/api/notion/write", {
+                method: "POST",
+                body: JSON.stringify(payload),
+            });
             console.log(nextSessions);
             alert("저장되었습니다");
-            setShowHistory(false);
-            setShowHistory(true);
             onSavedHistory();
                         
 
