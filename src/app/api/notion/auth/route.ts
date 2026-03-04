@@ -26,7 +26,7 @@ export async function GET() {
         path: "/",
     });
 
-    
+    console.log("AUTHORIZE:", process.env.NOTION_AUTHORIZE_URL);
     // Notion authorize URL 구성
     const authUrl = new URL(process.env.NOTION_AUTHORIZE_URL ?? "");
     // client_id
