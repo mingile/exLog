@@ -1,177 +1,225 @@
 "use client";
 
 import {
-    Accordion,
-    AccordionContent,
-    AccordionItem,
-    AccordionTrigger,
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
 } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
 import { Exercises } from "./types";
 import { useRouter } from "next/navigation";
 
-export function WorkoutSessionClient({ exercises, addSet, changeWeight, changeReps, toggleDone, displayUnit, setDisplayUnit, setShowHistory, showHistory, changeMemo }: { exercises: Exercises, addSet: (exIdx: number) => void, changeWeight: (exIdx: number, setIdx: number, delta: number) => void, changeReps: (exIdx: number, setIdx: number, delta: number) => void, toggleDone: (exIdx: number, setIdx: number) => void, displayUnit: "kg" | "lb", setDisplayUnit: (unit: "kg" | "lb") => void, setShowHistory: (show: boolean) => void, showHistory: boolean, changeMemo: (exIdx : number, setIdx: number, value: string) => void }) {
-
-    const router = useRouter();
-
-    return (
-        <main className="p-2">
-            {exercises.map((ex, i) => {
-                return (
-                    <Accordion key={ex.id} type="single" collapsible>
-                        <AccordionItem value={`item-${i}`}>
-                            <AccordionTrigger>
-                                <div className="flex flex-row justify-between items-center w-full">
-                                    <div>{ex.name}</div>
-                                    <PlusButton exerciseIndex={i} addSet={addSet} />
-                                </div>
-                            </AccordionTrigger>
-                            <AccordionContent>
-                                <div className="grid grid-cols-1 gap-1">
-                                    <div className="grid grid-cols-7 justify-items-center">
-                                        <div>세트번호</div>
-                                        <div>무게</div>
-                                        <div>횟수</div>
-                                        <div>무게 증감</div>
-                                        <div>횟수 증감</div>
-                                        <div>메모</div>
-                                        <div>완료</div>
-                                    </div>
-                                    {ex.sets.map((set, j) => (
-                                        <Row
-                                            key={`${ex.id}-set-${j}`}
-                                            exerciseIndex={i}
-                                            setIndex={j}
-                                            weight={displayUnit === "kg" ? set.weight+"kg" : kgToLb(set.weight).toString()+"lb"}
-                                            reps={set.reps}
-                                            memo={set.memo || ""}
-                                            done={set.done}
-                                            onWeightDelta={changeWeight}
-                                            onRepsDelta={changeReps}
-                                            onToggleDone={toggleDone}
-                                            changeMemo={changeMemo}
-                                        />
-                                    ))}
-                                </div>
-                            </AccordionContent>
-                        </AccordionItem>
-                    </Accordion>
-                );
-            })}            
-            <div className="mt-4 flex gap-1">
-                <Button className="px-3" onClick={() => setDisplayUnit(displayUnit === "kg" ? "lb" : "kg")}>
-                    단위변환
-                </Button>
-                <Button className="px-3" onClick={() => setShowHistory(!showHistory)}>
-                    지난기록
-                </Button>
-                <Button className="px-3" onClick={() => {
-                    router.push("/api/notion/auth");
-                }}>
-                    Notion 연동
-                </Button>
-                <Button
-  onClick={() => router.push("/settings/notion")}
->
-  Notion 설정
-</Button>
-            </div>
-        </main>
-    );
-
-    function kgToLb(kg: number) {
-        return Math.round(kg * 2.205);
-    }
-
-    function PlusButton({
-        exerciseIndex,
-        addSet,
-    }: {
-        exerciseIndex: number;
-        addSet: (exIdx: number) => void;
-    }) {
-        return (
-            <Button
-                onClick={(e) => {
-                    e.stopPropagation();
-                    addSet(exerciseIndex);
-                }}
-                className="w-5 h-5"
-            >
-                +
-            </Button>
-        );
-    }
-
-}
-function Row({
-    exerciseIndex,
-    setIndex,
-    weight,
-    reps,
-    done,
-    onWeightDelta,
-    onRepsDelta,
-    onToggleDone,
-    memo,
-    changeMemo,
+export function WorkoutSessionClient({
+  exercises,
+  addSet,
+  changeWeight,
+  changeReps,
+  toggleDone,
+  displayUnit,
+  setDisplayUnit,
+  setShowHistory,
+  showHistory,
+  changeMemo,
 }: {
-    exerciseIndex: number;
-    setIndex: number;
-    weight: string;
-    reps: number;
-    done: boolean;
-    onWeightDelta: (exIdx: number, setIdx: number, delta: number) => void;
-    onRepsDelta: (exIdx: number, setIdx: number, delta: number) => void;
-    onToggleDone: (exIdx: number, setIdx: number) => void;
-    memo: string;
-    changeMemo: (exIdx: number, setIdx: number, value: string) => void;
+  exercises: Exercises;
+  addSet: (exIdx: number) => void;
+  changeWeight: (exIdx: number, setIdx: number, delta: number) => void;
+  changeReps: (exIdx: number, setIdx: number, delta: number) => void;
+  toggleDone: (exIdx: number, setIdx: number) => void;
+  displayUnit: "kg" | "lb";
+  setDisplayUnit: (unit: "kg" | "lb") => void;
+  setShowHistory: (show: boolean) => void;
+  showHistory: boolean;
+  changeMemo: (exIdx: number, setIdx: number, value: string) => void;
 }) {
+  const router = useRouter();
+
+  function kgToLb(kg: number) {
+    return Math.round(kg * 2.205);
+  }
+
+  return (
+    <main className="p-2 space-y-2">
+      {exercises.map((ex, i) => {
+        return (
+          <Accordion key={ex.id} type="single" collapsible>
+            <AccordionItem value={`item-${i}`} className="rounded-lg border px-2">
+              <AccordionTrigger className="py-3">
+                <div className="flex w-full items-center justify-between pr-2">
+                  <div className="text-base font-medium">{ex.name}</div>
+                  <PlusButton exerciseIndex={i} addSet={addSet} />
+                </div>
+              </AccordionTrigger>
+
+              <AccordionContent className="pb-3">
+                <div className="space-y-3">
+                  {ex.sets.map((set, j) => (
+                    <Row
+                      key={`${ex.id}-set-${j}`}
+                      exerciseIndex={i}
+                      setIndex={j}
+                      weightLabel={
+                        displayUnit === "kg"
+                          ? `${set.weight}kg`
+                          : `${kgToLb(set.weight)}lb`
+                      }
+                      reps={set.reps}
+                      memo={set.memo || ""}
+                      done={set.done}
+                      onWeightDelta={changeWeight}
+                      onRepsDelta={changeReps}
+                      onToggleDone={toggleDone}
+                      changeMemo={changeMemo}
+                    />
+                  ))}
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
+        );
+      })}
+
+      <div className="grid grid-cols-2 gap-2 pt-2">
+        <Button onClick={() => setDisplayUnit(displayUnit === "kg" ? "lb" : "kg")}>
+          단위변환
+        </Button>
+        <Button onClick={() => setShowHistory(!showHistory)}>
+          {showHistory ? "기록 닫기" : "지난기록"}
+        </Button>
+        <Button
+          variant="outline"
+          onClick={() => {
+            router.push("/api/notion/auth");
+          }}
+        >
+          Notion 연동
+        </Button>
+        <Button variant="outline" onClick={() => router.push("/settings/notion")}>
+          Notion 설정
+        </Button>
+      </div>
+    </main>
+  );
+
+  function PlusButton({
+    exerciseIndex,
+    addSet,
+  }: {
+    exerciseIndex: number;
+    addSet: (exIdx: number) => void;
+  }) {
     return (
-        <div className="grid grid-cols-7 justify-items-center">
-            <div>{setIndex + 1}</div>
-            <div>{weight}</div>
-            <div>{reps}</div>
-            <div>
-                <Button
-                    className="w-1 h-1 ps-3 pe-3"
-                    onClick={() => onWeightDelta(exerciseIndex, setIndex, -5)}
-                    >
-                    -
-                </Button>
-                <span className="text-sm"> / </span>
-                <Button
-                    className="w-1 h-1 ps-3 pe-3"
-                    onClick={() => onWeightDelta(exerciseIndex, setIndex, +5)}
-                    >
-                    +
-                </Button>
-            </div>
-
-            <div>
-                <Button
-                    className="w-1 h-1 ps-3 pe-3"
-                    onClick={() => onRepsDelta(exerciseIndex, setIndex, -1)}
-                    >
-                    -
-                </Button>
-                <span className="text-sm"> / </span>
-                <Button
-                    className="w-1 h-1 ps-3 pe-3"
-                    onClick={() => onRepsDelta(exerciseIndex, setIndex, +1)}
-                    >
-                    +
-                </Button>
-            </div>
-            <input className="text-center border rounded border-orange-200" type="text" value={memo} onChange={ e =>changeMemo(exerciseIndex, setIndex, e.target.value)}/>
-
-            <input
-                type="checkbox"
-                className="w-4 h-4 accent-blue-500"
-                checked={done}
-                onChange={() => onToggleDone(exerciseIndex, setIndex)}
-            />
-            <div className="border-t border-gray-300 my-0 h-1 mt-1"></div>
-        </div>
+      <Button
+        type="button"
+        className="h-9 w-9 rounded-full p-0 text-lg"
+        onClick={(e) => {
+          e.stopPropagation();
+          addSet(exerciseIndex);
+        }}
+      >
+        +
+      </Button>
     );
+  }
+}
+
+function Row({
+  exerciseIndex,
+  setIndex,
+  weightLabel,
+  reps,
+  done,
+  onWeightDelta,
+  onRepsDelta,
+  onToggleDone,
+  memo,
+  changeMemo,
+}: {
+  exerciseIndex: number;
+  setIndex: number;
+  weightLabel: string;
+  reps: number;
+  done: boolean;
+  onWeightDelta: (exIdx: number, setIdx: number, delta: number) => void;
+  onRepsDelta: (exIdx: number, setIdx: number, delta: number) => void;
+  onToggleDone: (exIdx: number, setIdx: number) => void;
+  memo: string;
+  changeMemo: (exIdx: number, setIdx: number, value: string) => void;
+}) {
+  return (
+    <div className="rounded-xl border bg-card p-3 space-y-3">
+      <div className="flex items-center justify-between">
+        <div className="text-sm font-semibold">세트 {setIndex + 1}</div>
+        <label className="flex items-center gap-2 text-sm text-muted-foreground">
+          완료
+          <input
+            type="checkbox"
+            className="h-5 w-5 accent-blue-500"
+            checked={done}
+            onChange={() => onToggleDone(exerciseIndex, setIndex)}
+          />
+        </label>
+      </div>
+
+      <div className="grid grid-cols-2 gap-2">
+        <div className="rounded-lg bg-muted/50 p-3 text-center">
+          <div className="text-xs text-muted-foreground">무게</div>
+          <div className="mt-1 text-lg font-semibold">{weightLabel}</div>
+        </div>
+        <div className="rounded-lg bg-muted/50 p-3 text-center">
+          <div className="text-xs text-muted-foreground">횟수</div>
+          <div className="mt-1 text-lg font-semibold">{reps}회</div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-2">
+        <ControlBlock
+          label="무게 조절"
+          onMinus={() => onWeightDelta(exerciseIndex, setIndex, -5)}
+          onPlus={() => onWeightDelta(exerciseIndex, setIndex, +5)}
+        />
+        <ControlBlock
+          label="횟수 조절"
+          onMinus={() => onRepsDelta(exerciseIndex, setIndex, -1)}
+          onPlus={() => onRepsDelta(exerciseIndex, setIndex, +1)}
+        />
+      </div>
+
+      <div className="space-y-1">
+        <div className="text-xs text-muted-foreground">메모</div>
+        <input
+          className="w-full rounded-md border px-3 py-2 text-sm outline-none focus:border-blue-400"
+          type="text"
+          value={memo}
+          onChange={(e) => changeMemo(exerciseIndex, setIndex, e.target.value)}
+          placeholder="세트 메모"
+        />
+      </div>
+    </div>
+  );
+}
+
+function ControlBlock({
+  label,
+  onMinus,
+  onPlus,
+}: {
+  label: string;
+  onMinus: () => void;
+  onPlus: () => void;
+}) {
+  return (
+    <div className="rounded-lg border p-2">
+      <div className="mb-2 text-center text-xs text-muted-foreground">{label}</div>
+      <div className="grid grid-cols-2 gap-2">
+        <Button type="button" variant="outline" className="h-10" onClick={onMinus}>
+          -
+        </Button>
+        <Button type="button" variant="outline" className="h-10" onClick={onPlus}>
+          +
+        </Button>
+      </div>
+    </div>
+  );
 }
