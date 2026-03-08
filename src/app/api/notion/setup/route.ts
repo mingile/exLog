@@ -11,8 +11,8 @@ let cachedClient : MongoClient | null = null;
 
 export async function POST(req: Request){
     const cookieStore = await cookies();
-    const userKey = cookieStore.get("user_key")?.value;
-    if(!userKey){
+    const user_key = cookieStore.get("user_key")?.value;
+    if(!user_key){
         return NextResponse.json({error: "Unauthorized"}, {status: 401});
     }
     const body = await req.json();
@@ -36,11 +36,12 @@ export async function POST(req: Request){
         }
         const db = cachedClient.db("notion");
         const collection = db.collection("connections_info");
-        const connection = await collection.findOne({ user_key: userKey });
-        if (!connection?.access_token) {
+        const connection = await collection.findOne({ user_key: user_key });
+        const accessToken = connection?.access_token;
+        if (!accessToken) {
             return NextResponse.json({error: "No connection found"}, {status: 404});
         }
-        const accessToken = connection?.access_token;
+
         const response = await fetch(`https://api.notion.com/v1/databases/${databaseId}`, {
             method: "GET",
             headers: {
@@ -60,7 +61,7 @@ export async function POST(req: Request){
         }
 
         await response.json();
-        await collection.updateOne({user_key: userKey, access_token: accessToken}, {$set: {database_id: databaseId}});
+        await collection.updateOne({user_key: user_key, access_token: accessToken}, {$set: {database_id: databaseId}});
         return NextResponse.json({message: "Database setup completed"}, {status: 200});
     }catch(error){
         console.error("Database setup failed", error);

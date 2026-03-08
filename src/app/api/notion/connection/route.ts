@@ -23,12 +23,12 @@ export async function GET(req : Request){
         const db = cachedClient.db('notion');
         const collection = db.collection("connections_info");
         const cookieStore = await cookies();
-        const userKey = cookieStore.get("user_key")?.value;
-        if(!userKey){
+        const user_key = cookieStore.get("user_key")?.value;
+        if(!user_key){
             return NextResponse.json({connected: false}, {status: 401});
         }
         const result = await collection.findOne({
-            user_key: userKey
+            user_key: user_key
         });
         return NextResponse.json({connected: !!result});
 

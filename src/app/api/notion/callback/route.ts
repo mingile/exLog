@@ -16,8 +16,8 @@ export async function GET(request: Request){
     
     const cookieStore = await cookies();
     const savedState = cookieStore.get("notion_oauth_state")?.value;
-    let userKey = cookieStore.get("user_key")?.value;
-    if(!userKey){
+    let user_key = cookieStore.get("user_key")?.value;
+    if(!user_key){
         return NextResponse.redirect(new URL("/api/notion/auth", process.env.APP_BASE_URL));
     }
 
@@ -103,7 +103,7 @@ export async function GET(request: Request){
                         bot_id: tokenData?.bot_id,
                         access_token: tokenData?.access_token,
                         workspace_id: tokenData?.workspace_id,
-                        user_key: userKey,
+                        user_key: user_key,
                         updated_at: new Date(),
                     },
                     $setOnInsert:{

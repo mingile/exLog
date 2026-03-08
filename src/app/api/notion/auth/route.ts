@@ -8,10 +8,10 @@ export async function GET() {
     // state를 HttpOnly 쿠키로 저장 (콜백에서 검증용)
     const cookieStore = await cookies();
     
-    let userKey = cookieStore.get("user_key")?.value;
-    if(!userKey){
-        userKey = crypto.randomUUID();
-        cookieStore.set("user_key", userKey, {
+    let user_key = cookieStore.get("user_key")?.value;
+    if(!user_key){
+        user_key = crypto.randomUUID();
+        cookieStore.set("user_key", user_key, {
             httpOnly: true,
             secure: process.env.NODE_ENV === "production",
             maxAge: 60*60*24*30, // 30일

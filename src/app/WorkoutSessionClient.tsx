@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Exercises } from "./types";
 import { useRouter } from "next/navigation";
 
-export function WorkoutSessionClient({ exercises, addSet, changeWeight, changeReps, toggleDone, displayUnit, setDisplayUnit, setShowHistory, showHistory }: { exercises: Exercises, addSet: (exIdx: number) => void, changeWeight: (exIdx: number, setIdx: number, delta: number) => void, changeReps: (exIdx: number, setIdx: number, delta: number) => void, toggleDone: (exIdx: number, setIdx: number) => void, displayUnit: "kg" | "lb", setDisplayUnit: (unit: "kg" | "lb") => void, setShowHistory: (show: boolean) => void, showHistory: boolean }) {
+export function WorkoutSessionClient({ exercises, addSet, changeWeight, changeReps, toggleDone, displayUnit, setDisplayUnit, setShowHistory, showHistory, setNotionReady }: { exercises: Exercises, addSet: (exIdx: number) => void, changeWeight: (exIdx: number, setIdx: number, delta: number) => void, changeReps: (exIdx: number, setIdx: number, delta: number) => void, toggleDone: (exIdx: number, setIdx: number) => void, displayUnit: "kg" | "lb", setDisplayUnit: (unit: "kg" | "lb") => void, setShowHistory: (show: boolean) => void, showHistory: boolean, setNotionReady: React.Dispatch<React.SetStateAction<boolean>> }) {
 
     const router = useRouter();
 
@@ -38,7 +38,7 @@ export function WorkoutSessionClient({ exercises, addSet, changeWeight, changeRe
                                     </div>
                                     {ex.sets.map((set, j) => (
                                         <Row
-                                            key={ex.id}
+                                            key={`${ex.id}-set-${j}`}
                                             exerciseIndex={i}
                                             setIndex={j}
                                             weight={displayUnit === "kg" ? set.weight+"kg" : kgToLb(set.weight).toString()+"lb"}
@@ -72,9 +72,30 @@ export function WorkoutSessionClient({ exercises, addSet, changeWeight, changeRe
 >
   Notion 설정
 </Button>
+<Button className="px-3" onClick={() => {
+                    fetch("/api/notion/disconnect", {
+                        method: "POST",
+                    }).then(data=>{
+                        if(data.ok){
+                            alert('Notion 연결 해제 완료');
+                            checkNotionStatus();
+                        }
+                    }).catch(err=>{
+                        alert('Notion 연결 해제 중 오류가 발생했습니다.');
+                        console.error('Notion 연결 해제 중 오류가 발생했습니다.', err);
+                    });
+                }}>
+                    Notion 연결 해제
+                </Button>
             </div>
         </main>
     );
+
+    async function checkNotionStatus(){
+        const response = await fetch("/api/notion/status")
+        const data = await response.json()
+        setNotionReady(data.notionConnected && data.dbConnected);
+    }
 
     function kgToLb(kg: number) {
         return Math.round(kg * 2.205);
