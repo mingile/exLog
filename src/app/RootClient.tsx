@@ -11,128 +11,128 @@ const exerciseTemplate: Record<Part, Exercises> = {
         {
             id: "pullup",
             name: "Pull - Up",
-            sets: [{ weight: 0, reps: 5, done: false, synced: false }],
+            sets: [{ weight: 0, reps: 5, done: false, synced: false, memo: "" }],
         },
         {
             id: "latpulldown",
             name: "Latpulldown",
-            sets: [{ weight: 55, reps: 12, done: false, synced: false }],
+            sets: [{ weight: 55, reps: 12, done: false, synced: false, memo: "" }],
         },
         {
             id: "lateralrow",
             name: "Lateral-Row",
-            sets: [{ weight: 80, reps: 12, done: false, synced: false }],
+            sets: [{ weight: 80, reps: 12, done: false, synced: false, memo: "" }],
         },
         {
             id: "barbellrow",
             name: "Barbell-Row",
-            sets: [{ weight: 60, reps: 12, done: false, synced: false }],
+            sets: [{ weight: 60, reps: 12, done: false, synced: false, memo: "" }],
         },
         {
             id: "facepull",
             name: "Face-Pull",
-            sets: [{ weight: 40, reps: 12, done: false, synced: false }]
+            sets: [{ weight: 40, reps: 12, done: false, synced: false, memo: "" }]
         },
         {
             id: "seatedcablerow",
             name: "Seated-Cable-Row",
-            sets: [{ weight: 30, reps: 12, done: false, synced: false }],
+            sets: [{ weight: 30, reps: 12, done: false, synced: false, memo: "" }],
         },
         {
             id: "deadlift",
             name: "Deadlift",
-            sets: [{ weight: 80, reps: 5, done: false, synced: false }]
+            sets: [{ weight: 80, reps: 5, done: false, synced: false, memo: "" }]
         }
     ],
     chest: [
         {
             id: "chestpress",
             name: "Chest-Press",
-            sets: [{ weight: 63, reps: 12, done: false, synced: false }],
+            sets: [{ weight: 63, reps: 12, done: false, synced: false, memo: "" }],
         },
         {
             id: "inclinebenchpress",
             name: "Incline-Bench-Press",
-            sets: [{ weight: 15, reps: 12, done: false, synced: false }],
+            sets: [{ weight: 15, reps: 12, done: false, synced: false, memo: "" }],
         },
         {
             id: "cablecrossover",
             name: "Cable-Cross",
-            sets: [{ weight: 27, reps: 12, done: false, synced: false }],
+            sets: [{ weight: 27, reps: 12, done: false, synced: false, memo: "" }],
         },
         {
             id: "pecdeckfly",
             name: "Pec-Deck-Fly",
-            sets: [{ weight: 27, reps: 12, done: false, synced: false }],
+            sets: [{ weight: 27, reps: 12, done: false, synced: false, memo: "" }],
         },
         {
             id: "dumbbellpullover",
             name: "Dumbbell-Pullover",
-            sets: [{ weight: 18, reps: 12, done: false, synced: false }],
+            sets: [{ weight: 18, reps: 12, done: false, synced: false, memo: ""}],
         },
     ],
     legs: [
         {
             id: "legpress",
             name: "Leg-Press",
-            sets: [{ weight: 112, reps: 12, done: false, synced: false }],
+            sets: [{ weight: 112, reps: 12, done: false, synced: false, memo: "" }],
         },
         {
             id: "legcurl",
             name: "Leg-Curl",
-            sets: [{ weight: 30, reps: 12, done: false, synced: false }],
+            sets: [{ weight: 30, reps: 12, done: false, synced: false, memo: "" }],
         },
         {
             id: "calfraise",
             name: "Calf-Rise",
-            sets: [{ weight: 31, reps: 12, done: false, synced: false }],
+            sets: [{ weight: 31, reps: 12, done: false, synced: false, memo: "" }],
         },
         {
             id: "hipthrust",
             name: "Hip-Thrust",
-            sets: [{ weight: 40, reps: 12, done: false, synced: false }],
+            sets: [{ weight: 40, reps: 12, done: false, synced: false, memo: "" }],
         },
         {
             id: "hipabduction",
             name: "Hip-Abduction",
-            sets: [{ weight: 40, reps: 12, done: false, synced: false }],
+            sets: [{ weight: 40, reps: 12, done: false, synced: false, memo: "" }],
         },
         {
             id: "hipadduction",
             name: "Hip-Adduction",
-            sets: [{ weight: 40, reps: 12, done: false, synced: false }],
+            sets: [{ weight: 40, reps: 12, done: false, synced: false, memo: "" }],
         },
         {
             id: "bulgariansplitsquat",
             name: "Bulgarian-Split-Squat",
-            sets: [{ weight: 8, reps: 12, done: false, synced: false }],
+            sets: [{ weight: 8, reps: 12, done: false, synced: false, memo: "" }],
         },
         {
             id: "glutekickback",
             name: "Glute-Kickback",
-            sets: [{ weight: 20, reps: 12, done: false, synced: false }],
+            sets: [{ weight: 20, reps: 12, done: false, synced: false, memo: "" }],
         }
     ],
     shoulders: [
         {
             id: "ohp",
             name: "Overhead-Press",
-            sets: [{ weight: 40, reps: 12, done: false, synced: false }],
+            sets: [{ weight: 40, reps: 12, done: false, synced: false, memo: "" }],
         },
         {
             id: "shoulderpress",
             name: "Shoulder-Press",
-            sets: [{ weight: 50, reps: 12, done: false, synced: false }],
+            sets: [{ weight: 50, reps: 12, done: false, synced: false, memo: "" }],
         },
         {
             id: "lateralraise",
             name: "Lateral-Raise",
-            sets: [{ weight: 60, reps: 12, done: false, synced: false }],
+            sets: [{ weight: 60, reps: 12, done: false, synced: false, memo: "" }],
         },
         {
             id: "uprightrow",
             name: "Upright-Row",
-            sets: [{ weight: 40, reps: 12, done: false, synced: false }],
+            sets: [{ weight: 40, reps: 12, done: false, synced: false, memo: "" }],
         }
     ],
 };
@@ -170,10 +170,10 @@ export function RootClient() {
         }
         function isSetItem(
             v: unknown,
-        ): v is { weight: number; reps: number; done: boolean, synced: boolean } {
+        ): v is { weight: number; reps: number; done: boolean, synced: boolean, memo: string } {
             if (!isObject(v)) return false;
             return (
-                isNumber(v.weight) && isNumber(v.reps) && typeof v.done === "boolean" && typeof v.synced === "boolean"
+                isNumber(v.weight) && isNumber(v.reps) && typeof v.done === "boolean" && typeof v.synced === "boolean" && typeof v.memo === "string"
             );
         }
         function isExercise(
@@ -189,7 +189,7 @@ export function RootClient() {
         function isExerciseArray(v: unknown): v is {
             id: string;
             name: string;
-            sets: { weight: number; reps: number; done: boolean, synced: boolean }[];
+            sets: { weight: number; reps: number; done: boolean, synced: boolean, memo: string }[];
         }[] {
             if (!Array.isArray(v)) return false;
             if (v.length === 0) return false;
@@ -259,6 +259,21 @@ export function RootClient() {
         );
     }
 
+    function changeMemo(exIdx: number, setIdx: number, value: string){
+        setExercises((prev) =>
+        prev.map((ex, i) => {
+            if (i !== exIdx) return ex;
+            return{
+                ...ex,
+                sets: ex.sets.map((s, j) => {
+                    if (j !== setIdx) return s;
+                    return { ...s, memo : value  }
+                })
+            }
+        })
+    )
+    }
+
     function toggleDone(exIdx: number, setIdx: number) {
         setExercises((prev) =>
             prev.map((ex, i) => {
@@ -285,7 +300,8 @@ export function RootClient() {
                             weight: ex.sets[ex.sets.length - 1].weight,
                             reps: ex.sets[ex.sets.length - 1].reps,
                             done: false,
-                            synced: false
+                            synced: false,
+                            memo: ""
                         },
                     ],
                 };
@@ -327,8 +343,8 @@ export function RootClient() {
 
     return (
         <div className="flex flex-col h-100vh min-h-screen">
-            <HeaderControls onSavedHistory={onSavedHistory} date={date} selectedPart={selectedPart} onSelectPart={onSelectPart} clearDoneStatus={clearDoneStatus} exercises={exercises} setExercises={setExercises} saving={saving} setSaving={setSaving} notionReady={notionReady} />
-            <WorkoutSessionClient exercises={exercises} changeReps={changeReps} changeWeight={changeWeight} toggleDone={toggleDone} addSet={addSet} displayUnit={displayUnit} setDisplayUnit={setDisplayUnit} setShowHistory={setShowHistory} showHistory={showHistory} setNotionReady={setNotionReady} />
+            <HeaderControls onSavedHistory={onSavedHistory} date={date} selectedPart={selectedPart} onSelectPart={onSelectPart} clearDoneStatus={clearDoneStatus} exercises={exercises} setExercises={setExercises} saving={saving} setSaving={setSaving} notionReady={notionReady} setNotionReady={setNotionReady} />
+            <WorkoutSessionClient exercises={exercises} changeReps={changeReps} changeWeight={changeWeight} toggleDone={toggleDone} addSet={addSet} displayUnit={displayUnit} setDisplayUnit={setDisplayUnit} setShowHistory={setShowHistory} showHistory={showHistory} changeMemo={changeMemo}/>
             <div className="overflow-y-auto flex-grow pb-16">
             <WorkoutHistoryClient showHistory={showHistory} historyVersion={historyVersion} displayUnit={displayUnit}/>
             </div>

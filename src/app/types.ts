@@ -1,4 +1,4 @@
-export type SetItem = { weight: number; reps: number; done: boolean, synced: boolean };
+export type SetItem = { weight: number; reps: number; done: boolean, synced: boolean, memo: string };
 export type Exercise = { id: string; name: string; sets: SetItem[] };
 export type Exercises = Exercise[];
 export type Part = "back" | "chest" | "legs" | "shoulders";

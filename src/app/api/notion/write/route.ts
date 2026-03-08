@@ -68,27 +68,36 @@ export async function POST(req: Request){
               "number": set.weight,
             },
             "Reps": {
-              "number": set.reps,
+              "number": set.reps
             },
             "Date":{
               "date": {
-                "start": saved_at,
+                "start": saved_at
               }
             },
             "Part": {
               "select": { // notion Part 속성은 select임
-                "name": part,
+                "name": part
               }
             },
             "Exercise": {
               "rich_text": [
                 {
                   "text": {
-                    "content": exercise.name,
+                    "content": exercise.name
                   }
                 }
               ]
             },
+            "Memo":{
+              "rich_text":[
+                {
+                  "text":{
+                    "content":set.memo
+                  }
+                }
+              ]
+            }
           }
         }
         const response = await fetch('https://api.notion.com/v1/pages', {

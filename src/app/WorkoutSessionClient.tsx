@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Exercises } from "./types";
 import { useRouter } from "next/navigation";
 
-export function WorkoutSessionClient({ exercises, addSet, changeWeight, changeReps, toggleDone, displayUnit, setDisplayUnit, setShowHistory, showHistory, setNotionReady }: { exercises: Exercises, addSet: (exIdx: number) => void, changeWeight: (exIdx: number, setIdx: number, delta: number) => void, changeReps: (exIdx: number, setIdx: number, delta: number) => void, toggleDone: (exIdx: number, setIdx: number) => void, displayUnit: "kg" | "lb", setDisplayUnit: (unit: "kg" | "lb") => void, setShowHistory: (show: boolean) => void, showHistory: boolean, setNotionReady: React.Dispatch<React.SetStateAction<boolean>> }) {
+export function WorkoutSessionClient({ exercises, addSet, changeWeight, changeReps, toggleDone, displayUnit, setDisplayUnit, setShowHistory, showHistory, changeMemo }: { exercises: Exercises, addSet: (exIdx: number) => void, changeWeight: (exIdx: number, setIdx: number, delta: number) => void, changeReps: (exIdx: number, setIdx: number, delta: number) => void, toggleDone: (exIdx: number, setIdx: number) => void, displayUnit: "kg" | "lb", setDisplayUnit: (unit: "kg" | "lb") => void, setShowHistory: (show: boolean) => void, showHistory: boolean, changeMemo: (exIdx : number, setIdx: number, value: string) => void }) {
 
     const router = useRouter();
 
@@ -28,12 +28,13 @@ export function WorkoutSessionClient({ exercises, addSet, changeWeight, changeRe
                             </AccordionTrigger>
                             <AccordionContent>
                                 <div className="grid grid-cols-1 gap-1">
-                                    <div className="grid grid-cols-6 justify-items-center">
+                                    <div className="grid grid-cols-7 justify-items-center">
                                         <div>세트번호</div>
                                         <div>무게</div>
                                         <div>횟수</div>
                                         <div>무게 증감</div>
                                         <div>횟수 증감</div>
+                                        <div>메모</div>
                                         <div>완료</div>
                                     </div>
                                     {ex.sets.map((set, j) => (
@@ -43,10 +44,12 @@ export function WorkoutSessionClient({ exercises, addSet, changeWeight, changeRe
                                             setIndex={j}
                                             weight={displayUnit === "kg" ? set.weight+"kg" : kgToLb(set.weight).toString()+"lb"}
                                             reps={set.reps}
+                                            memo={set.memo || ""}
                                             done={set.done}
                                             onWeightDelta={changeWeight}
                                             onRepsDelta={changeReps}
                                             onToggleDone={toggleDone}
+                                            changeMemo={changeMemo}
                                         />
                                     ))}
                                 </div>
@@ -72,30 +75,9 @@ export function WorkoutSessionClient({ exercises, addSet, changeWeight, changeRe
 >
   Notion 설정
 </Button>
-<Button className="px-3" onClick={() => {
-                    fetch("/api/notion/disconnect", {
-                        method: "POST",
-                    }).then(data=>{
-                        if(data.ok){
-                            alert('Notion 연결 해제 완료');
-                            checkNotionStatus();
-                        }
-                    }).catch(err=>{
-                        alert('Notion 연결 해제 중 오류가 발생했습니다.');
-                        console.error('Notion 연결 해제 중 오류가 발생했습니다.', err);
-                    });
-                }}>
-                    Notion 연결 해제
-                </Button>
             </div>
         </main>
     );
-
-    async function checkNotionStatus(){
-        const response = await fetch("/api/notion/status")
-        const data = await response.json()
-        setNotionReady(data.notionConnected && data.dbConnected);
-    }
 
     function kgToLb(kg: number) {
         return Math.round(kg * 2.205);
@@ -121,71 +103,75 @@ export function WorkoutSessionClient({ exercises, addSet, changeWeight, changeRe
         );
     }
 
-    function Row({
-        exerciseIndex,
-        setIndex,
-        weight,
-        reps,
-        done,
-        onWeightDelta,
-        onRepsDelta,
-        onToggleDone,
-    }: {
-        exerciseIndex: number;
-        setIndex: number;
-        weight: string;
-        reps: number;
-        done: boolean;
-        onWeightDelta: (exIdx: number, setIdx: number, delta: number) => void;
-        onRepsDelta: (exIdx: number, setIdx: number, delta: number) => void;
-        onToggleDone: (exIdx: number, setIdx: number) => void;
-    }) {
-        return (
-            <div className="grid grid-cols-6 justify-items-center">
-                <div>{setIndex + 1}</div>
-                <div>{weight}</div>
-                <div>{reps}</div>
-
-                <div>
-                    <Button
-                        className="w-1 h-1 ps-3 pe-3"
-                        onClick={() => onWeightDelta(exerciseIndex, setIndex, -5)}
+}
+function Row({
+    exerciseIndex,
+    setIndex,
+    weight,
+    reps,
+    done,
+    onWeightDelta,
+    onRepsDelta,
+    onToggleDone,
+    memo,
+    changeMemo,
+}: {
+    exerciseIndex: number;
+    setIndex: number;
+    weight: string;
+    reps: number;
+    done: boolean;
+    onWeightDelta: (exIdx: number, setIdx: number, delta: number) => void;
+    onRepsDelta: (exIdx: number, setIdx: number, delta: number) => void;
+    onToggleDone: (exIdx: number, setIdx: number) => void;
+    memo: string;
+    changeMemo: (exIdx: number, setIdx: number, value: string) => void;
+}) {
+    return (
+        <div className="grid grid-cols-7 justify-items-center">
+            <div>{setIndex + 1}</div>
+            <div>{weight}</div>
+            <div>{reps}</div>
+            <div>
+                <Button
+                    className="w-1 h-1 ps-3 pe-3"
+                    onClick={() => onWeightDelta(exerciseIndex, setIndex, -5)}
                     >
-                        -
-                    </Button>
-                    <span className="text-sm"> / </span>
-                    <Button
-                        className="w-1 h-1 ps-3 pe-3"
-                        onClick={() => onWeightDelta(exerciseIndex, setIndex, +5)}
+                    -
+                </Button>
+                <span className="text-sm"> / </span>
+                <Button
+                    className="w-1 h-1 ps-3 pe-3"
+                    onClick={() => onWeightDelta(exerciseIndex, setIndex, +5)}
                     >
-                        +
-                    </Button>
-                </div>
-
-                <div>
-                    <Button
-                        className="w-1 h-1 ps-3 pe-3"
-                        onClick={() => onRepsDelta(exerciseIndex, setIndex, -1)}
-                    >
-                        -
-                    </Button>
-                    <span className="text-sm"> / </span>
-                    <Button
-                        className="w-1 h-1 ps-3 pe-3"
-                        onClick={() => onRepsDelta(exerciseIndex, setIndex, +1)}
-                    >
-                        +
-                    </Button>
-                </div>
-
-                <input
-                    type="checkbox"
-                    className="w-4 h-4 accent-blue-500"
-                    checked={done}
-                    onChange={() => onToggleDone(exerciseIndex, setIndex)}
-                />
-                <div className="border-t border-gray-300 my-0 h-1 mt-1"></div>
+                    +
+                </Button>
             </div>
-        );
-    }
+
+            <div>
+                <Button
+                    className="w-1 h-1 ps-3 pe-3"
+                    onClick={() => onRepsDelta(exerciseIndex, setIndex, -1)}
+                    >
+                    -
+                </Button>
+                <span className="text-sm"> / </span>
+                <Button
+                    className="w-1 h-1 ps-3 pe-3"
+                    onClick={() => onRepsDelta(exerciseIndex, setIndex, +1)}
+                    >
+                    +
+                </Button>
+            </div>
+            <input className="text-center border rounded border-orange-200" type="text" value={memo} onChange={ e =>changeMemo(exerciseIndex, setIndex, e.target.value)}/>
+
+            <input
+                type="checkbox"
+                className="w-4 h-4 accent-blue-500"
+                checked={done}
+                onChange={() => onToggleDone(exerciseIndex, setIndex)}
+            />
+            <div className="border-t border-gray-300 my-0 h-1 mt-1"></div>
+        </div>
+    );
 }

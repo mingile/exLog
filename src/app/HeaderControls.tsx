@@ -5,7 +5,7 @@ import type { Exercises, Session, SavedExercise } from "./types";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import React from "react";
 
-export function HeaderControls({ onSavedHistory, selectedPart, clearDoneStatus, exercises, onSelectPart, date, setExercises, saving, setSaving, notionReady }: { onSavedHistory: () => void, selectedPart: ('back' | 'chest' | 'legs' | 'shoulders'), clearDoneStatus: () => void, exercises: Exercises, onSelectPart: (part: ('back' | 'chest' | 'legs' | 'shoulders')) => void, date: string, setExercises: React.Dispatch<React.SetStateAction<Exercises>>, saving: boolean, setSaving: (saving: boolean)=> void, notionReady: boolean }){
+export function HeaderControls({ onSavedHistory, selectedPart, clearDoneStatus, exercises, onSelectPart, date, setExercises, saving, setSaving, notionReady, setNotionReady }: { onSavedHistory: () => void, selectedPart: ('back' | 'chest' | 'legs' | 'shoulders'), clearDoneStatus: () => void, exercises: Exercises, onSelectPart: (part: ('back' | 'chest' | 'legs' | 'shoulders')) => void, date: string, setExercises: React.Dispatch<React.SetStateAction<Exercises>>, saving: boolean, setSaving: (saving: boolean)=> void, notionReady: boolean, setNotionReady: (notionReady: boolean) => void }){
 
     return (
         <header className="sticky top-0 z-50 bg-background/95 backdrop-blur border-b supports-[backdrop-filter]:bg-background/60">
@@ -23,6 +23,21 @@ export function HeaderControls({ onSavedHistory, selectedPart, clearDoneStatus, 
                 </Select>
                 <span className="text-xs text-muted-foreground">{date}</span>
                 <p className="text-xs bg-blue-100 border border-blue-300 rounded-md p-1 w-fit text-muted-foreground">Notion 연결 상태 : {notionReady ? '🟢' : '🔴'}</p>
+                <Button className="px-1 text-xs h-7" onClick={() => {
+                    fetch("/api/notion/disconnect", {
+                        method: "POST",
+                    }).then(data=>{
+                        if(data.ok){
+                            alert('Notion 연결 해제 완료');
+                            checkNotionStatus();
+                        }
+                    }).catch(err=>{
+                        alert('Notion 연결 해제 중 오류가 발생했습니다.');
+                        console.error('Notion 연결 해제 중 오류가 발생했습니다.', err);
+                    });
+                }}>
+                    연결 해제
+                </Button>
                 <div className="ml-auto flex items-center justify-end gap-0.5">
                     <Button onClick={saveSession} disabled={saving}>
                         {saving ? "저장중..." : "저장"}
@@ -34,6 +49,12 @@ export function HeaderControls({ onSavedHistory, selectedPart, clearDoneStatus, 
                 </div>
         </header>
     )
+
+    async function checkNotionStatus(){
+        const response = await fetch("/api/notion/status")
+        const data = await response.json()
+        setNotionReady(data.notionConnected && data.dbConnected);
+    }
 
     async function saveSession() {
         console.log('1. saveSession 시작, saving:', saving);
@@ -66,6 +87,7 @@ export function HeaderControls({ onSavedHistory, selectedPart, clearDoneStatus, 
                             setNo,
                             weight: set.weight,
                             reps: set.reps,
+                            memo: set.memo,
                         };
                     }),
                 };
@@ -76,11 +98,7 @@ export function HeaderControls({ onSavedHistory, selectedPart, clearDoneStatus, 
             part: selectedPart,            
             exercises: savedExercises,
         };
-        console.log('2. savedExercises:', savedExercises);
-        console.log('3. savedExercises.length:', savedExercises.length);
-        
         try{
-            console.log('4. try 시작');
             if (savedExercises.length > 0) {
                 console.log('5. savedExercises.length > 0');
                 const sessionKey = "workout.sessions.v1";
@@ -141,6 +159,10 @@ export function HeaderControls({ onSavedHistory, selectedPart, clearDoneStatus, 
                 onSavedHistory();
                 return;
             }
+        }
+        else{
+            alert("새로 저장할 내용이 없습니다.");
+            return;
         }
     }
         finally{
