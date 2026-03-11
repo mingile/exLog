@@ -3,6 +3,7 @@
 import { Button } from "@/components/ui/button";
 import type { Exercises, Session, SavedExercise } from "./types";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { toast } from "sonner"
 import React from "react";
 
 export function HeaderControls({ onSavedHistory, selectedPart, clearDoneStatus, exercises, onSelectPart, date, setExercises, saving, setSaving, notionReady, setNotionReady }: { onSavedHistory: () => void, selectedPart: ('back' | 'chest' | 'legs' | 'shoulders'), clearDoneStatus: () => void, exercises: Exercises, onSelectPart: (part: ('back' | 'chest' | 'legs' | 'shoulders')) => void, date: string, setExercises: React.Dispatch<React.SetStateAction<Exercises>>, saving: boolean, setSaving: (saving: boolean)=> void, notionReady: boolean, setNotionReady: (notionReady: boolean) => void }){
@@ -28,12 +29,15 @@ export function HeaderControls({ onSavedHistory, selectedPart, clearDoneStatus, 
                         method: "POST",
                     }).then(data=>{
                         if(data.ok){
-                            alert('Notion 연결 해제 완료');
+                            toast.success('Notion 연결 해제 완료', {
+                                duration: 1000
+                            });
                             checkNotionStatus();
                         }
                     }).catch(err=>{
-                        alert('Notion 연결 해제 중 오류가 발생했습니다.');
-                        console.error('Notion 연결 해제 중 오류가 발생했습니다.', err);
+                        toast.error('Notion 연결 해제 중 오류가 발생했습니다.', {
+                            duration: 1000
+                        });
                     });
                 }}>
                     연결 해제
@@ -66,13 +70,24 @@ export function HeaderControls({ onSavedHistory, selectedPart, clearDoneStatus, 
             .map((ex) => {
                 const doneSets = ex.sets
                     .map((set, i) => {
+                        console.log(`세트 ${i}:`, {
+                            weight: set.weight,
+                            reps: set.reps,
+                            done: set.done,
+                            synced: set.synced,
+                            memo: set.memo
+                        });
                         return {
                             set,
                             setNo: i + 1,
                         };
                     })
-                    .filter(({ set }) => set.done && !set.synced);
-                return {
+                    .filter(({ set }) => {
+                        const pass = set.done && !set.synced;
+                        console.log(`세트 필터 결과:`, {done: set.done, synced: set.synced, pass});
+                        return pass;
+                    });
+                    return {
                     ...ex,
                     sets: doneSets,
                 };
@@ -143,25 +158,35 @@ export function HeaderControls({ onSavedHistory, selectedPart, clearDoneStatus, 
                             ))
                         }))
                     )
+                    localStorage.setItem(sessionKey, JSON.stringify(nextSessions));
                     onSavedHistory();
-                    alert(`노션에 ${data.created_count}개 세트 저장되었습니다`);
+                    toast.success(`노션에 ${data.created_count}개 세트 저장되었습니다`, {
+                        duration: 1000
+                    });
                     
                 }
                 else{
-                    alert("노션에 세트 저장 실패");
+                    const errorData = await response.json();
+                    toast.error("노션에 세트 저장 실패: " + errorData.error, {
+                        duration: 1000
+                    });
                     return;
                 }
                 
             } else {
-                alert(`수행한 세션이 로컬 스토리지에 저장되었습니다. 
-                    노션에 저장하려면 연결을 해주세요.`)
-                localStorage.setItem(sessionKey, JSON.stringify(nextSessions));
-                onSavedHistory();
-                return;
+                    toast.success(`로컬 서버에 저장 완료!`, {
+                            description: "노션에 저장하려면 연결을 해주세요.",
+                            duration: 1000
+                        })                    
+                    localStorage.setItem(sessionKey, JSON.stringify(nextSessions));
+                    onSavedHistory();
+                    return;
             }
         }
         else{
-            alert("새로 저장할 내용이 없습니다.");
+            toast.error("새로 저장할 내용이 없습니다.", {
+                duration: 1000
+            });
             return;
         }
     }
