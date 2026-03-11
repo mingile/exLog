@@ -237,7 +237,7 @@ export function RootClient() {
                     ...ex,
                     sets: ex.sets.map((s, j) => {
                         if (j !== setIdx) return s;
-                        return { ...s, reps: s.reps + delta };
+                        return { ...s, reps: s.reps + delta, synced: false };
                     }),
                 };
             }),
@@ -252,7 +252,7 @@ export function RootClient() {
                     ...ex,
                     sets: ex.sets.map((s, j) => {
                         if (j !== setIdx) return s;
-                        return { ...s, weight: s.weight + delta };
+                        return { ...s, weight: s.weight + delta, synced: false };
                     }),
                 };
             }),
@@ -267,7 +267,7 @@ export function RootClient() {
                 ...ex,
                 sets: ex.sets.map((s, j) => {
                     if (j !== setIdx) return s;
-                    return { ...s, memo : value  }
+                    return { ...s, memo : value, synced: false }
                 })
             }
         })
@@ -310,21 +310,8 @@ export function RootClient() {
     }
 
     function clearDoneStatus() {
-        if (confirm("초기화 하시겠습니까?")) {
-            setExercises((prev) =>
-                prev.map((ex) => {
-                    const resetSets = ex.sets.map((set) => {
-                        return {
-                            ...set,
-                            done: false,
-                        };
-                    });
-                    return {
-                        ...ex,
-                        sets: resetSets,
-                    };
-                }),
-            );
+        if (confirm("모든 데이터를 초기 상태로 되돌리시겠습니까?")) {
+            setExercises(exerciseTemplate[selectedPart]);
         }
     }
     function onSelectPart(part: Part) {
