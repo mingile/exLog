@@ -4,27 +4,31 @@ import { useEffect, useState } from "react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Session } from "./types";
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "@/components/ui/collapsible";
+import { TrashIcon } from "lucide-react";
+import { Button } from "@/components/ui/button";
+
+const sessionKey = `workout.sessions.v1`;
 
 export function WorkoutHistoryClient({showHistory, historyVersion, displayUnit}: {showHistory: boolean, historyVersion: number, displayUnit: "kg" | "lb"}) {
     const [sessions, setSessions] = useState<Session[]>([]);
-
     
     useEffect(()=>{
         if (!showHistory) return;
-        const history = localStorage.getItem("workout.sessions.v1");
+        const history = localStorage.getItem(sessionKey);
         try{
-
+            const parsedHistory: Session[] = history ? JSON.parse(history) : [];
             if (history){
-                const parsedHistory = JSON.parse(history);
                 if(!Array.isArray(parsedHistory)) {
                     return ;
                 }
                 setSessions(parsedHistory);
+            }else{
+                setSessions([]);
             }
         } catch (e) {
             console.error("올바르지 않은 JSON 데이터", e);
             setSessions([]);
-            localStorage.removeItem("workout.sessions.v1");
+            localStorage.removeItem(sessionKey);
         }
     }, [showHistory, historyVersion]);
      
@@ -39,6 +43,12 @@ export function WorkoutHistoryClient({showHistory, historyVersion, displayUnit}:
         });
         return groupedSessions;
     }
+
+    function deleteSession(sessionId: string){
+            const filteredHistory = sessions.filter((s: Session) => s.id !== sessionId);
+            localStorage.setItem(sessionKey, JSON.stringify(filteredHistory));
+            setSessions(filteredHistory);
+    }
     
     if (!showHistory) return null;
     const grouped = groupByDay(sessions);
@@ -52,17 +62,31 @@ export function WorkoutHistoryClient({showHistory, historyVersion, displayUnit}:
                         <AccordionItem value={`item-${i}`}>
                             <AccordionTrigger><div>{dayKey}</div></AccordionTrigger>
                             <AccordionContent>
-                                {daySessions.map((session, j) => {
+                                {daySessions.map((session) => {
                                     return(
                                         <div key={session.id}>
-                                        <Collapsible key={session.id}>
-                                                <CollapsibleTrigger><div className="ps-4">{session.part}</div></CollapsibleTrigger>
+                                        <Collapsible>
+                                                <div className="ps-4 flex">
+                                                <CollapsibleTrigger>
+                                                    <div className="text-md font-bold">{session.part}</div>
+                                                </CollapsibleTrigger>
+                                                    <Button variant="outline" size="xs" className="ml-auto mr-4"
+                                                    onClick={e=>{
+                                                        e.stopPropagation();
+                                                        deleteSession(session.id)}
+                                                    }
+                                                    >
+                                                        <TrashIcon className="size-4" />
+                                                    </Button>
+                                                    </div>
                                                 <CollapsibleContent>
-                                                    {session.exercises.map((ex, k) => {
+                                                    {session.exercises.map((ex) => {
                                                         return(
                                                         <Collapsible key={ex.id}>
                                                             <CollapsibleTrigger>
-                                                                <div className="ps-8">{ex.name}</div>
+                                                                <div className="ps-8">
+                                                                    {ex.name}
+                                                                    </div>
                                                             </CollapsibleTrigger>
                                                             <CollapsibleContent>
                                                                     <div className="grid grid-cols-3 justify-items-center">
@@ -70,7 +94,7 @@ export function WorkoutHistoryClient({showHistory, historyVersion, displayUnit}:
                                                                         <div>무게</div>
                                                                         <div>횟수</div>
                                                                     </div>
-                                                                    {ex.sets.map((set, l) => {
+                                                                    {ex.sets.map((set) => {
                                                                         return(
                                                                             <div className="grid grid-cols-3 justify-items-center" key={set.setNo}>
                                                                                 <div>{set.setNo}</div>
@@ -95,4 +119,6 @@ export function WorkoutHistoryClient({showHistory, historyVersion, displayUnit}:
             })}
         </main>
     );
+
 }
+
