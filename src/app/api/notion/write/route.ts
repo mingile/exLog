@@ -109,11 +109,14 @@ export async function POST(req: Request){
           },
           body: JSON.stringify(notion_payload),
         })
-    
+
+        console.log("Notion payload:", notion_payload);
+        console.log("Creating row:", exercise.name, "set", set.setNo);    
     
       if (!response.ok) {
         const errorData = await response.json();
         console.error("Notion API error:", {
+            payload: notion_payload,
             status: response.status,
             statusText: response.statusText,
             error: errorData,
@@ -131,11 +134,5 @@ export async function POST(req: Request){
     console.error('Notion write failed', e)
     return NextResponse.json({error:'Notion write failed'}, {status:500});
   }
-
-
-
-
-
-
 
 }
