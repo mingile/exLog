@@ -66,7 +66,7 @@ export function HeaderControls({ onSavedHistory, selectedPart, clearDoneStatus, 
         setSaving(true);
         const savedAt = new Date().toISOString();
         const dayKey = new Date().toLocaleDateString('ko-KR', { year: 'numeric', month: '2-digit', day: '2-digit' }).slice(2, 12 );
-        const savedExercises: SavedExercise[] = exercises
+        const notionExercises: SavedExercise[] = exercises
             .map((ex) => {
                 const doneSets = ex.sets
                     .map((set, i) => {
@@ -107,14 +107,60 @@ export function HeaderControls({ onSavedHistory, selectedPart, clearDoneStatus, 
                     }),
                 };
             });
-        const payload = {
+        const localExercises: SavedExercise[] = exercises
+            .map((ex) => {
+                const doneSets = ex.sets
+                    .map((set, i) => {
+                        console.log(`세트 ${i}:`, {
+                            weight: set.weight,
+                            reps: set.reps,
+                            done: set.done,
+                            synced: set.synced,
+                            memo: set.memo
+                        });
+                        return {
+                            set,
+                            setNo: i + 1,
+                        };
+                    })
+                    .filter(({ set }) => {
+                        const pass = set.done;
+                        return pass;
+                    });
+                    return {
+                    ...ex,
+                    sets: doneSets,
+                };
+            })
+            .filter((ex) => ex.sets.length > 0)
+            .map((ex) => {
+                return {
+                    id: ex.id,
+                    name: ex.name,
+                    sets: ex.sets.map(({ set, setNo }) => {
+                        return {
+                            setNo,
+                            weight: set.weight,
+                            reps: set.reps,
+                            memo: set.memo,
+                        };
+                    }),
+                };
+            });
+        const notionPayload = {
             id: `${dayKey}_${selectedPart}`,
             saved_at: savedAt,
             part: selectedPart,            
-            exercises: savedExercises,
+            exercises: notionExercises,
+        };
+        const localPayload = {
+            id: `${dayKey}_${selectedPart}`,
+            saved_at: savedAt,
+            part: selectedPart,            
+            exercises: localExercises,
         };
         try{
-            if (savedExercises.length > 0) {
+            if (localExercises.length > 0) {
                 console.log('5. savedExercises.length > 0');
                 const sessionKey = "workout.sessions.v1";
                 const session = localStorage.getItem(sessionKey);
@@ -130,20 +176,21 @@ export function HeaderControls({ onSavedHistory, selectedPart, clearDoneStatus, 
                     }
                 } catch (e) {
                     console.error("올바르지 않은 JSON 데이터", e);
-                    // 깨진 세션을 비워두지 않고 새로운 세션을 저장
-                    localStorage.setItem(sessionKey, JSON.stringify([payload]));
+                    localStorage.setItem(sessionKey, JSON.stringify([localPayload]));
                     return;
                 }
-                // 기존 세션에서 현재 세션을 제외한 나머지 세션을 필터링
-                // payload가 기존에 존재하던 세션일 경우 중복방지를 위해 필터링
-                const filtered = sessionData.filter((s => s.id !== payload.id));
-                // 수정된 기존 세션을 맨 앞에 추가
-                const nextSessions = [payload, ...filtered];
+                
+                const filtered = sessionData.filter((s => s.id !== localPayload.id));
+                // 병합이 아닌 전체 스냅샷 교체 방식
+                // 왜? 이게 더 구현하기 쉽기 떄문
+                // 나중에 문제가 생기면 mergedSession 방식도 고려해보자.
+                const nextSessions = [localPayload, ...filtered];
 
-                if(notionReady){
+
+                if(notionReady&&notionExercises.length > 0){
                 const response = await fetch("/api/notion/write", {
                     method: "POST",
-                    body: JSON.stringify(payload),
+                    body: JSON.stringify(notionPayload),
                 });            
                 
                 if(response.ok){
