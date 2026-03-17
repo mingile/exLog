@@ -9,6 +9,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Exercises } from "./types";
 import { useRouter } from "next/navigation";
+import { useRef } from "react";
 
 export function WorkoutSessionClient({
   exercises,
@@ -21,6 +22,7 @@ export function WorkoutSessionClient({
   setShowHistory,
   showHistory,
   changeMemo,
+  changeName,
 }: {
   exercises: Exercises;
   addSet: (exIdx: number) => void;
@@ -32,6 +34,7 @@ export function WorkoutSessionClient({
   setShowHistory: (show: boolean) => void;
   showHistory: boolean;
   changeMemo: (exIdx: number, setIdx: number, value: string) => void;
+  changeName: (exIdx: number, value: string) => void;
 }) {
   const router = useRouter();
 
@@ -39,6 +42,8 @@ export function WorkoutSessionClient({
     return Math.round(kg * 2.205);
   }
 
+  const originalNames = useRef<Record<number, string>>({});
+  
   return (
     <main className="p-2 space-y-2">
       {exercises.map((ex, i) => {
@@ -47,7 +52,24 @@ export function WorkoutSessionClient({
             <AccordionItem value={`item-${i}`} className="rounded-lg border px-2">
               <AccordionTrigger className="py-3">
                 <div className="flex w-full items-center justify-between pr-2">
-                  <div className="text-base font-medium">{ex.name}</div>
+                  <input
+                    type="text"
+                    value={ex.name}
+                    onFocus={() => originalNames.current[i] = ex.name}
+                    // react의 controlled input vs uncontrolled input
+                    onChange={(e) => {
+                      changeName(i, e.currentTarget.value)
+                    }
+                    }
+                    onBlur={(e) => {
+                      if(e.currentTarget.value.trim() === "" || e.currentTarget.value === originalNames.current[i]){
+                        changeName(i, originalNames.current[i]);
+                        console.log(e.currentTarget.value);
+                      }
+                    }} 
+                    
+                    className="text-base font-medium"
+                  />
                   <PlusButton exerciseIndex={i} addSet={addSet} />
                 </div>
               </AccordionTrigger>
@@ -101,6 +123,7 @@ export function WorkoutSessionClient({
       </div>
     </main>
   );
+
 
   function PlusButton({
     exerciseIndex,

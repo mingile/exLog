@@ -367,6 +367,18 @@ export function RootClient() {
         localStorage.setItem("workout.settings.v1", JSON.stringify({ displayUnit }));
     }, [selectedPart, exercises, hydrated, displayUnit]);
 
+    function changeName(exIdx: number, value: string){
+        setExercises((prev) =>
+            prev.map((ex,i) => {
+                if(i !== exIdx) return ex;
+                return{
+                    ...ex,
+                    name: value
+                }
+            })
+        )
+    }
+
 
     function changeReps(exIdx: number, setIdx: number, delta: number) {
         setExercises((prev) =>
