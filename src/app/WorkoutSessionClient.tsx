@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Exercises } from "./types";
 import { useRouter } from "next/navigation";
 import { useRef } from "react";
+import { TrashIcon } from "lucide-react";
 
 export function WorkoutSessionClient({
   exercises,
@@ -23,6 +24,7 @@ export function WorkoutSessionClient({
   showHistory,
   changeMemo,
   changeName,
+  deleteSet,
 }: {
   exercises: Exercises;
   addSet: (exIdx: number) => void;
@@ -35,6 +37,7 @@ export function WorkoutSessionClient({
   showHistory: boolean;
   changeMemo: (exIdx: number, setIdx: number, value: string) => void;
   changeName: (exIdx: number, value: string) => void;
+  deleteSet: (exId: string, setIdx: number) => void;
 }) {
   const router = useRouter();
 
@@ -89,6 +92,8 @@ export function WorkoutSessionClient({
                       reps={set.reps}
                       memo={set.memo || ""}
                       done={set.done}
+                      exId={ex.id}
+                      deleteSet={deleteSet}
                       onWeightDelta={changeWeight}
                       onRepsDelta={changeReps}
                       onToggleDone={toggleDone}
@@ -148,6 +153,7 @@ export function WorkoutSessionClient({
 }
 
 function Row({
+  exId,
   exerciseIndex,
   setIndex,
   weightLabel,
@@ -158,7 +164,9 @@ function Row({
   onToggleDone,
   memo,
   changeMemo,
+  deleteSet,
 }: {
+  exId: string;
   exerciseIndex: number;
   setIndex: number;
   weightLabel: string;
@@ -169,11 +177,20 @@ function Row({
   onToggleDone: (exIdx: number, setIdx: number) => void;
   memo: string;
   changeMemo: (exIdx: number, setIdx: number, value: string) => void;
+  deleteSet: (exId: string, setIdx: number) => void;
 }) {
   return (
     <div className="rounded-xl border bg-card p-3 space-y-3">
       <div className="flex items-center justify-between">
-        <div className="text-sm font-semibold">세트 {setIndex + 1}</div>
+        <div className="text-sm font-semibold">세트 {setIndex + 1}
+        <Button variant="outline" className="ml-3 size-8" 
+        onClick={e => {
+          e.stopPropagation();
+          deleteSet(exId, setIndex);
+        }}>
+          <TrashIcon className="h-5 w-5" />
+        </Button>
+        </div>
         <label className="flex items-center gap-2 text-sm text-muted-foreground">
           완료
           <input

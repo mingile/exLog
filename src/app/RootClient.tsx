@@ -367,6 +367,19 @@ export function RootClient() {
         localStorage.setItem("workout.settings.v1", JSON.stringify({ displayUnit }));
     }, [selectedPart, exercises, hydrated, displayUnit]);
 
+    function deleteSet(exId: string, setIdx: number){
+        setExercises(prev => {
+            return prev.map(ex => {
+                if(ex.id !== exId) return ex;
+                if(ex.sets.length === 1) return ex;
+                return {
+                    ...ex,
+                    sets: ex.sets.filter((set, idx) => idx !== setIdx)
+                }
+            });
+        });
+    }
+
     function changeName(exIdx: number, value: string){
         setExercises((prev) =>
             prev.map((ex,i) => {
@@ -495,7 +508,7 @@ export function RootClient() {
     return (
         <div className="flex flex-col h-100vh min-h-screen">
             <HeaderControls onSavedHistory={onSavedHistory} date={date} selectedPart={selectedPart} onSelectPart={onSelectPart} clearDoneStatus={clearDoneStatus} exercises={exercises} setExercises={setExercises} saving={saving} setSaving={setSaving} notionReady={notionReady} setNotionReady={setNotionReady} />
-            <WorkoutSessionClient exercises={exercises} changeReps={changeReps} changeWeight={changeWeight} toggleDone={toggleDone} addSet={addSet} displayUnit={displayUnit} setDisplayUnit={setDisplayUnit} setShowHistory={setShowHistory} showHistory={showHistory} changeMemo={changeMemo} changeName={changeName} />
+            <WorkoutSessionClient exercises={exercises} changeReps={changeReps} changeWeight={changeWeight} toggleDone={toggleDone} addSet={addSet} displayUnit={displayUnit} setDisplayUnit={setDisplayUnit} setShowHistory={setShowHistory} showHistory={showHistory} changeMemo={changeMemo} changeName={changeName} deleteSet={deleteSet} />
             <div className="overflow-y-auto flex-grow pb-16">
             <WorkoutHistoryClient showHistory={showHistory} historyVersion={historyVersion} displayUnit={displayUnit}/>
             </div>
