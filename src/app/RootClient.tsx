@@ -367,6 +367,72 @@ export function RootClient() {
         localStorage.setItem("workout.settings.v1", JSON.stringify({ displayUnit }));
     }, [selectedPart, exercises, hydrated, displayUnit]);
 
+    function ruleDecision(equipment: string): { unit: "kg" | "lb"; step: number; stepUnit: "kg" | "lb" } {
+        let unit = 'kg';
+        let step = 0;
+        let stepUnit = 'kg';
+        switch(equipment){
+            case 'cable-machine':
+                unit = 'lb';
+                step = 10;
+                stepUnit = 'lb';
+                break;
+            case 'plate-machine':
+                unit = 'kg';
+                step = 2.5;
+                stepUnit = 'kg';
+                break;
+            case 'barbell':
+                unit = 'kg';
+                step = 2.5;
+                stepUnit = 'kg';
+                break;
+            case 'dumbbell':
+                unit = 'kg';
+                step = 1;
+                stepUnit = 'kg';
+                break;
+            case 'smith-machine':
+                unit = 'kg';
+                step = 2.5;
+                stepUnit = 'kg';
+                break;
+            default:
+                unit = 'kg';
+                step = 5;
+                stepUnit = 'kg';
+                break;
+        }
+        return { unit: unit as "kg" | "lb", step, stepUnit: stepUnit as "kg" | "lb" };
+    }
+
+    function nextWeight(weight: number, equipment: string, direction: "increase"|"decrease") {
+        const {unit, step, stepUnit} = ruleDecision(equipment);
+        let delta = 0;
+        if (stepUnit === 'kg') {
+            delta = direction==='increase' ? step : -step;
+        }else{
+            delta = direction==='increase' ? step / 2.205 : -(step / 2.205);
+        }
+        if (weight + delta < 0) return 0;
+        return weight + delta
+    }
+
+    function displayWeightUnit(weight: number, equipment: string, displayUnit: "kg" | "lb") {
+        let displayWeight = weight;
+        let unit: "kg" | "lb" = displayUnit;
+
+        if (displayUnit === 'lb') {
+            displayWeight = Math.round((weight * 2.205) / 10) * 10;
+            unit = 'lb';
+        } else {
+            displayWeight = Math.round(weight * 10) / 10;
+            unit = 'kg';
+        }
+
+        return { displayWeight, unit };
+    }
+
     function deleteSet(exId: string, setIdx: number){
         setExercises(prev => {
             return prev.map(ex => {
@@ -408,7 +474,7 @@ export function RootClient() {
         );
     }
 
-    function changeWeight(exIdx: number, setIdx: number, delta: number) {
+    function changeWeight(exIdx: number, setIdx: number, nextWeight: number) {
         setExercises((prev) =>
             prev.map((ex, i) => {
                 if (i !== exIdx) return ex;
@@ -416,7 +482,7 @@ export function RootClient() {
                     ...ex,
                     sets: ex.sets.map((s, j) => {
                         if (j !== setIdx) return s;
-                        return { ...s, weight: s.weight + delta, synced: false };
+                        return { ...s, weight: nextWeight, synced: false };
                     }),
                 };
             }),

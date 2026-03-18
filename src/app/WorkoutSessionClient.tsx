@@ -14,36 +14,39 @@ import { TrashIcon } from "lucide-react";
 
 export function WorkoutSessionClient({
   exercises,
+  displayWeightUnit,
+  nextWeight,
   addSet,
   changeWeight,
   changeReps,
   toggleDone,
-  displayUnit,
-  setDisplayUnit,
   setShowHistory,
   showHistory,
   changeMemo,
   changeName,
   deleteSet,
+  setDisplayUnit,
+  displayUnit,
+  changeEquipment,
 }: {
   exercises: Exercises;
+  displayWeightUnit: (weight: number, equipment: string, displayUnit: "kg" | "lb") => { displayWeight: number, unit: "kg" | "lb" };
+  nextWeight: (weight: number, equipment: string, direction: "increase"|"decrease") => number;
   addSet: (exIdx: number) => void;
-  changeWeight: (exIdx: number, setIdx: number, delta: number) => void;
+  changeWeight: (exIdx: number, setIdx: number, nextWeight: number) => void;
   changeReps: (exIdx: number, setIdx: number, delta: number) => void;
   toggleDone: (exIdx: number, setIdx: number) => void;
-  displayUnit: "kg" | "lb";
-  setDisplayUnit: (unit: "kg" | "lb") => void;
   setShowHistory: (show: boolean) => void;
   showHistory: boolean;
   changeMemo: (exIdx: number, setIdx: number, value: string) => void;
   changeName: (exIdx: number, value: string) => void;
   deleteSet: (exId: string, setIdx: number) => void;
+  setDisplayUnit: (unit: "kg" | "lb") => void;
+  displayUnit: "kg" | "lb";
+  changeEquipment: (exIdx: number, setIdx: number, equipment: string) => void;
 }) {
   const router = useRouter();
 
-  function kgToLb(kg: number) {
-    return Math.round(kg * 2.205);
-  }
 
   const originalNames = useRef<Record<number, string>>({});
   
@@ -109,9 +112,7 @@ export function WorkoutSessionClient({
       })}
 
       <div className="grid grid-cols-2 gap-2 pt-2">
-        <Button onClick={() => setDisplayUnit(displayUnit === "kg" ? "lb" : "kg")}>
-          단위변환
-        </Button>
+      <Button onClick={() => setDisplayUnit(displayUnit === 'kg' ? 'lb' : 'kg')}>단위변환</Button>
         <Button onClick={() => setShowHistory(!showHistory)}>
           {showHistory ? "기록 닫기" : "지난기록"}
         </Button>
@@ -217,7 +218,7 @@ function Row({
       <div className="grid grid-cols-2 gap-2">
         <div className="rounded-lg bg-muted/50 p-3 text-center">
           <div className="text-xs text-muted-foreground">무게</div>
-          <div className="mt-1 text-lg font-semibold">{weightLabel}</div>
+          <div className="mt-1 text-lg font-semibold">{displayWeight}{unit}</div>
         </div>
         <div className="rounded-lg bg-muted/50 p-3 text-center">
           <div className="text-xs text-muted-foreground">횟수</div>
@@ -228,8 +229,8 @@ function Row({
       <div className="grid grid-cols-2 gap-2">
         <ControlBlock
           label="무게 조절"
-          onMinus={() => onWeightDelta(exerciseIndex, setIndex, -5)}
-          onPlus={() => onWeightDelta(exerciseIndex, setIndex, +5)}
+          onMinus={() => onWeightChange(exerciseIndex, setIndex, nextWeight(weight, equipment, "decrease"))}
+          onPlus={() => onWeightChange(exerciseIndex, setIndex, nextWeight(weight, equipment, "increase"))}
         />
         <ControlBlock
           label="횟수 조절"
