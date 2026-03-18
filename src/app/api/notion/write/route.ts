@@ -45,6 +45,14 @@ export async function POST(req: Request){
 
     let created_count = 0;
 
+    const EQUIPMENT_TO_NOTION: Record<string, string> = {
+      "cable-machine": "케이블",
+      "smith-machine": "스미스",
+      "plate-machine": "원판",
+      barbell: "바벨",
+      dumbbell: "덤벨",
+    };
+
     for(const exercise of exercises){
       for(const set of exercise.sets){
         const notion_payload = {
@@ -97,9 +105,11 @@ export async function POST(req: Request){
                   }
                 }
               ]
-            }
+            },
+            "Equipment": EQUIPMENT_TO_NOTION[set.equipment]
+            ? { "select": { "name": EQUIPMENT_TO_NOTION[set.equipment] } }
+            : undefined}
           }
-        }
         const response = await fetch('https://api.notion.com/v1/pages', {
           method: "POST",
           headers: {

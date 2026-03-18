@@ -84,20 +84,21 @@ export function WorkoutSessionClient({
                       key={`${ex.id}-set-${j}`}
                       exerciseIndex={i}
                       setIndex={j}
-                      weightLabel={
-                        displayUnit === "kg"
-                          ? `${set.weight}kg`
-                          : `${kgToLb(set.weight)}lb`
-                      }
+                      weight={set.weight}
+                      equipment={set.equipment}
                       reps={set.reps}
                       memo={set.memo || ""}
                       done={set.done}
                       exId={ex.id}
                       deleteSet={deleteSet}
-                      onWeightDelta={changeWeight}
+                      onWeightChange={changeWeight}
                       onRepsDelta={changeReps}
                       onToggleDone={toggleDone}
                       changeMemo={changeMemo}
+                      displayWeightUnit={displayWeightUnit}
+                      nextWeight={nextWeight}
+                      displayUnit={displayUnit}
+                      changeEquipment={changeEquipment}
                     />
                   ))}
                 </div>
@@ -156,29 +157,40 @@ function Row({
   exId,
   exerciseIndex,
   setIndex,
-  weightLabel,
+  weight,
+  equipment,
   reps,
   done,
-  onWeightDelta,
+  onWeightChange,
   onRepsDelta,
   onToggleDone,
   memo,
   changeMemo,
   deleteSet,
+  displayWeightUnit,
+  nextWeight,
+  displayUnit,
+  changeEquipment,
 }: {
   exId: string;
   exerciseIndex: number;
   setIndex: number;
-  weightLabel: string;
+  weight: number;
+  equipment: string;
   reps: number;
   done: boolean;
-  onWeightDelta: (exIdx: number, setIdx: number, delta: number) => void;
+  onWeightChange: (exIdx: number, setIdx: number, nextWeight: number) => void;
   onRepsDelta: (exIdx: number, setIdx: number, delta: number) => void;
   onToggleDone: (exIdx: number, setIdx: number) => void;
   memo: string;
   changeMemo: (exIdx: number, setIdx: number, value: string) => void;
   deleteSet: (exId: string, setIdx: number) => void;
+  displayWeightUnit: (weight: number, equipment: string, displayUnit: "kg" | "lb") => { displayWeight: number, unit: "kg" | "lb" };
+  nextWeight: (weight: number, equipment: string, direction: "increase"|"decrease") => number;
+  displayUnit: "kg" | "lb";
+  changeEquipment: (exIdx: number, setIdx: number, equipment: string) => void;
 }) {
+  const { displayWeight, unit } = displayWeightUnit(weight, equipment, displayUnit);
   return (
     <div className="rounded-xl border bg-card p-3 space-y-3">
       <div className="flex items-center justify-between">
@@ -226,6 +238,20 @@ function Row({
         />
       </div>
 
+      <div className="space-y-1">
+      <div className="text-xs text-muted-foreground">기구</div>
+        <select
+          className="w-full rounded-md border px-3 py-2 text-sm outline-none focus:border-blue-400"
+          value={equipment}
+          onChange={(e) => changeEquipment(exerciseIndex, setIndex, e.target.value)}
+        >
+          <option value="cable-machine">케이블 머신</option>
+          <option value="smith-machine">스미스 머신</option>
+          <option value="plate-machine">원판 머신</option>
+          <option value="barbell">바벨</option>
+          <option value="dumbbell">덤벨</option>
+        </select>
+      </div>
       <div className="space-y-1">
         <div className="text-xs text-muted-foreground">메모</div>
         <input

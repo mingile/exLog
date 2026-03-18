@@ -103,6 +103,7 @@ export function HeaderControls({ onSavedHistory, selectedPart, clearDoneStatus, 
                             weight: set.weight,
                             reps: set.reps,
                             memo: set.memo,
+                            equipment: set.equipment,
                         };
                     }),
                 };
@@ -143,6 +144,7 @@ export function HeaderControls({ onSavedHistory, selectedPart, clearDoneStatus, 
                             weight: set.weight,
                             reps: set.reps,
                             memo: set.memo,
+                            equipment: set.equipment,
                         };
                     }),
                 };
