@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 
 const sessionKey = `workout.sessions.v1`;
 
-export function WorkoutHistoryClient({showHistory, historyVersion, displayUnit}: {showHistory: boolean, historyVersion: number, displayUnit: "kg" | "lb"}) {
+export function WorkoutHistoryClient({showHistory, historyVersion}: {showHistory: boolean, historyVersion: number}) {
     const [sessions, setSessions] = useState<Session[]>([]);
     
     useEffect(()=>{
@@ -98,7 +98,7 @@ export function WorkoutHistoryClient({showHistory, historyVersion, displayUnit}:
                                                                         return(
                                                                             <div className="grid grid-cols-3 justify-items-center" key={set.setNo}>
                                                                                 <div>{set.setNo}</div>
-                                                                                <div>{displayUnit === "kg" ? set.weight+"kg" : Math.round(set.weight * 2.205).toString()+"lb"}</div>
+                                                                                <div>{set.weight+"kg"}</div>
                                                                                 <div>{set.reps}</div>
                                                                             </div>
                                                                         )

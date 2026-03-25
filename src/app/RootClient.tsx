@@ -11,138 +11,139 @@ const exerciseTemplate: Record<Part, Exercises> = {
         {
             id: "back-1",
             name: "Pull - Up",
-            sets: [{ weight: 0, reps: 5, done: false, synced: false, equipment: "cable-machine", memo: "" }],
+            sets: [{ weight: 0, reps: 5, done: false, synced: false, equipment: "cable-machine", memo: "", unit: "lb"}],
         },
         {
             id: "back-2",
             name: "Latpulldown",
-            sets: [{ weight: 55, reps: 12, done: false, synced: false, equipment: "cable-machine", memo: "" }],
+            sets: [{ weight: 55, reps: 12, done: false, synced: false, equipment: "cable-machine", memo: "", unit: "lb" }],
         },
         {
             id: "back-3",
             name: "Lateral-Row",
-            sets: [{ weight: 80, reps: 12, done: false, synced: false, equipment: "plate-machine", memo: "" }],
+            sets: [{ weight: 80, reps: 12, done: false, synced: false, equipment: "plate-machine", memo: "", unit: "kg" }],
         },
         {
             id: "back-4",
             name: "Barbell-Row",
-            sets: [{ weight: 60, reps: 12, done: false, synced: false, equipment: "barbell", memo: "" }],
+            sets: [{ weight: 60, reps: 12, done: false, synced: false, equipment: "barbell", memo: "", unit: "kg" }],
         },
         {
             id: "back-5",
             name: "Face-Pull",
-            sets: [{ weight: 40, reps: 12, done: false, synced: false, equipment: "cable-machine", memo: "" }]
+            sets: [{ weight: 40, reps: 12, done: false, synced: false, equipment: "cable-machine", memo: "", unit:"lb" }]
         },
         {
             id: "back-6",
             name: "Seated-Cable-Row",
-            sets: [{ weight: 30, reps: 12, done: false, synced: false, equipment: "cable-machine", memo: "" }],
+            sets: [{ weight: 30, reps: 12, done: false, synced: false, equipment: "cable-machine", memo: "", unit: "lb" }],
         },
         {
             id: "back-7",
             name: "Deadlift",
-            sets: [{ weight: 80, reps: 5, done: false, synced: false, equipment: "barbell", memo: "" }]
+            sets: [{ weight: 80, reps: 5, done: false, synced: false, equipment: "barbell", memo: "", unit: "kg" }]
         }
     ],
     chest: [
         {
             id: "chest-1",
             name: "Chest-Press",
-            sets: [{ weight: 63, reps: 12, done: false, synced: false, equipment: "cable-machine", memo: "" }],
+            sets: [{ weight: 63, reps: 12, done: false, synced: false, equipment: "cable-machine", memo: "", unit: "lb" }],
         },
         {
             id: "chest-2",
             name: "Incline-Bench-Press",
-            sets: [{ weight: 15, reps: 12, done: false, synced: false, equipment: "plate-machine", memo: "" }],
+            sets: [{ weight: 15, reps: 12, done: false, synced: false, equipment: "plate-machine", memo: "", unit: "kg" }],
         },
         {
             id: "chest-3",
             name: "Cable-Cross",
-            sets: [{ weight: 27, reps: 12, done: false, synced: false, equipment: "cable-machine", memo: "" }],
+            sets: [{ weight: 27, reps: 12, done: false, synced: false, equipment: "cable-machine", memo: "", unit: "lb" }],
         },
         {
             id: "chest-4",
             name: "Pec-Deck-Fly",
-            sets: [{ weight: 27, reps: 12, done: false, synced: false, equipment: "cable-machine", memo: "" }],
+            sets: [{ weight: 27, reps: 12, done: false, synced: false, equipment: "cable-machine", memo: "", unit: "lb" }],
         },
         {
             id: "chest-5",
             name: "Dumbbell-Pullover",
-            sets: [{ weight: 18, reps: 12, done: false, synced: false, equipment: "dumbbell", memo: ""}],
+            sets: [{ weight: 18, reps: 12, done: false, synced: false, equipment: "dumbbell", memo: "", unit: "kg" }],
         },
     ],
     legs: [
         {
             id: "legs-1",
             name: "Leg-Press",
-            sets: [{ weight: 112, reps: 12, done: false, synced: false, equipment: "plate-machine", memo: "" }],
+            sets: [{ weight: 112, reps: 12, done: false, synced: false, equipment: "plate-machine", memo: "", unit: "kg" }],
         },
         {
             id: "legs-2",
             name: "Leg-Curl",
-            sets: [{ weight: 30, reps: 12, done: false, synced: false, equipment: "cable-machine", memo: "" }],
+            sets: [{ weight: 30, reps: 12, done: false, synced: false, equipment: "cable-machine", memo: "", unit: "lb" }],
         },
         {
             id: "legs-3",
             name: "Calf-Rise",
-            sets: [{ weight: 31, reps: 12, done: false, synced: false, equipment: "cable-machine", memo: "" }],
+            sets: [{ weight: 31, reps: 12, done: false, synced: false, equipment: "cable-machine", memo: "", unit: "lb" }],
         },
         {
             id: "legs-4",
             name: "Hip-Thrust",
-            sets: [{ weight: 40, reps: 12, done: false, synced: false, equipment: "plate-machine", memo: "" }],
+            sets: [{ weight: 40, reps: 12, done: false, synced: false, equipment: "plate-machine", memo: "", unit: "kg" }],
         },
         {
             id: "legs-5",
             name: "Hip-Abduction",
-            sets: [{ weight: 40, reps: 12, done: false, synced: false, equipment: "cable-machine", memo: "" }],
+            sets: [{ weight: 40, reps: 12, done: false, synced: false, equipment: "cable-machine", memo: "", unit: "lb" }],
         },
         {
             id: "legs-6",
             name: "Hip-Adduction",
-            sets: [{ weight: 40, reps: 12, done: false, synced: false, equipment: "cable-machine", memo: "" }],
+            sets: [{ weight: 40, reps: 12, done: false, synced: false, equipment: "cable-machine", memo: "", unit: "lb" }],
         },
         {
             id: "legs-7",
             name: "Bulgarian-Split-Squat",
-            sets: [{ weight: 8, reps: 12, done: false, synced: false, equipment: "dumbbell", memo: "" }],
+            sets: [{ weight: 8, reps: 12, done: false, synced: false, equipment: "dumbbell", memo: "", unit: "kg" }],
         },
         {
             id: "legs-8",
             name: "Glute-Kickback",
-            sets: [{ weight: 20, reps: 12, done: false, synced: false, equipment: "cable-machine", memo: "" }],
+            sets: [{ weight: 20, reps: 12, done: false, synced: false, equipment: "cable-machine", memo: "", unit: "lb"}],
         }
     ],
     shoulders: [
         {
             id: "shoulders-1",
             name: "Overhead-Press",
-            sets: [{ weight: 40, reps: 12, done: false, synced: false, equipment: "smith-machine", memo: "" }],
+            sets: [{ weight: 40, reps: 12, done: false, synced: false, equipment: "smith-machine", memo: "", unit: "kg" }],
         },
         {
             id: "shoulders-2",
             name: "Shoulder-Press",
-            sets: [{ weight: 50, reps: 12, done: false, synced: false, equipment: "cable-machine", memo: "" }],
+            sets: [{ weight: 50, reps: 12, done: false, synced: false, equipment: "cable-machine", memo: "", unit: "lb" }],
         },
         {
             id: "shoulders-3",
             name: "Lateral-Raise",
-            sets: [{ weight: 60, reps: 12, done: false, synced: false, equipment: "cable-machine", memo: "" }],
+            sets: [{ weight: 60, reps: 12, done: false, synced: false, equipment: "cable-machine", memo: "", unit: "lb" }],
         },
         {
             id: "shoulders-4",
             name: "Upright-Row",
-            sets: [{ weight: 40, reps: 12, done: false, synced: false, equipment: "barbell", memo: "" }],
+            sets: [{ weight: 40, reps: 12, done: false, synced: false, equipment: "barbell", memo: "", unit: "kg" }],
         }
     ],
 };
+
+const KG_TO_LB = 2.205;
 
 export function RootClient() {
 
     const [exercises, setExercises] = useState<Exercises>(exerciseTemplate.back);
     const [hydrated, setHydrated] = useState(false);
     const [selectedPart, setSelectedPart] = useState<Part>("back");
-    const [displayUnit, setDisplayUnit] = useState<"kg" | "lb">("kg");
     const [showHistory, setShowHistory] = useState<boolean>(false);
     const [historyVersion, setHistoryVersion] = useState<number>(0);
     const [saving, setSaving] = useState<boolean>(false);
@@ -215,6 +216,26 @@ export function RootClient() {
                 return memo;
             }
 
+            function getEquipment(properties: any) {
+                if (!properties) return null;
+                const name = properties.Equipment?.select?.name;
+                if (typeof name !== "string" || name.trim() === "") return null;
+                switch (name) {
+                    case "케이블":
+                        return "cable-machine";
+                    case "스미스":
+                        return "smith-machine";
+                    case "원판":
+                        return "plate-machine";
+                    case "바벨":
+                        return "barbell";
+                    case "덤벨":
+                        return "dumbbell";
+                    default:
+                        return null;
+                }
+            }
+
             const rawRow = data.results.map((result: any) => {
               return {
                 title: getTitle(result.properties),
@@ -225,6 +246,7 @@ export function RootClient() {
                 part: getPart(result.properties),
                 exercise: getExercise(result.properties),
                 memo: getMemo(result.properties),
+                equipment: getEquipment(result.properties),
               };
             });
 
@@ -270,6 +292,7 @@ export function RootClient() {
                             weight: latest.weight ?? set.weight,
                             reps: latest.reps ?? set.reps,
                             memo: latest.memo ?? set.memo,
+                            equipment: latest.equipment ?? set.equipment,
                         };
                     });
 
@@ -309,10 +332,16 @@ export function RootClient() {
         }
         function isSetItem(
             v: unknown,
-        ): v is { weight: number; reps: number; done: boolean, synced: boolean, equipment: string, memo: string } {
+        ): v is { weight: number; reps: number; done: boolean, synced: boolean, equipment: string, memo: string, unit?: "kg" | "lb" } {
             if (!isObject(v)) return false;
             return (
-                isNumber(v.weight) && isNumber(v.reps) && typeof v.done === "boolean" && typeof v.synced === "boolean" && typeof v.equipment === "string" && typeof v.memo === "string"
+                isNumber(v.weight) &&
+                isNumber(v.reps) &&
+                typeof v.done === "boolean" &&
+                typeof v.synced === "boolean" &&
+                typeof v.equipment === "string" &&
+                typeof v.memo === "string" &&
+                (v.unit === undefined || v.unit === "kg" || v.unit === "lb")
             );
         }
         function isExercise(
@@ -328,7 +357,7 @@ export function RootClient() {
         function isExerciseArray(v: unknown): v is {
             id: string;
             name: string;
-            sets: { weight: number; reps: number; done: boolean, synced: boolean, equipment: string, memo: string }[];
+            sets: { weight: number; reps: number; done: boolean, synced: boolean, equipment: string, memo: string, unit?: "kg" | "lb" }[];
         }[] {
             if (!Array.isArray(v)) return false;
             if (v.length === 0) return false;
@@ -347,7 +376,14 @@ export function RootClient() {
             if (storedEx) {
                 const parsedEx = JSON.parse(storedEx);
                 if (isSession(parsedEx)) {
-                    setExercises(parsedEx.exercises);
+                    const migratedExercises = parsedEx.exercises.map((ex) => ({
+                        ...ex,
+                        sets: ex.sets.map((set) => ({
+                            ...set,
+                            unit: set.unit ?? (set.equipment === "cable-machine" ? "lb" : "kg"),
+                        })),
+                    }));
+                    setExercises(migratedExercises);
                     setSelectedPart(parsedEx.selectedPart);
                 } else {
                     localStorage.removeItem("workout.session.v1");
@@ -364,8 +400,7 @@ export function RootClient() {
     useEffect(() => {
         if (!hydrated) return;
         localStorage.setItem("workout.session.v1", JSON.stringify({ selectedPart, exercises }));
-        localStorage.setItem("workout.settings.v1", JSON.stringify({ displayUnit }));
-    }, [selectedPart, exercises, hydrated, displayUnit]);
+    }, [selectedPart, exercises, hydrated]);
 
     function ruleDecision(equipment: string): { unit: "kg" | "lb"; step: number; stepUnit: "kg" | "lb" } {
         let unit = 'kg';
@@ -411,26 +446,24 @@ export function RootClient() {
         let delta = 0;
         if (stepUnit === 'kg') {
             delta = direction==='increase' ? step : -step;
-        }else{
-            delta = direction==='increase' ? step / 2.205 : -(step / 2.205);
+        } else {
+            delta = direction === 'increase' ? step / KG_TO_LB : -(step / KG_TO_LB);
         }
         if (weight + delta < 0) return 0;
         return weight + delta
     }
 
-    function displayWeightUnit(weight: number, equipment: string, displayUnit: "kg" | "lb") {
+    function displayWeightUnit(weight: number, unit: "kg" | "lb"): { displayWeight: number, displayUnit: "kg" | "lb" } {
         let displayWeight = weight;
-        let unit: "kg" | "lb" = displayUnit;
+        let displayUnit: "kg" | "lb" = unit;
 
-        if (displayUnit === 'lb') {
-            displayWeight = Math.round((weight * 2.205) / 10) * 10;
-            unit = 'lb';
+        if (unit === "lb") {
+            displayWeight = Math.round(weight * KG_TO_LB);
         } else {
             displayWeight = Math.round(weight * 10) / 10;
-            unit = 'kg';
         }
 
-        return { displayWeight, unit };
+        return { displayWeight, displayUnit };
     }
 
     function deleteSet(exId: string, setIdx: number){
@@ -519,6 +552,21 @@ export function RootClient() {
         );
     }
 
+    function changeUnit(exIdx: number, setIdx: number, unit: "kg" | "lb") {
+        setExercises((prev) =>
+            prev.map((ex, i) => {
+                if (i !== exIdx) return ex;
+                return {
+                    ...ex,
+                    sets: ex.sets.map((s, j) => {
+                        if (j !== setIdx) return s;
+                        return { ...s, unit, synced: false };
+                    }),
+                };
+            }),
+        );
+    }
+
     function toggleDone(exIdx: number, setIdx: number) {
         setExercises((prev) =>
             prev.map((ex, i) => {
@@ -547,7 +595,8 @@ export function RootClient() {
                             done: false,
                             synced: false,
                             equipment: ex.sets[ex.sets.length - 1].equipment,
-                            memo: ""
+                            memo: "",
+                            unit: ex.sets[ex.sets.length - 1].unit
                         },
                     ],
                 };
@@ -590,9 +639,9 @@ export function RootClient() {
     return (
         <div className="flex flex-col h-100vh min-h-screen">
             <HeaderControls onSavedHistory={onSavedHistory} date={date} selectedPart={selectedPart} onSelectPart={onSelectPart} clearDoneStatus={clearDoneStatus} exercises={exercises} setExercises={setExercises} saving={saving} setSaving={setSaving} notionReady={notionReady} setNotionReady={setNotionReady} />
-            <WorkoutSessionClient exercises={exercises} changeReps={changeReps} changeWeight={changeWeight} toggleDone={toggleDone} addSet={addSet} setShowHistory={setShowHistory} showHistory={showHistory} changeMemo={changeMemo} changeName={changeName} deleteSet={deleteSet} displayWeightUnit={displayWeightUnit} nextWeight={nextWeight} displayUnit={displayUnit} setDisplayUnit={setDisplayUnit} changeEquipment={changeEquipment} />
+            <WorkoutSessionClient exercises={exercises} changeReps={changeReps} changeWeight={changeWeight} toggleDone={toggleDone} addSet={addSet} setShowHistory={setShowHistory} showHistory={showHistory} changeMemo={changeMemo} changeName={changeName} deleteSet={deleteSet} displayWeightUnit={displayWeightUnit} nextWeight={nextWeight} changeEquipment={changeEquipment} changeUnit={changeUnit} />
             <div className="overflow-y-auto f1lex-grow pb-16">
-            <WorkoutHistoryClient showHistory={showHistory} historyVersion={historyVersion} displayUnit={displayUnit}/>
+            <WorkoutHistoryClient showHistory={showHistory} historyVersion={historyVersion} />
             </div>
         </div>
     );

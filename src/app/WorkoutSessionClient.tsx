@@ -9,7 +9,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Exercises } from "./types";
 import { useRouter } from "next/navigation";
-import { useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { TrashIcon } from "lucide-react";
 
 export function WorkoutSessionClient({
@@ -25,12 +25,11 @@ export function WorkoutSessionClient({
   changeMemo,
   changeName,
   deleteSet,
-  setDisplayUnit,
-  displayUnit,
   changeEquipment,
+  changeUnit,
 }: {
   exercises: Exercises;
-  displayWeightUnit: (weight: number, equipment: string, displayUnit: "kg" | "lb") => { displayWeight: number, unit: "kg" | "lb" };
+  displayWeightUnit: (weight: number, unit: "kg" | "lb") => { displayWeight: number, displayUnit: "kg" | "lb" };
   nextWeight: (weight: number, equipment: string, direction: "increase"|"decrease") => number;
   addSet: (exIdx: number) => void;
   changeWeight: (exIdx: number, setIdx: number, nextWeight: number) => void;
@@ -41,9 +40,8 @@ export function WorkoutSessionClient({
   changeMemo: (exIdx: number, setIdx: number, value: string) => void;
   changeName: (exIdx: number, value: string) => void;
   deleteSet: (exId: string, setIdx: number) => void;
-  setDisplayUnit: (unit: "kg" | "lb") => void;
-  displayUnit: "kg" | "lb";
   changeEquipment: (exIdx: number, setIdx: number, equipment: string) => void;
+  changeUnit: (exIdx: number, setIdx: number, unit: "kg" | "lb") => void;
 }) {
   const router = useRouter();
 
@@ -100,8 +98,9 @@ export function WorkoutSessionClient({
                       changeMemo={changeMemo}
                       displayWeightUnit={displayWeightUnit}
                       nextWeight={nextWeight}
-                      displayUnit={displayUnit}
                       changeEquipment={changeEquipment}
+                      changeUnit={changeUnit}
+                      unit={set.unit}
                     />
                   ))}
                 </div>
@@ -111,8 +110,7 @@ export function WorkoutSessionClient({
         );
       })}
 
-      <div className="grid grid-cols-2 gap-2 pt-2">
-      <Button onClick={() => setDisplayUnit(displayUnit === 'kg' ? 'lb' : 'kg')}>단위변환</Button>
+      <div className="grid grid-cols-1 gap-2 pt-2">
         <Button onClick={() => setShowHistory(!showHistory)}>
           {showHistory ? "기록 닫기" : "지난기록"}
         </Button>
@@ -170,8 +168,9 @@ function Row({
   deleteSet,
   displayWeightUnit,
   nextWeight,
-  displayUnit,
   changeEquipment,
+  changeUnit,
+  unit,
 }: {
   exId: string;
   exerciseIndex: number;
@@ -186,12 +185,62 @@ function Row({
   memo: string;
   changeMemo: (exIdx: number, setIdx: number, value: string) => void;
   deleteSet: (exId: string, setIdx: number) => void;
-  displayWeightUnit: (weight: number, equipment: string, displayUnit: "kg" | "lb") => { displayWeight: number, unit: "kg" | "lb" };
+  displayWeightUnit: (weight: number, unit: "kg" | "lb") => { displayWeight: number, displayUnit: "kg" | "lb" };
   nextWeight: (weight: number, equipment: string, direction: "increase"|"decrease") => number;
-  displayUnit: "kg" | "lb";
   changeEquipment: (exIdx: number, setIdx: number, equipment: string) => void;
+  changeUnit: (exIdx: number, setIdx: number, unit: "kg" | "lb") => void;
+  unit: "kg" | "lb";
 }) {
-  const { displayWeight, unit } = displayWeightUnit(weight, equipment, displayUnit);
+  const { displayWeight, displayUnit } = displayWeightUnit(weight, unit);
+  const [isEditingWeight, setIsEditingWeight] = useState(false);
+  const [draftWeight, setDraftWeight] = useState<string>(String(displayWeight));
+
+  useEffect(() => {
+    if (isEditingWeight) return;
+    setDraftWeight(String(displayWeight));
+  }, [displayWeight, isEditingWeight]);
+
+  function beginWeightEdit() {
+    setDraftWeight(String(displayWeight));
+    setIsEditingWeight(true);
+  }
+
+  function convertInputToKg(value: string): number | null {
+    const trimmed = value.trim();
+    if (trimmed === "") return null;
+
+    const parsed = Number(trimmed);
+    if (!Number.isFinite(parsed)) return null;
+
+    if (unit === "kg") {
+      const normalizedKg = Math.round(parsed * 10) / 10;
+      if (normalizedKg < 0) return null;
+      return normalizedKg;
+    }
+
+    const normalizedLb = Math.round(parsed);
+    if (normalizedLb < 0) return null;
+    return Math.round((normalizedLb / KG_TO_LB) * 10) / 10;
+  }
+
+  function commitWeightEdit() {
+    const nextKg = convertInputToKg(draftWeight);
+
+    if (nextKg === null) {
+      setDraftWeight(String(displayWeight));
+      setIsEditingWeight(false);
+      return;
+    }
+
+    onWeightChange(exerciseIndex, setIndex, nextKg);
+    setIsEditingWeight(false);
+  }
+
+  function cancelWeightEdit() {
+    setDraftWeight(String(displayWeight));
+    setIsEditingWeight(false);
+  }
+
   return (
     <div className="rounded-xl border bg-card p-3 space-y-3">
       <div className="flex items-center justify-between">
@@ -218,7 +267,56 @@ function Row({
       <div className="grid grid-cols-2 gap-2">
         <div className="rounded-lg bg-muted/50 p-3 text-center">
           <div className="text-xs text-muted-foreground">무게</div>
-          <div className="mt-1 text-lg font-semibold">{displayWeight}{unit}</div>
+          {isEditingWeight ? (
+            <div className="mt-1 flex items-center justify-center gap-1">
+              <input
+                type="number"
+                inputMode="decimal"
+                step={displayUnit === "kg" ? "0.1" : "1"}
+                className="w-20 rounded-md border bg-background px-2 py-1 text-center text-lg font-semibold outline-none focus:border-blue-400"
+                value={draftWeight}
+                onChange={(e) => setDraftWeight(e.currentTarget.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.currentTarget.blur();
+                  }
+                  if (e.key === "Escape") {
+                    e.preventDefault();
+                    cancelWeightEdit();
+                  }
+                }}
+                onBlur={commitWeightEdit}
+                autoFocus
+              />
+              <span className="text-lg font-semibold">{displayUnit}</span>
+            </div>
+          ) : (
+            <button
+              type="button"
+              className="mt-1 text-lg font-semibold"
+              onClick={beginWeightEdit}
+            >
+              {displayWeight}{displayUnit}
+            </button>
+          )}
+          <div className="mt-2 flex justify-center gap-2">
+            <Button
+              type="button"
+              variant={unit === "kg" ? "default" : "outline"}
+              className="h-7 px-3 text-xs"
+              onClick={() => changeUnit(exerciseIndex, setIndex, "kg")}
+            >
+              kg
+            </Button>
+            <Button
+              type="button"
+              variant={unit === "lb" ? "default" : "outline"}
+              className="h-7 px-3 text-xs"
+              onClick={() => changeUnit(exerciseIndex, setIndex, "lb")}
+            >
+              lb
+            </Button>
+          </div>
         </div>
         <div className="rounded-lg bg-muted/50 p-3 text-center">
           <div className="text-xs text-muted-foreground">횟수</div>
