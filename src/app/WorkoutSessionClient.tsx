@@ -27,6 +27,7 @@ export function WorkoutSessionClient({
   deleteSet,
   changeEquipment,
   changeUnit,
+  changeRpe,
 }: {
   exercises: Exercises;
   displayWeightUnit: (weight: number, unit: "kg" | "lb") => { displayWeight: number, displayUnit: "kg" | "lb" };
@@ -42,10 +43,9 @@ export function WorkoutSessionClient({
   deleteSet: (exId: string, setIdx: number) => void;
   changeEquipment: (exIdx: number, setIdx: number, equipment: string) => void;
   changeUnit: (exIdx: number, setIdx: number, unit: "kg" | "lb") => void;
+  changeRpe: (exIdx: number, setIdx: number, rpe: null | number) => void;
 }) {
   const router = useRouter();
-
-
   const originalNames = useRef<Record<number, string>>({});
   
   return (
@@ -91,6 +91,7 @@ export function WorkoutSessionClient({
                       memo={set.memo || ""}
                       done={set.done}
                       exId={ex.id}
+                      rpe={set.rpe ?? null}
                       deleteSet={deleteSet}
                       onWeightChange={changeWeight}
                       onRepsDelta={changeReps}
@@ -101,6 +102,7 @@ export function WorkoutSessionClient({
                       changeEquipment={changeEquipment}
                       changeUnit={changeUnit}
                       unit={set.unit}
+                      changeRpe={changeRpe}
                     />
                   ))}
                 </div>
@@ -171,6 +173,8 @@ function Row({
   changeEquipment,
   changeUnit,
   unit,
+  changeRpe,
+  rpe,
 }: {
   exId: string;
   exerciseIndex: number;
@@ -190,15 +194,23 @@ function Row({
   changeEquipment: (exIdx: number, setIdx: number, equipment: string) => void;
   changeUnit: (exIdx: number, setIdx: number, unit: "kg" | "lb") => void;
   unit: "kg" | "lb";
+  changeRpe: (exIdx: number, setIdx: number, rpe: null | number) => void;
+  rpe: null | number;
 }) {
   const { displayWeight, displayUnit } = displayWeightUnit(weight, unit);
   const [isEditingWeight, setIsEditingWeight] = useState(false);
   const [draftWeight, setDraftWeight] = useState<string>(String(displayWeight));
+  const [draftRpe, setDraftRpe] = useState<string>(rpe ? String(rpe) : "");
+  const KG_TO_LB = 2.20462;
 
   useEffect(() => {
     if (isEditingWeight) return;
     setDraftWeight(String(displayWeight));
   }, [displayWeight, isEditingWeight]);
+
+  useEffect(() => {
+    setDraftRpe(rpe ? String(rpe) : "");
+  }, [rpe]);
 
   function beginWeightEdit() {
     setDraftWeight(String(displayWeight));
@@ -234,6 +246,28 @@ function Row({
 
     onWeightChange(exerciseIndex, setIndex, nextKg);
     setIsEditingWeight(false);
+  }
+
+  function commitRpeEdit() {
+    const trimmed = draftRpe.trim();
+  
+    if (trimmed === "") {
+      changeRpe(exerciseIndex, setIndex, null);
+      return;
+    }
+  
+    const nextRpe = Number(trimmed);
+  
+    if (!Number.isInteger(nextRpe) || nextRpe < 6 || nextRpe > 10) {
+      setDraftRpe(rpe !== null ? String(rpe) : "");
+      return;
+    }
+  
+    changeRpe(exerciseIndex, setIndex, nextRpe);
+  }
+
+  function cancelRpeEdit() {
+    setDraftRpe(rpe !== null ? String(rpe) : "");
   }
 
   function cancelWeightEdit() {
@@ -337,19 +371,51 @@ function Row({
         />
       </div>
 
-      <div className="space-y-1">
-      <div className="text-xs text-muted-foreground">기구</div>
+      <div className="grid grid-cols-2 gap-2">
+      <div className="items-center justify-center">
+      <div className="text-xs text-muted-foreground text-center mb-2">기구</div>
         <select
           className="w-full rounded-md border px-3 py-2 text-sm outline-none focus:border-blue-400"
           value={equipment}
           onChange={(e) => changeEquipment(exerciseIndex, setIndex, e.target.value)}
-        >
+          >
           <option value="cable-machine">케이블 머신</option>
           <option value="smith-machine">스미스 머신</option>
           <option value="plate-machine">원판 머신</option>
           <option value="barbell">바벨</option>
           <option value="dumbbell">덤벨</option>
         </select>
+            </div>
+          <div className="items-center justify-center">
+          <div className="text-xs text-muted-foreground text-center mb-2">운동 강도</div>
+          <div className="flex items-center gap-1">
+          <input
+            placeholder="6-10 사이 정수를 입력하세요"
+            type="number"
+            inputMode="decimal"
+            step="1"
+            value={draftRpe}
+            className="w-full rounded-md border px-3 py-2 text-sm outline-none focus:border-blue-400"
+            onChange={(e) => setDraftRpe(e.currentTarget.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.currentTarget.blur();
+              }
+              if (e.key === "Escape") {
+                e.preventDefault();
+                cancelRpeEdit();
+              }
+            }}
+            onBlur={commitRpeEdit}
+            />
+            <Button type="button" variant="outline" className="h-8 ml-1" onClick={() => changeRpe(exerciseIndex, setIndex, rpe !== null && rpe > 6 ? rpe - 1 : 6)}>
+              -
+            </Button>
+            <Button type="button" variant="outline" className="h-8 mr-1" onClick={() => changeRpe(exerciseIndex, setIndex, rpe !== null && rpe < 10 ? rpe + 1 : 10)}>
+              +
+            </Button>
+            </div>
+          </div>
       </div>
       <div className="space-y-1">
         <div className="text-xs text-muted-foreground">메모</div>

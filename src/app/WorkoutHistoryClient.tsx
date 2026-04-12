@@ -89,17 +89,19 @@ export function WorkoutHistoryClient({showHistory, historyVersion}: {showHistory
                                                                     </div>
                                                             </CollapsibleTrigger>
                                                             <CollapsibleContent>
-                                                                    <div className="grid grid-cols-3 justify-items-center">
+                                                                    <div className="grid grid-cols-4 justify-items-center">
                                                                         <div>세트번호</div>
                                                                         <div>무게</div>
                                                                         <div>횟수</div>
+                                                                        <div>RPE</div>
                                                                     </div>
                                                                     {ex.sets.map((set) => {
                                                                         return(
-                                                                            <div className="grid grid-cols-3 justify-items-center" key={set.setNo}>
+                                                                            <div className="grid grid-cols-4 justify-items-center" key={set.setNo}>
                                                                                 <div>{set.setNo}</div>
                                                                                 <div>{set.weight+"kg"}</div>
                                                                                 <div>{set.reps}</div>
+                                                                                <div>{set.rpe ?? "미입력"}</div>
                                                                             </div>
                                                                         )
                                                                     })}

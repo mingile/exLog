@@ -75,7 +75,8 @@ export function HeaderControls({ onSavedHistory, selectedPart, clearDoneStatus, 
                             reps: set.reps,
                             done: set.done,
                             synced: set.synced,
-                            memo: set.memo
+                            memo: set.memo,
+                            rpe: set.rpe
                         });
                         return {
                             set,
@@ -104,6 +105,7 @@ export function HeaderControls({ onSavedHistory, selectedPart, clearDoneStatus, 
                             reps: set.reps,
                             memo: set.memo,
                             equipment: set.equipment,
+                            rpe: set.rpe,
                         };
                     }),
                 };
@@ -117,7 +119,8 @@ export function HeaderControls({ onSavedHistory, selectedPart, clearDoneStatus, 
                             reps: set.reps,
                             done: set.done,
                             synced: set.synced,
-                            memo: set.memo
+                            memo: set.memo,
+                            rpe: set.rpe
                         });
                         return {
                             set,
@@ -145,6 +148,7 @@ export function HeaderControls({ onSavedHistory, selectedPart, clearDoneStatus, 
                             reps: set.reps,
                             memo: set.memo,
                             equipment: set.equipment,
+                            rpe: set.rpe,
                         };
                     }),
                 };
