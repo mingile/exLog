@@ -654,13 +654,25 @@ export function RootClient() {
         return `${today.getFullYear()}년 ${today.getMonth() + 1}월 ${today.getDate()}일`;
     });
 
+    // if (entryMode === "loading") {
+    //     return <div className="flex flex-col h-100vh min-h-screen text-center items-center justify-center">Loading...</div>;
+    //   }
+      
+    //   if (entryMode === "onboarding") {
+    //     return <div className="flex flex-col h-100vh min-h-screen text-center items-center justify-center">Onboarding</div>;
+    //   }
+      
+    //   if (entryMode === "library") {
+    //     return <div className="flex flex-col h-100vh min-h-screen text-center items-center justify-center">Library</div>;
+    //   }
+
     return (
-        <div className="flex flex-col h-100vh min-h-screen">
-            <HeaderControls onSavedHistory={onSavedHistory} date={date} selectedPart={selectedPart} onSelectPart={onSelectPart} clearDoneStatus={clearDoneStatus} exercises={exercises} setExercises={setExercises} saving={saving} setSaving={setSaving} notionReady={notionReady} setNotionReady={setNotionReady} />
-            <WorkoutSessionClient exercises={exercises} changeReps={changeReps} changeWeight={changeWeight} toggleDone={toggleDone} addSet={addSet} setShowHistory={setShowHistory} showHistory={showHistory} changeMemo={changeMemo} changeName={changeName} deleteSet={deleteSet} displayWeightUnit={displayWeightUnit} nextWeight={nextWeight} changeEquipment={changeEquipment} changeUnit={changeUnit} />
-            <div className="overflow-y-auto f1lex-grow pb-16">
-            <WorkoutHistoryClient showHistory={showHistory} historyVersion={historyVersion} />
+                <div className="flex flex-col h-100vh min-h-screen">
+                    <HeaderControls onSavedHistory={onSavedHistory} date={date} selectedPart={selectedPart} onSelectPart={onSelectPart} clearDoneStatus={clearDoneStatus} exercises={exercises} setExercises={setExercises} saving={saving} setSaving={setSaving} notionReady={notionReady} setNotionReady={setNotionReady} />
+                    <WorkoutSessionClient exercises={exercises} changeReps={changeReps} changeWeight={changeWeight} toggleDone={toggleDone} addSet={addSet} setShowHistory={setShowHistory} showHistory={showHistory} changeMemo={changeMemo} changeName={changeName} deleteSet={deleteSet} displayWeightUnit={displayWeightUnit} nextWeight={nextWeight} changeEquipment={changeEquipment} changeUnit={changeUnit} changeRpe={changeRpe} />
+                    <div className="overflow-y-auto f1lex-grow pb-16">
+                        <WorkoutHistoryClient showHistory={showHistory} historyVersion={historyVersion} />
+                </div>
             </div>
-        </div>
     );
 }
