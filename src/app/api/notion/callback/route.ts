@@ -1,8 +1,7 @@
-import { MongoClient } from "mongodb";
+import { getMongoDb } from "@/lib/mongodb";
+import { randomUUID } from "crypto";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
-
-let cachedClient : MongoClient | null = null;
 
 export async function GET(request: Request){
 
@@ -87,40 +86,42 @@ export async function GET(request: Request){
                 workspaceId: tokenData?.workspace_id,
             });
     
-            // TODO: 4-4 MongoDB upsert 저장
-            if(!cachedClient){
-                 cachedClient = new MongoClient(process.env.MONGODB_URI ?? '');
-                 await cachedClient.connect();
-            }
-                const db = cachedClient.db('notion');
-                const collection = db.collection("connections_info");
+            const db = await getMongoDb();
+            const collection = db.collection("temp_info");
+            const temp_id = randomUUID();
+            const now = new Date();
+            const expiresAt = new Date(now.getTime() + 5 * 60 * 1000);
 
             try{
-                await collection.findOneAndUpdate({
-                    bot_id: tokenData?.bot_id,
-                },{
-                    $set:{
-                        bot_id: tokenData?.bot_id,
-                        access_token: tokenData?.access_token,
-                        workspace_id: tokenData?.workspace_id,
-                        user_key: user_key,
-                        updated_at: new Date(),
+                await collection.findOneAndUpdate(
+                    { user_key },
+                    {
+                        $set: {
+                            temp_id,
+                            user_key,
+                            bot_id: tokenData?.bot_id,
+                            access_token: tokenData?.access_token,
+                            workspace_id: tokenData?.workspace_id,
+                            created_at: now,
+                            expires_at: expiresAt,
+                        },
                     },
-                    $setOnInsert:{
-                        created_at: new Date(),
+                    {
+                        upsert: true,
                     }
-                },
-                {
-                    upsert: true,
-                    returnDocument: "after"
-                }
-            );
-                console.log('db생성')
-                // const redirectUrl = new URL("/settings/notion", process.env.APP_BASE_URL);
-                // redirectUrl.searchParams.set("connected", "1");
+                );
+
+                cookieStore.set("notion_temp_id", temp_id, {
+                    httpOnly: true,
+                    secure: process.env.NODE_ENV === "production",
+                    sameSite: "lax",
+                    maxAge: 60 * 5,
+                    path: "/",
+                });
+
                 return NextResponse.redirect(new URL('/', process.env.APP_BASE_URL));
             }catch(error){
-                console.error("Notion 연결 정보 저장 중 예외", error);
+                console.error("Notion temp 정보 저장 중 예외", error);
                 return NextResponse.redirect(new URL("/api/notion/auth", process.env.APP_BASE_URL));
             }
     }catch(error){
@@ -128,13 +129,3 @@ export async function GET(request: Request){
         return NextResponse.redirect(new URL("/api/notion/auth", process.env.APP_BASE_URL));
     }
 }
-// notion token endpoint로 code 교환
-// 응답에서 아래 값들 뽑기
-    // access_token
-    // refresh_token
-    // bot_id
-    // workspace_id
-// MongoDB에 "연결정보" upsert 저장
-    // 기준키 : bot_id unique
-// 이후 앱 화면으로 redirect
-    // 예 : /settings/notion 또는 ?connected=1

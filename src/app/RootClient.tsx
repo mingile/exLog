@@ -5,6 +5,8 @@ import { HeaderControls } from "./HeaderControls";
 import { useEffect, useState } from "react";
 import { Exercises, Part } from "./types";
 import { WorkoutHistoryClient } from "./WorkoutHistoryClient";
+import { OnBoarding } from "./OnBoarding";
+import NotionSettingsPage from "./settings/notion/NotionSettingsClient";
 
 const exerciseTemplate: Record<Part, Exercises> = {
     back: [
@@ -147,11 +149,15 @@ export function RootClient() {
     const [showHistory, setShowHistory] = useState<boolean>(false);
     const [historyVersion, setHistoryVersion] = useState<number>(0);
     const [saving, setSaving] = useState<boolean>(false);
-    const [notionReady, setNotionReady] = useState<boolean>(false);
+    const [entryMode, setEntryMode] = useState<"loading"|"session"|"onboarding"|"library">("loading");
+
+    const [notionStatusLoading, setNotionStatusLoading] = useState<boolean>(true);
+    const [notionConnected, setNotionConnected] = useState<boolean>(false);
+    const [dbConnected, setDbConnected] = useState<boolean>(false);
 
     useEffect(() => {
         if (!hydrated) return;
-        if (!notionReady) return;
+        if (!dbConnected) return;
 
         const fetchWorkoutRecords = async () => {
           try {
@@ -308,19 +314,7 @@ export function RootClient() {
         };
 
         fetchWorkoutRecords();
-    }, [selectedPart, hydrated, notionReady]);
-
-    useEffect(()=>{
-        fetch('/api/notion/status')
-        .then(res => res.json())
-        .then(data => {
-            setNotionReady(data.notionConnected && data.dbConnected);
-        })
-        .catch(err => {
-            console.error('Notion 상태 조회 중 오류', err);
-            setNotionReady(false);
-        })
-    }, [])
+    }, [selectedPart, hydrated]);
 
     useEffect(() => {
         const storedEx = localStorage.getItem("workout.session.v1");
@@ -398,6 +392,20 @@ export function RootClient() {
             setHydrated(true);
         }
     }, []);
+
+    useEffect(() => {
+        if (!hydrated) return;
+        refreshNotionStatus();
+    }, [hydrated]);
+
+    useEffect(()=>{
+        if(hydrated===false) return;
+        
+        const storedEx = localStorage.getItem('workout.session.v1');
+        
+        if(storedEx) setEntryMode('session');
+        else setEntryMode('onboarding');
+    }, [hydrated])
 
     useEffect(() => {
         if (!hydrated) return;
@@ -649,26 +657,68 @@ export function RootClient() {
         setHistoryVersion(v=>v + 1);
     }
 
+    async function refreshNotionStatus() {
+        try {
+          setNotionStatusLoading(true);
+      
+          const res = await fetch("/api/notion/status", {
+            method: "GET",
+            credentials: "include",
+            cache: "no-store",
+          });
+      
+          const data = await res.json();
+      
+          setNotionConnected(!!data.notionConnected);
+          setDbConnected(!!data.dbConnected);
+          console.log(notionConnected, dbConnected);
+        } catch (err) {
+          console.error("Notion 상태 조회 중 오류", err);
+          setNotionConnected(false);
+          setDbConnected(false);
+        } finally {
+          setNotionStatusLoading(false);
+        }
+      }
+
     const [date, setDate] = useState<string>(() => {
         const today = new Date();
         return `${today.getFullYear()}년 ${today.getMonth() + 1}월 ${today.getDate()}일`;
     });
 
-    // if (entryMode === "loading") {
-    //     return <div className="flex flex-col h-100vh min-h-screen text-center items-center justify-center">Loading...</div>;
-    //   }
+    if (notionStatusLoading) {
+        return (
+          <div className="flex flex-col h-100vh min-h-screen text-center items-center justify-center">
+            Loading...
+          </div>
+        );
+      }
       
-    //   if (entryMode === "onboarding") {
-    //     return <div className="flex flex-col h-100vh min-h-screen text-center items-center justify-center">Onboarding</div>;
-    //   }
+      if (!dbConnected) {
+        return (
+          <NotionSettingsPage
+            notionConnected={notionConnected}
+            dbConnected={dbConnected}
+            onConnectionComplete={refreshNotionStatus}
+          />
+        );
+      }
+
+    if (entryMode === "loading") {
+        return <div className="flex flex-col h-100vh min-h-screen text-center items-center justify-center">Loading...</div>;
+      }
       
-    //   if (entryMode === "library") {
-    //     return <div className="flex flex-col h-100vh min-h-screen text-center items-center justify-center">Library</div>;
-    //   }
+      if (entryMode === "onboarding") {
+        return <OnBoarding />;
+      }
+      
+      if (entryMode === "library") {
+        return <div className="flex flex-col h-100vh min-h-screen text-center items-center justify-center">Library</div>;
+      }
 
     return (
                 <div className="flex flex-col h-100vh min-h-screen">
-                    <HeaderControls onSavedHistory={onSavedHistory} date={date} selectedPart={selectedPart} onSelectPart={onSelectPart} clearDoneStatus={clearDoneStatus} exercises={exercises} setExercises={setExercises} saving={saving} setSaving={setSaving} notionReady={notionReady} setNotionReady={setNotionReady} />
+                    <HeaderControls onSavedHistory={onSavedHistory} date={date} selectedPart={selectedPart} onSelectPart={onSelectPart} clearDoneStatus={clearDoneStatus} exercises={exercises} setExercises={setExercises} saving={saving} setSaving={setSaving} notionReady={dbConnected} setNotionReady={setDbConnected} />
                     <WorkoutSessionClient exercises={exercises} changeReps={changeReps} changeWeight={changeWeight} toggleDone={toggleDone} addSet={addSet} setShowHistory={setShowHistory} showHistory={showHistory} changeMemo={changeMemo} changeName={changeName} deleteSet={deleteSet} displayWeightUnit={displayWeightUnit} nextWeight={nextWeight} changeEquipment={changeEquipment} changeUnit={changeUnit} changeRpe={changeRpe} />
                     <div className="overflow-y-auto f1lex-grow pb-16">
                         <WorkoutHistoryClient showHistory={showHistory} historyVersion={historyVersion} />
