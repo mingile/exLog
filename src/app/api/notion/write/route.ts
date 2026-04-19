@@ -34,7 +34,7 @@ export async function POST(req: Request){
     const collection = db?.collection("connections_info");
     const connection = await collection?.findOne({ user_key });
     const accessToken = connection?.access_token;
-    const databaseId = connection?.database_id;
+    const databaseId = connection?.workout_sets_db_id;
 
     if(!accessToken){
       return NextResponse.json({error:"No connection found"}, {status: 404});

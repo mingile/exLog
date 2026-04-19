@@ -5,8 +5,8 @@ import { HeaderControls } from "./HeaderControls";
 import { useEffect, useState } from "react";
 import { Exercises, Part } from "./types";
 import { WorkoutHistoryClient } from "./WorkoutHistoryClient";
-import { OnBoarding } from "./OnBoarding";
 import NotionSettingsPage from "./settings/notion/NotionSettingsClient";
+import { LibraryClient } from "./LibraryClient";
 
 const exerciseTemplate: Record<Part, Exercises> = {
     back: [
@@ -149,7 +149,7 @@ export function RootClient() {
     const [showHistory, setShowHistory] = useState<boolean>(false);
     const [historyVersion, setHistoryVersion] = useState<number>(0);
     const [saving, setSaving] = useState<boolean>(false);
-    const [entryMode, setEntryMode] = useState<"loading"|"session"|"onboarding"|"library">("loading");
+    const [entryMode, setEntryMode] = useState<"loading"|"session"|"library">("loading");
 
     const [notionStatusLoading, setNotionStatusLoading] = useState<boolean>(true);
     const [notionConnected, setNotionConnected] = useState<boolean>(false);
@@ -404,13 +404,21 @@ export function RootClient() {
         const storedEx = localStorage.getItem('workout.session.v1');
         
         if(storedEx) setEntryMode('session');
-        else setEntryMode('onboarding');
+        else setEntryMode('library');
     }, [hydrated])
 
     useEffect(() => {
         if (!hydrated) return;
-        localStorage.setItem("workout.session.v1", JSON.stringify({ selectedPart, exercises }));
-    }, [selectedPart, exercises, hydrated]);
+        if (entryMode !== "session") return;
+        if (!exercises.length) return;
+
+        localStorage.setItem("workout.session.v1", JSON.stringify({ 
+            selectedPart, 
+            exercises 
+        }));
+    }, [selectedPart, exercises]);
+
+
 
     function ruleDecision(equipment: string): { unit: "kg" | "lb"; step: number; stepUnit: "kg" | "lb" } {
         let unit = 'kg';
@@ -708,21 +716,23 @@ export function RootClient() {
         return <div className="flex flex-col h-100vh min-h-screen text-center items-center justify-center">Loading...</div>;
       }
       
-      if (entryMode === "onboarding") {
-        return <OnBoarding />;
-      }
       
       if (entryMode === "library") {
-        return <div className="flex flex-col h-100vh min-h-screen text-center items-center justify-center">Library</div>;
+        return <LibraryClient onConfirmSelection={(selectedExercises) => {
+            setExercises(selectedExercises);
+            setEntryMode("session");
+        }} />;
       }
 
-    return (
-                <div className="flex flex-col h-100vh min-h-screen">
-                    <HeaderControls onSavedHistory={onSavedHistory} date={date} selectedPart={selectedPart} onSelectPart={onSelectPart} clearDoneStatus={clearDoneStatus} exercises={exercises} setExercises={setExercises} saving={saving} setSaving={setSaving} notionReady={dbConnected} setNotionReady={setDbConnected} />
-                    <WorkoutSessionClient exercises={exercises} changeReps={changeReps} changeWeight={changeWeight} toggleDone={toggleDone} addSet={addSet} setShowHistory={setShowHistory} showHistory={showHistory} changeMemo={changeMemo} changeName={changeName} deleteSet={deleteSet} displayWeightUnit={displayWeightUnit} nextWeight={nextWeight} changeEquipment={changeEquipment} changeUnit={changeUnit} changeRpe={changeRpe} />
-                    <div className="overflow-y-auto f1lex-grow pb-16">
-                        <WorkoutHistoryClient showHistory={showHistory} historyVersion={historyVersion} />
-                </div>
+      if (entryMode === "session") {
+        return (
+          <div className="flex flex-col h-100vh min-h-screen">
+            <HeaderControls onSavedHistory={onSavedHistory} date={date} selectedPart={selectedPart} onSelectPart={onSelectPart} clearDoneStatus={clearDoneStatus} exercises={exercises} setExercises={setExercises} saving={saving} setSaving={setSaving} notionReady={dbConnected} setNotionReady={setDbConnected} />
+            <WorkoutSessionClient exercises={exercises} changeReps={changeReps} changeWeight={changeWeight} toggleDone={toggleDone} addSet={addSet} setShowHistory={setShowHistory} showHistory={showHistory} changeMemo={changeMemo} changeName={changeName} deleteSet={deleteSet} displayWeightUnit={displayWeightUnit} nextWeight={nextWeight} changeEquipment={changeEquipment} changeUnit={changeUnit} changeRpe={changeRpe} />
+            <div className="overflow-y-auto f1lex-grow pb-16">
+              <WorkoutHistoryClient showHistory={showHistory} historyVersion={historyVersion} />
             </div>
-    );
+          </div>
+        );
+      }
 }

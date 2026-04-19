@@ -85,7 +85,6 @@ export function HeaderControls({ onSavedHistory, selectedPart, clearDoneStatus, 
                     })
                     .filter(({ set }) => {
                         const pass = set.done && !set.synced;
-                        console.log(`세트 필터 결과:`, {done: set.done, synced: set.synced, pass});
                         return pass;
                     });
                     return {

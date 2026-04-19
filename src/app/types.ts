@@ -20,3 +20,19 @@ export type SavedExercise = {
         equipment: string;
     }[];
 };
+
+export type LibraryCategory = "등" | "가슴" | "하체" | "어깨" | "팔" | "코어" | "유산소" | "기타";
+
+export type LibraryExercise = {
+    id: string;
+    name: string;
+    category: LibraryCategory;
+    equipment?: string;
+    primaryEffect?: string;
+};
+
+export type LibraryState = 
+    | { status: "loading" }
+    | { status: "error"; message: string }
+    | { status: "empty" }
+    | { status: "success"; exercises: LibraryExercise[]; categories: LibraryCategory[] };
