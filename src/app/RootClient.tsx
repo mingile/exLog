@@ -665,6 +665,11 @@ export function RootClient() {
         setHistoryVersion(v=>v + 1);
     }
 
+    function startNewSession(){
+        localStorage.removeItem("workout.session.v1");
+        setEntryMode("library");
+    }
+
     async function refreshNotionStatus() {
         try {
           setNotionStatusLoading(true);
@@ -727,7 +732,7 @@ export function RootClient() {
       if (entryMode === "session") {
         return (
           <div className="flex flex-col h-100vh min-h-screen">
-            <HeaderControls onSavedHistory={onSavedHistory} date={date} selectedPart={selectedPart} onSelectPart={onSelectPart} clearDoneStatus={clearDoneStatus} exercises={exercises} setExercises={setExercises} saving={saving} setSaving={setSaving} notionReady={dbConnected} setNotionReady={setDbConnected} />
+            <HeaderControls onSavedHistory={onSavedHistory} date={date} selectedPart={selectedPart} onSelectPart={onSelectPart} clearDoneStatus={clearDoneStatus} exercises={exercises} setExercises={setExercises} saving={saving} setSaving={setSaving} notionReady={dbConnected} setNotionReady={setDbConnected} onStartNewSession={startNewSession} />
             <WorkoutSessionClient exercises={exercises} changeReps={changeReps} changeWeight={changeWeight} toggleDone={toggleDone} addSet={addSet} setShowHistory={setShowHistory} showHistory={showHistory} changeMemo={changeMemo} changeName={changeName} deleteSet={deleteSet} displayWeightUnit={displayWeightUnit} nextWeight={nextWeight} changeEquipment={changeEquipment} changeUnit={changeUnit} changeRpe={changeRpe} />
             <div className="overflow-y-auto f1lex-grow pb-16">
               <WorkoutHistoryClient showHistory={showHistory} historyVersion={historyVersion} />

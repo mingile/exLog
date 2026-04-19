@@ -6,7 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "sonner"
 import React from "react";
 
-export function HeaderControls({ onSavedHistory, selectedPart, clearDoneStatus, exercises, onSelectPart, date, setExercises, saving, setSaving, notionReady, setNotionReady }: { onSavedHistory: () => void, selectedPart: ('back' | 'chest' | 'legs' | 'shoulders'), clearDoneStatus: () => void, exercises: Exercises, onSelectPart: (part: ('back' | 'chest' | 'legs' | 'shoulders')) => void, date: string, setExercises: React.Dispatch<React.SetStateAction<Exercises>>, saving: boolean, setSaving: (saving: boolean)=> void, notionReady: boolean, setNotionReady: (notionReady: boolean) => void }){
+export function HeaderControls({ onSavedHistory, selectedPart, clearDoneStatus, exercises, onSelectPart, date, setExercises, saving, setSaving, notionReady, setNotionReady, onStartNewSession }: { onSavedHistory: () => void, selectedPart: ('back' | 'chest' | 'legs' | 'shoulders'), clearDoneStatus: () => void, exercises: Exercises, onSelectPart: (part: ('back' | 'chest' | 'legs' | 'shoulders')) => void, date: string, setExercises: React.Dispatch<React.SetStateAction<Exercises>>, saving: boolean, setSaving: (saving: boolean)=> void, notionReady: boolean, setNotionReady: (notionReady: boolean) => void, onStartNewSession: () => void }){
 
     return (
         <header className="sticky top-0 z-50 bg-background/95 backdrop-blur border-b supports-[backdrop-filter]:bg-background/60">
@@ -46,8 +46,11 @@ export function HeaderControls({ onSavedHistory, selectedPart, clearDoneStatus, 
                     <Button onClick={saveSession} disabled={saving}>
                         {saving ? "저장중..." : "저장"}
                     </Button>
-                    <Button onClick={clearDoneStatus}>
+                    {/* <Button onClick={clearDoneStatus}>
                         초기화
+                    </Button> */}
+                    <Button onClick={handleStartNewSession}>
+                        새 세션
                     </Button>
                 </div>
                 </div>
@@ -58,6 +61,24 @@ export function HeaderControls({ onSavedHistory, selectedPart, clearDoneStatus, 
         const response = await fetch("/api/notion/status")
         const data = await response.json()
         setNotionReady(data.notionConnected && data.dbConnected);
+    }
+
+    function handleStartNewSession() {
+        const hasUnsavedChanges = exercises.some(ex => 
+            ex.sets.some(set => set.done && !set.synced)
+        );
+
+        if (hasUnsavedChanges) {
+            const confirmed = window.confirm(
+                "저장되지 않은 변경사항이 있습니다.\n새 세션을 시작하시겠습니까?\n(현재 세션이 종료됩니다)"
+            );
+            if (!confirmed) return;
+        }
+
+        onStartNewSession();
+        toast.success("새 세션을 시작합니다", {
+            duration: 1000
+        });
     }
 
     async function saveSession() {
