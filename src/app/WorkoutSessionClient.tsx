@@ -142,7 +142,7 @@ export function WorkoutSessionClient({
     return (
       <Button
         type="button"
-        className="h-9 w-9 rounded-full p-0 text-lg"
+        className="h-9 w-9 rounded-full p-0 text-lg active:scale-95 transition-transform"
         onClick={(e) => {
           e.stopPropagation();
           addSet(exerciseIndex);
@@ -201,6 +201,8 @@ function Row({
   const [isEditingWeight, setIsEditingWeight] = useState(false);
   const [draftWeight, setDraftWeight] = useState<string>(String(displayWeight));
   const [draftRpe, setDraftRpe] = useState<string>(rpe ? String(rpe) : "");
+  const [swipeOffset, setSwipeOffset] = useState<number>(0);
+  const [isSwiping, setIsSwiping] = useState<boolean>(false);
   const KG_TO_LB = 2.20462;
 
   useEffect(() => {
@@ -275,10 +277,82 @@ function Row({
     setIsEditingWeight(false);
   }
 
+  function handleTouchStart(e: React.TouchEvent) {
+    const touch = e.touches[0];
+    setIsSwiping(true);
+    setSwipeOffset(0);
+    (e.currentTarget as HTMLElement).dataset.startX = String(touch.clientX);
+  }
+
+  function handleTouchMove(e: React.TouchEvent) {
+    if (!isSwiping) return;
+    
+    const touch = e.touches[0];
+    const startX = Number((e.currentTarget as HTMLElement).dataset.startX);
+    const currentX = touch.clientX;
+    const diff = currentX - startX;
+
+    if (diff < 0) {
+      setSwipeOffset(Math.max(diff, -100));
+    }
+  }
+
+  function handleTouchEnd() {
+    if (swipeOffset < -50) {
+      deleteSet(exId, setIndex);
+    }
+    setIsSwiping(false);
+    setSwipeOffset(0);
+  }
+
+  function handleMouseDown(e: React.MouseEvent) {
+    setIsSwiping(true);
+    setSwipeOffset(0);
+    (e.currentTarget as HTMLElement).dataset.startX = String(e.clientX);
+  }
+
+  function handleMouseMove(e: React.MouseEvent) {
+    if (!isSwiping) return;
+    
+    const startX = Number((e.currentTarget as HTMLElement).dataset.startX);
+    const currentX = e.clientX;
+    const diff = currentX - startX;
+
+    if (diff < 0) {
+      setSwipeOffset(Math.max(diff, -100));
+    }
+  }
+
+  function handleMouseUp() {
+    if (swipeOffset < -50) {
+      deleteSet(exId, setIndex);
+    }
+    setIsSwiping(false);
+    setSwipeOffset(0);
+  }
+
+  function handleMouseLeave() {
+    setIsSwiping(false);
+    setSwipeOffset(0);
+  }
+
   return (
-    <div className="rounded-xl border bg-card p-3 space-y-3">
-      <div className="flex items-center justify-between">
-        <div className="text-sm font-semibold">세트 {setIndex + 1}
+    <div 
+      className="relative overflow-hidden rounded-xl"
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+    >
+      <div className="absolute inset-0 bg-red-500 flex items-center justify-end pr-4">
+        <TrashIcon className="size-6 text-white" />
+      </div>
+      
+      <div 
+        className="rounded-xl border bg-card p-3 space-y-3 transition-transform"
+        style={{ transform: `translateX(${swipeOffset}px)` }}
+      >
+        <div className="flex items-center justify-between">
+        <div className="relative bg-card p-3 space-y-3 transition-transform">세트 {setIndex + 1}
         <Button variant="outline" className="ml-3 size-8" 
         onClick={e => {
           e.stopPropagation();
@@ -426,6 +500,7 @@ function Row({
           onChange={(e) => changeMemo(exerciseIndex, setIndex, e.target.value)}
           placeholder="세트 메모"
         />
+      </div>
       </div>
     </div>
   );

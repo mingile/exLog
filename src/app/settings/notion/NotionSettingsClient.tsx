@@ -241,7 +241,7 @@ export default function NotionSettingsPage({ notionConnected, dbConnected, onCon
         <div className="rounded-xl border bg-white p-6 shadow-sm space-y-5">
           <div className="space-y-2">
             <label htmlFor="sets-db" className="block text-sm font-medium">
-              Workout Sets DB
+              Set DB
             </label>
             <select
               id="sets-db"
@@ -294,7 +294,7 @@ export default function NotionSettingsPage({ notionConnected, dbConnected, onCon
 
           <div className="space-y-3 text-sm">
             <div className="rounded-md border bg-white p-4">
-              <div className="font-medium">Workout Sets DB</div>
+              <div className="font-medium">Worktout Set DB</div>
               <div className="mt-1 text-gray-700">
                 {selectedSetsDb ? selectedSetsDb.title : "아직 선택 안 됨"}
               </div>
