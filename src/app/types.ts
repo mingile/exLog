@@ -21,6 +21,17 @@ export type SavedExercise = {
     }[];
 };
 
+export type SessionMetadata = {
+    sessionId: string;
+    sessionName: string;
+    startedAt: string;
+};
+
+export type SessionDraft = {
+    session: SessionMetadata;
+    exercises: Exercises;
+};
+
 export type LibraryCategory = "등" | "가슴" | "하체" | "어깨" | "팔" | "코어" | "유산소" | "기타";
 
 export type LibraryExercise = {

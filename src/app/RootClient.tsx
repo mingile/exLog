@@ -3,7 +3,7 @@
 import { WorkoutSessionClient } from "./WorkoutSessionClient";
 import { HeaderControls } from "./HeaderControls";
 import { useEffect, useState } from "react";
-import { Exercises, Part } from "./types";
+import { Exercises, Part, SessionDraft, SessionMetadata } from "./types";
 import { WorkoutHistoryClient } from "./WorkoutHistoryClient";
 import NotionSettingsPage from "./settings/notion/NotionSettingsClient";
 import { LibraryClient } from "./LibraryClient";
@@ -150,6 +150,7 @@ export function RootClient() {
     const [historyVersion, setHistoryVersion] = useState<number>(0);
     const [saving, setSaving] = useState<boolean>(false);
     const [entryMode, setEntryMode] = useState<"loading"|"session"|"library">("loading");
+    const [sessionMetadata, setSessionMetadata] = useState<SessionMetadata | null>(null);
 
     const [notionStatusLoading, setNotionStatusLoading] = useState<boolean>(true);
     const [notionConnected, setNotionConnected] = useState<boolean>(false);
@@ -317,7 +318,9 @@ export function RootClient() {
     }, [selectedPart, hydrated]);
 
     useEffect(() => {
-        const storedEx = localStorage.getItem("workout.session.v1");
+        const storedDraft = localStorage.getItem("workout.currentSession.v1");
+        const oldStoredEx = localStorage.getItem("workout.session.v1");
+        
         function isObject(v: unknown): v is Record<string, unknown> {
             return typeof v === "object" && v !== null;
         }
@@ -362,15 +365,45 @@ export function RootClient() {
             return typeof v === "string" && ["back", "chest", "legs", "shoulders"].includes(v);
         }
 
-        function isSession(v: unknown): v is { selectedPart: Part; exercises: Exercises } {
+        function isSessionMetadata(v: unknown): v is SessionMetadata {
+            if (!isObject(v)) return false;
+            return (
+                typeof v.sessionId === "string" &&
+                typeof v.sessionName === "string" &&
+                typeof v.startedAt === "string"
+            );
+        }
+
+        function isSessionDraft(v: unknown): v is SessionDraft {
+            if (!isObject(v)) return false;
+            return isSessionMetadata(v.session) && isExerciseArray(v.exercises);
+        }
+
+        function isLegacySession(v: unknown): v is { selectedPart: Part; exercises: Exercises } {
             if (!isObject(v)) return false;
             return isPart(v.selectedPart) && isExerciseArray(v.exercises);
         }
 
         try {
-            if (storedEx) {
-                const parsedEx = JSON.parse(storedEx);
-                if (isSession(parsedEx)) {
+            if (storedDraft) {
+                const parsedDraft = JSON.parse(storedDraft);
+                if (isSessionDraft(parsedDraft)) {
+                    const migratedExercises = parsedDraft.exercises.map((ex) => ({
+                        ...ex,
+                        sets: ex.sets.map((set) => ({
+                            ...set,
+                            unit: set.unit ?? (set.equipment === "cable-machine" ? "lb" : "kg"),
+                            rpe: set.rpe ?? null,
+                        })),
+                    }));
+                    setExercises(migratedExercises);
+                    setSessionMetadata(parsedDraft.session);
+                } else {
+                    localStorage.removeItem("workout.currentSession.v1");
+                }
+            } else if (oldStoredEx) {
+                const parsedEx = JSON.parse(oldStoredEx);
+                if (isLegacySession(parsedEx)) {
                     const migratedExercises = parsedEx.exercises.map((ex) => ({
                         ...ex,
                         sets: ex.sets.map((set) => ({
@@ -381,12 +414,12 @@ export function RootClient() {
                     }));
                     setExercises(migratedExercises);
                     setSelectedPart(parsedEx.selectedPart);
-                } else {
-                    localStorage.removeItem("workout.session.v1");
                 }
+                localStorage.removeItem("workout.session.v1");
             }
         } catch (e) {
             console.error("올바르지 않은 JSON 데이터", e);
+            localStorage.removeItem("workout.currentSession.v1");
             localStorage.removeItem("workout.session.v1");
         } finally {
             setHydrated(true);
@@ -401,22 +434,28 @@ export function RootClient() {
     useEffect(()=>{
         if(hydrated===false) return;
         
-        const storedEx = localStorage.getItem('workout.session.v1');
+        const storedDraft = localStorage.getItem('workout.currentSession.v1');
         
-        if(storedEx) setEntryMode('session');
-        else setEntryMode('library');
+        if(storedDraft) {
+            setEntryMode('session');
+        } else {
+            setEntryMode('library');
+        }
     }, [hydrated])
 
     useEffect(() => {
         if (!hydrated) return;
         if (entryMode !== "session") return;
         if (!exercises.length) return;
+        if (!sessionMetadata) return;
 
-        localStorage.setItem("workout.session.v1", JSON.stringify({ 
-            selectedPart, 
-            exercises 
-        }));
-    }, [selectedPart, exercises]);
+        const draftData: SessionDraft = {
+            session: sessionMetadata,
+            exercises,
+        };
+
+        localStorage.setItem("workout.currentSession.v1", JSON.stringify(draftData));
+    }, [exercises, sessionMetadata, hydrated, entryMode]);
 
 
 
@@ -666,7 +705,8 @@ export function RootClient() {
     }
 
     function startNewSession(){
-        localStorage.removeItem("workout.session.v1");
+        localStorage.removeItem("workout.currentSession.v1");
+        setSessionMetadata(null);
         setEntryMode("library");
     }
 
@@ -723,8 +763,9 @@ export function RootClient() {
       
       
       if (entryMode === "library") {
-        return <LibraryClient onConfirmSelection={(selectedExercises) => {
-            setExercises(selectedExercises);
+        return <LibraryClient onConfirmSelection={(draft) => {
+            setExercises(draft.exercises);
+            setSessionMetadata(draft.session);
             setEntryMode("session");
         }} />;
       }
