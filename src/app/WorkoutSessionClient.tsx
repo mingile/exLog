@@ -7,7 +7,7 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
-import { Exercises } from "./types";
+import { Exercises, SessionMetadata } from "./types";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { TrashIcon } from "lucide-react";
@@ -23,11 +23,12 @@ export function WorkoutSessionClient({
   setShowHistory,
   showHistory,
   changeMemo,
-  changeName,
   deleteSet,
   changeEquipment,
   changeUnit,
   changeRpe,
+  sessionMetadata,
+  changeSessionName,
 }: {
   exercises: Exercises;
   displayWeightUnit: (weight: number, unit: "kg" | "lb") => { displayWeight: number, displayUnit: "kg" | "lb" };

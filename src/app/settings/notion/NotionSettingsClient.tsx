@@ -23,10 +23,13 @@ export default function NotionSettingsPage({ notionConnected, dbConnected, onCon
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [selectedSetsDbId, setSelectedSetsDbId] = useState("");
   const [selectedExerciseDbId, setSelectedExerciseDbId] = useState("");
+  const [selectedSessionDbId, setSelectedSessionDbId] = useState("");
 
   const handleCompleteConnection = async () => {
-    if (!selectedSetsDbId || !selectedExerciseDbId) return;
-    if (selectedSetsDbId === selectedExerciseDbId) return;
+    if (!selectedSetsDbId || !selectedExerciseDbId || !selectedSessionDbId) return;
+    const ids = [selectedSetsDbId, selectedExerciseDbId, selectedSessionDbId];
+    const uniqueIds = new Set(ids);
+    if (uniqueIds.size !== ids.length) return;
   
     try {
       setSubmitting(true);
@@ -40,6 +43,7 @@ export default function NotionSettingsPage({ notionConnected, dbConnected, onCon
         body: JSON.stringify({
           workout_sets_db_id: selectedSetsDbId,
           workout_exercise_db_id: selectedExerciseDbId,
+          workout_session_db_id: selectedSessionDbId,
         }),
       });
   
@@ -107,12 +111,16 @@ export default function NotionSettingsPage({ notionConnected, dbConnected, onCon
 
 
   const setsOptions = useMemo(() => {
-    return databases.filter((db) => db.id !== selectedExerciseDbId);
-  }, [databases, selectedExerciseDbId]);
+    return databases.filter((db) => db.id !== selectedExerciseDbId && db.id !== selectedSessionDbId);
+  }, [databases, selectedExerciseDbId, selectedSessionDbId]);
 
   const exerciseOptions = useMemo(() => {
-    return databases.filter((db) => db.id !== selectedSetsDbId);
-  }, [databases, selectedSetsDbId]);
+    return databases.filter((db) => db.id !== selectedSetsDbId && db.id !== selectedSessionDbId);
+  }, [databases, selectedSetsDbId, selectedSessionDbId]);
+
+  const sessionOptions = useMemo(() => {
+    return databases.filter((db) => db.id !== selectedSetsDbId && db.id !== selectedExerciseDbId);
+  }, [databases, selectedSetsDbId, selectedExerciseDbId]);
 
   const selectedSetsDb = useMemo(() => {
     return databases.find((db) => db.id === selectedSetsDbId) ?? null;
@@ -122,10 +130,15 @@ export default function NotionSettingsPage({ notionConnected, dbConnected, onCon
     return databases.find((db) => db.id === selectedExerciseDbId) ?? null;
   }, [databases, selectedExerciseDbId]);
 
+  const selectedSessionDb = useMemo(() => {
+    return databases.find((db) => db.id === selectedSessionDbId) ?? null;
+  }, [databases, selectedSessionDbId]);
+
   const isCompleteEnabled =
     !!selectedSetsDbId &&
     !!selectedExerciseDbId &&
-    selectedSetsDbId !== selectedExerciseDbId;
+    !!selectedSessionDbId &&
+    new Set([selectedSetsDbId, selectedExerciseDbId, selectedSessionDbId]).size === 3;
 
     if (!notionConnected) {
       return (
@@ -192,7 +205,7 @@ export default function NotionSettingsPage({ notionConnected, dbConnected, onCon
             <div>
               <h1 className="text-2xl font-semibold">Notion DB 연결</h1>
               <p className="mt-2 text-sm text-gray-600">
-                운동 기록용 DB와 운동 목록 DB를 각각 선택하세요.
+                운동 기록용 DB, 운동 목록 DB, 세션 DB를 각각 선택하세요.
               </p>
             </div>
 
@@ -282,6 +295,28 @@ export default function NotionSettingsPage({ notionConnected, dbConnected, onCon
               운동 목록과 카테고리 정보를 읽어올 데이터베이스를 선택합니다.
             </p>
           </div>
+
+          <div className="space-y-2">
+            <label htmlFor="session-db" className="block text-sm font-medium">
+              Workout Session DB
+            </label>
+            <select
+              id="session-db"
+              value={selectedSessionDbId}
+              onChange={(e) => setSelectedSessionDbId(e.target.value)}
+              className="w-full rounded-md border px-3 py-2"
+            >
+              <option value="">선택하세요</option>
+              {sessionOptions.map((db) => (
+                <option key={db.id} value={db.id}>
+                  {db.title}
+                </option>
+              ))}
+            </select>
+            <p className="text-xs text-gray-500">
+              세션 정보가 저장될 데이터베이스를 선택합니다. (Sets를 묶는 상위 레코드)
+            </p>
+          </div>
         </div>
 
         <div className="rounded-xl border bg-gray-50 p-6 space-y-4">
@@ -316,11 +351,23 @@ export default function NotionSettingsPage({ notionConnected, dbConnected, onCon
                 </div>
               )}
             </div>
+
+            <div className="rounded-md border bg-white p-4">
+              <div className="font-medium">Workout Session DB</div>
+              <div className="mt-1 text-gray-700">
+                {selectedSessionDb ? selectedSessionDb.title : "아직 선택 안 됨"}
+              </div>
+              {selectedSessionDb && (
+                <div className="mt-1 break-all text-xs text-gray-500">
+                  {selectedSessionDb.id}
+                </div>
+              )}
+            </div>
           </div>
 
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <p className="text-xs text-gray-500">
-              같은 데이터베이스는 두 역할에 중복 선택할 수 없습니다.
+              같은 데이터베이스는 여러 역할에 중복 선택할 수 없습니다.
             </p>
 
             <button

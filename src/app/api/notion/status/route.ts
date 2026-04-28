@@ -29,6 +29,7 @@ export async function GET(req:Request){
         const accessToken = temp_connection?.access_token || connection?.access_token;
         const workoutSetsDbId = connection?.workout_sets_db_id;
         const workoutExerciseDbId = connection?.workout_exercise_db_id;
+        const workoutSessionDbId = connection?.workout_session_db_id;
         let notionConnected : boolean = false;
         let dbConnected : boolean = false;
 
@@ -36,7 +37,7 @@ export async function GET(req:Request){
             notionConnected = true;
         }
 
-        if (!!workoutSetsDbId && !!workoutExerciseDbId) {
+        if (!!workoutSetsDbId && !!workoutExerciseDbId && !!workoutSessionDbId) {
             dbConnected = true;
         }
 

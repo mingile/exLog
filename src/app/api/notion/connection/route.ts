@@ -82,6 +82,7 @@ export async function POST(req: Request) {
           workspace_id: tempDoc.workspace_id,
           workout_sets_db_id,
           workout_exercise_db_id,
+          workout_session_db_id,
           updated_at: now,
         },
         $setOnInsert: {

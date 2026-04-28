@@ -158,6 +158,9 @@ export function RootClient() {
     useEffect(() => {
         if (!hydrated) return;
         if (!dbConnected) return;
+        if (entryMode !== "session") return;
+        if (!sessionMetadata) return;
+        if (!exercises.length) return;
 
         const fetchWorkoutRecords = async () => {
           try {
@@ -700,6 +703,16 @@ export function RootClient() {
         setEntryMode("library");
     }
 
+    function changeSessionName(newName: string) {
+        setSessionMetadata(prev => {
+            if (!prev) return prev;
+            return {
+                ...prev,
+                sessionName: newName
+            };
+        });
+    }
+
     async function refreshNotionStatus() {
         try {
           setNotionStatusLoading(true);
@@ -763,8 +776,8 @@ export function RootClient() {
       if (entryMode === "session") {
         return (
           <div className="flex flex-col h-100vh min-h-screen">
-            <HeaderControls onSavedHistory={onSavedHistory} date={date} selectedPart={selectedPart} onSelectPart={onSelectPart} clearDoneStatus={clearDoneStatus} exercises={exercises} setExercises={setExercises} saving={saving} setSaving={setSaving} notionReady={dbConnected} setNotionReady={setDbConnected} onStartNewSession={startNewSession} />
-            <WorkoutSessionClient exercises={exercises} changeReps={changeReps} changeWeight={changeWeight} toggleDone={toggleDone} addSet={addSet} setShowHistory={setShowHistory} showHistory={showHistory} changeMemo={changeMemo} changeName={changeName} deleteSet={deleteSet} displayWeightUnit={displayWeightUnit} nextWeight={nextWeight} changeEquipment={changeEquipment} changeUnit={changeUnit} changeRpe={changeRpe} />
+            <HeaderControls onSavedHistory={onSavedHistory} date={date} clearDoneStatus={clearDoneStatus} exercises={exercises} setExercises={setExercises} saving={saving} setSaving={setSaving} notionReady={dbConnected} setNotionReady={setDbConnected} onStartNewSession={startNewSession} sessionMetadata={sessionMetadata} />
+            <WorkoutSessionClient exercises={exercises} changeReps={changeReps} changeWeight={changeWeight} toggleDone={toggleDone} addSet={addSet} setShowHistory={setShowHistory} showHistory={showHistory} changeMemo={changeMemo} deleteSet={deleteSet} displayWeightUnit={displayWeightUnit} nextWeight={nextWeight} changeEquipment={changeEquipment} changeUnit={changeUnit} changeRpe={changeRpe} sessionMetadata={sessionMetadata} changeSessionName={changeSessionName} />
             <div className="overflow-y-auto f1lex-grow pb-16">
               <WorkoutHistoryClient showHistory={showHistory} historyVersion={historyVersion} />
             </div>

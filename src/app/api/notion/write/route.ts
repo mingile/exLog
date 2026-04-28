@@ -117,8 +117,16 @@ export async function POST(req: Request){
             },
             "Equipment": EQUIPMENT_TO_NOTION[set.equipment]
             ? { "select": { "name": EQUIPMENT_TO_NOTION[set.equipment] } }
-            : undefined}
+            : undefined,
+            "Session": sessionPageId ? {
+              "relation": [
+                {
+                  "id": sessionPageId
+                }
+              ]
+            } : undefined
           }
+        }
         const response = await fetch('https://api.notion.com/v1/pages', {
           method: "POST",
           headers: {

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { Session } from "./types";
+import { Session, SavedExercise } from "./types";
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "@/components/ui/collapsible";
 import { TrashIcon } from "lucide-react";
 
