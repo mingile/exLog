@@ -20,8 +20,8 @@ export async function POST(req: Request){
   }
 
   const saved_at = body.saved_at;
-  const part = body.part;
   const exercises = body.exercises;
+  const sessionPageId = body.sessionPageId;
   //return NextResponse.json({exercise_name, weight, reps});
   
   try{

@@ -143,9 +143,8 @@ const KG_TO_LB = 2.205;
 
 export function RootClient() {
 
-    const [exercises, setExercises] = useState<Exercises>(exerciseTemplate.back);
+    const [exercises, setExercises] = useState<Exercises>([]);
     const [hydrated, setHydrated] = useState(false);
-    const [selectedPart, setSelectedPart] = useState<Part>("back");
     const [showHistory, setShowHistory] = useState<boolean>(false);
     const [historyVersion, setHistoryVersion] = useState<number>(0);
     const [saving, setSaving] = useState<boolean>(false);
@@ -315,7 +314,7 @@ export function RootClient() {
         };
 
         fetchWorkoutRecords();
-    }, [selectedPart, hydrated]);
+    }, [hydrated, dbConnected, entryMode, sessionMetadata?.sessionId]);
 
     useEffect(() => {
         const storedDraft = localStorage.getItem("workout.currentSession.v1");
@@ -411,9 +410,9 @@ export function RootClient() {
                             unit: set.unit ?? (set.equipment === "cable-machine" ? "lb" : "kg"),
                             rpe: set.rpe ?? null,
                         })),
+                        part: parsedEx.selectedPart,
                     }));
                     setExercises(migratedExercises);
-                    setSelectedPart(parsedEx.selectedPart);
                 }
                 localStorage.removeItem("workout.session.v1");
             }
@@ -689,15 +688,6 @@ export function RootClient() {
                 })),
             );
         }
-    }
-    function onSelectPart(part: Part) {
-        setSelectedPart(part);
-        setExercises(
-            exerciseTemplate[part].map((ex) => ({
-                ...ex,
-                sets: ex.sets.map((s) => ({ ...s, done: false })),
-            })),
-        );
     }
 
     function onSavedHistory(){

@@ -1,27 +1,16 @@
 'use client';
 
 import { Button } from "@/components/ui/button";
-import type { Exercises, Session, SavedExercise } from "./types";
+import type { Exercises, Session, SavedExercise, SessionMetadata } from "./types";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner"
 import React from "react";
 
-export function HeaderControls({ onSavedHistory, selectedPart, clearDoneStatus, exercises, onSelectPart, date, setExercises, saving, setSaving, notionReady, setNotionReady, onStartNewSession }: { onSavedHistory: () => void, selectedPart: ('back' | 'chest' | 'legs' | 'shoulders'), clearDoneStatus: () => void, exercises: Exercises, onSelectPart: (part: ('back' | 'chest' | 'legs' | 'shoulders')) => void, date: string, setExercises: React.Dispatch<React.SetStateAction<Exercises>>, saving: boolean, setSaving: (saving: boolean)=> void, notionReady: boolean, setNotionReady: (notionReady: boolean) => void, onStartNewSession: () => void }){
+export function HeaderControls({ onSavedHistory, clearDoneStatus, exercises, date, setExercises, saving, setSaving, notionReady, setNotionReady, onStartNewSession, sessionMetadata }: { onSavedHistory: () => void, clearDoneStatus: () => void, exercises: Exercises, date: string, setExercises: React.Dispatch<React.SetStateAction<Exercises>>, saving: boolean, setSaving: (saving: boolean)=> void, notionReady: boolean, setNotionReady: (notionReady: boolean) => void, onStartNewSession: () => void, sessionMetadata: SessionMetadata | null }){
 
     return (
         <header className="sticky top-0 z-50 bg-background/95 backdrop-blur border-b supports-[backdrop-filter]:bg-background/60">
             <div className="flex justify-start flex-wrap items-center px-4 py-2 gap-2">
-                <Select value={selectedPart} onValueChange={(value) => onSelectPart(value as ('back' | 'chest' | 'legs' | 'shoulders'))}>
-                    <SelectTrigger>
-                        <SelectValue placeholder="부위를 선택하세요" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="back">등</SelectItem>
-                        <SelectItem value="chest">가슴</SelectItem>
-                        <SelectItem value="legs">하체</SelectItem>
-                        <SelectItem value="shoulders">어깨</SelectItem>
-                    </SelectContent>
-                </Select>
                 <span className="text-xs text-muted-foreground">{date}</span>
                 <p className="text-xs bg-blue-100 border border-blue-300 rounded-md p-1 w-fit text-muted-foreground">Notion 연결 상태 : {notionReady ? '🟢' : '🔴'}</p>
                 <Button className="px-1 text-xs h-7" onClick={() => {
@@ -174,15 +163,15 @@ export function HeaderControls({ onSavedHistory, selectedPart, clearDoneStatus, 
                 };
             });
         const notionPayload = {
-            id: `${dayKey}_${selectedPart}`,
             saved_at: savedAt,
-            part: selectedPart,            
             exercises: notionExercises,
         };
+        const sessionId = sessionMetadata?.sessionId || new Date().toISOString();
+        const sessionName = sessionMetadata?.sessionName || "세션";
         const localPayload = {
-            id: `${dayKey}_${selectedPart}`,
-            saved_at: savedAt,
-            part: selectedPart,            
+            id: sessionId,
+            savedAt: savedAt,
+            sessionName: sessionName,
             exercises: localExercises,
         };
         try{

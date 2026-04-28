@@ -83,13 +83,6 @@ export function WorkoutHistoryClient({showHistory, historyVersion}: {showHistory
         const startX = Number((e.currentTarget as HTMLElement).dataset.startX);
         const currentX = touch.clientX;
         const diff = currentX - startX;
-
-
-
-
-
-
-
         
         if (diff < 0) {
             setSwipeOffset(Math.max(diff, -100));
