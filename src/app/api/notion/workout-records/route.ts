@@ -38,7 +38,7 @@ export async function GET(req: Request) {
     const connection = await collection.findOne({ user_key });
 
     const accessToken = connection?.access_token;
-    const databaseId = connection?.database_id;
+    const databaseId = connection?.workout_sets_db_id;
 
     if (!accessToken) {
       return NextResponse.json(
@@ -49,7 +49,7 @@ export async function GET(req: Request) {
 
     if (!databaseId) {
       return NextResponse.json(
-        { error: "No database connected" },
+        { error: "No Workout Sets database connected" },
         { status: 404 }
       );
     }
