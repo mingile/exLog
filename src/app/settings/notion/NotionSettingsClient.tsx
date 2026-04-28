@@ -110,29 +110,14 @@ export default function NotionSettingsPage({ notionConnected, dbConnected, onCon
   }, [notionConnected, dbConnected]);
 
 
-  const setsOptions = useMemo(() => {
-    return databases.filter((db) => db.id !== selectedExerciseDbId && db.id !== selectedSessionDbId);
-  }, [databases, selectedExerciseDbId, selectedSessionDbId]);
+  const setsOptions =  databases.filter((db) => db.id !== selectedExerciseDbId && db.id !== selectedSessionDbId);
+  const exerciseOptions =  databases.filter((db) => db.id !== selectedSetsDbId && db.id !== selectedSessionDbId);
 
-  const exerciseOptions = useMemo(() => {
-    return databases.filter((db) => db.id !== selectedSetsDbId && db.id !== selectedSessionDbId);
-  }, [databases, selectedSetsDbId, selectedSessionDbId]);
+  const sessionOptions =  databases.filter((db) => db.id !== selectedSetsDbId && db.id !== selectedExerciseDbId);
 
-  const sessionOptions = useMemo(() => {
-    return databases.filter((db) => db.id !== selectedSetsDbId && db.id !== selectedExerciseDbId);
-  }, [databases, selectedSetsDbId, selectedExerciseDbId]);
-
-  const selectedSetsDb = useMemo(() => {
-    return databases.find((db) => db.id === selectedSetsDbId) ?? null;
-  }, [databases, selectedSetsDbId]);
-
-  const selectedExerciseDb = useMemo(() => {
-    return databases.find((db) => db.id === selectedExerciseDbId) ?? null;
-  }, [databases, selectedExerciseDbId]);
-
-  const selectedSessionDb = useMemo(() => {
-    return databases.find((db) => db.id === selectedSessionDbId) ?? null;
-  }, [databases, selectedSessionDbId]);
+  const selectedSetsDb = databases.find((db) => db.id === selectedSetsDbId) ?? null;
+  const selectedExerciseDb = databases.find((db) => db.id === selectedExerciseDbId) ?? null;
+  const selectedSessionDb = databases.find((db) => db.id === selectedSessionDbId) ?? null;
 
   const isCompleteEnabled =
     !!selectedSetsDbId &&
