@@ -33,22 +33,42 @@ export function WorkoutHistoryClient({showHistory, historyVersion}: {showHistory
         }
     }, [showHistory, historyVersion]);
      
-    function groupByDay(sessions: Session[]){
-        const groupedSessions: {[dayKey: string]: Session[]} = {};
+    function groupBySessionName(sessions: Session[]){
+        const groupedSessions: {[sessionName: string]: Session[]} = {};
         sessions.forEach(session => {
-            const dayKey = session.id.split('_')[0];
-            if(!groupedSessions[dayKey]){
-                groupedSessions[dayKey] = [];
+            let sessionName = session.sessionName;
+            if (!sessionName) {
+                // sessionName이 없으면 savedAt에서 생성
+                const date = new Date(session.savedAt);
+                if (!isNaN(date.getTime())) {
+                    const year = date.getFullYear();
+                    const month = String(date.getMonth() + 1).padStart(2, '0');
+                    const day = String(date.getDate()).padStart(2, '0');
+                    const hours = String(date.getHours()).padStart(2, '0');
+                    const minutes = String(date.getMinutes()).padStart(2, '0');
+                    sessionName = `${year}-${month}-${day} ${hours}:${minutes} 세션`;
+                } else {
+                    sessionName = "세션";
+                }
             }
-            groupedSessions[dayKey].push(session);
+            if(!groupedSessions[sessionName]){
+                groupedSessions[sessionName] = [];
+            }
+            groupedSessions[sessionName].push(session);
         });
         return groupedSessions;
     }
-
-    function deleteSession(sessionId: string){
-            const filteredHistory = sessions.filter((s: Session) => s.id !== sessionId);
-            localStorage.setItem(sessionKey, JSON.stringify(filteredHistory));
-            setSessions(filteredHistory);
+    
+    function groupExercisesByPart(exercises: (SavedExercise & { part?: string })[]): Map<string, (SavedExercise & { part?: string })[]> {
+        const grouped = new Map<string, (SavedExercise & { part?: string })[]>();
+        exercises.forEach(ex => {
+            const part = ex.part || "기타";
+            if (!grouped.has(part)) {
+                grouped.set(part, []);
+            }
+            grouped.get(part)!.push(ex);
+        });
+        return grouped;
     }
 
     function deleteSet(sessionId: string, exerciseId: string, setNo: number) {
@@ -129,28 +149,35 @@ export function WorkoutHistoryClient({showHistory, historyVersion}: {showHistory
     }
     
     if (!showHistory) return null;
-    const grouped = groupByDay(sessions);
-    const days = Object.keys(grouped).sort((a,b)=> b.localeCompare(a));
+    const grouped = groupBySessionName(sessions);
+    const sessionNames = Object.keys(grouped).sort((a,b)=> b.localeCompare(a));
     return(
         <main className="p-2">
-            {days.map((dayKey, i) => {
-                const daySessions = grouped[dayKey];
+            {sessionNames.map((sessionName, i) => {
+                const sessionList = grouped[sessionName];
+                const session = sessionList[0];
+                const partGrouped = groupExercisesByPart(session.exercises);
+                const parts = Array.from(partGrouped.keys());
+                
                 return(
-                    <Accordion key={dayKey} type="single" collapsible>
+                    <Accordion key={session.id} type="single" collapsible>
                         <AccordionItem value={`item-${i}`}>
-                            <AccordionTrigger><div>{dayKey}</div></AccordionTrigger>
+                            <AccordionTrigger><div>{sessionName}</div></AccordionTrigger>
                             <AccordionContent>
-                                {daySessions.map((session) => {
+                                {parts.map((part) => {
+                                    const partExercises = partGrouped.get(part) || [];
                                     return(
-                                        <div key={session.id}>
+                                        <div key={part}>
                                         <Collapsible>
                                                 <div className="ps-4 flex">
                                                 <CollapsibleTrigger>
-                                                    <div className="text-md font-bold">{session.part}</div>
+                                                    <div className="text-md font-bold">
+                                                        {part}
+                                                    </div>
                                                 </CollapsibleTrigger>
                                                     </div>
                                                 <CollapsibleContent>
-                                                    {session.exercises.map((ex) => {
+                                                    {partExercises.map((ex) => {
                                                         return(
                                                         <Collapsible key={ex.id}>
                                                             <CollapsibleTrigger>
@@ -159,13 +186,13 @@ export function WorkoutHistoryClient({showHistory, historyVersion}: {showHistory
                                                                     </div>
                                                             </CollapsibleTrigger>
                                                             <CollapsibleContent>
-                                                                    <div className="grid grid-cols-4 justify-items-center">
+                                                                    <div className="ps-8 grid grid-cols-4 justify-items-center">
                                                                         <div>세트번호</div>
                                                                         <div>무게</div>
                                                                         <div>횟수</div>
                                                                         <div>RPE</div>
                                                                     </div>
-                                                                    {ex.sets.map((set) => {
+                                                                    {ex.sets.map((set: SavedExercise['sets'][0]) => {
                                                                         const setKey = `${session.id}-${ex.id}-${set.setNo}`;
                                                                         const isActive = swipingSet === setKey;
                                                                         const offset = isActive ? swipeOffset : 0;
@@ -188,7 +215,7 @@ export function WorkoutHistoryClient({showHistory, historyVersion}: {showHistory
                                                                                     <TrashIcon className="size-5 text-white" />
                                                                                 </div>
                                                                                 <div 
-                                                                                    className="grid grid-cols-4 justify-items-center bg-white transition-transform"
+                                                                                    className="grid grid-cols-4 ps-8 justify-items-center bg-white transition-transform"
                                                                                     style={{ transform: `translateX(${offset}px)` }}
                                                                                 >
                                                                                     <div>{set.setNo}</div>
