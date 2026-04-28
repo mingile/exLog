@@ -1,16 +1,18 @@
 export type SetItem = { weight: number; reps: number; done: boolean, synced: boolean, equipment: string, memo: string, unit: "kg" | "lb", rpe: number | null };
-export type Exercise = { id: string; name: string; sets: SetItem[] };
+export type Exercise = { id: string; name: string; sets: SetItem[]; part?: string; exercisePageId?: string };
 export type Exercises = Exercise[];
 export type Part = "back" | "chest" | "legs" | "shoulders";
 export type Session = { 
     id: string;
     savedAt: string;
-    part: Part; 
-    exercises: SavedExercise[];
+    sessionName?: string;
+    part?: Part;
+    exercises: (SavedExercise & { part?: string })[];
 };
 export type SavedExercise = {
     id: string;
     name: string;
+    exercisePageId?: string;
     sets: {
         setNo: number;
         weight: number;
@@ -40,6 +42,7 @@ export type LibraryExercise = {
     category: LibraryCategory;
     equipment?: string;
     primaryEffect?: string;
+    notionPageId?: string;
 };
 
 export type LibraryState = 

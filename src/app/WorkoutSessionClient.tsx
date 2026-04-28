@@ -39,41 +39,64 @@ export function WorkoutSessionClient({
   setShowHistory: (show: boolean) => void;
   showHistory: boolean;
   changeMemo: (exIdx: number, setIdx: number, value: string) => void;
-  changeName: (exIdx: number, value: string) => void;
   deleteSet: (exId: string, setIdx: number) => void;
   changeEquipment: (exIdx: number, setIdx: number, equipment: string) => void;
   changeUnit: (exIdx: number, setIdx: number, unit: "kg" | "lb") => void;
   changeRpe: (exIdx: number, setIdx: number, rpe: null | number) => void;
+  sessionMetadata: SessionMetadata | null;
+  changeSessionName: (newName: string) => void;
 }) {
   const router = useRouter();
-  const originalNames = useRef<Record<number, string>>({});
+  const [sessionNameInput, setSessionNameInput] = useState("");
+
+  useEffect(() => {
+    if (sessionMetadata) {
+      setSessionNameInput(sessionMetadata.sessionName);
+    }
+  }, [sessionMetadata]);
+
+  function getDefaultSessionName(): string {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    const hours = String(now.getHours()).padStart(2, '0');
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+    return `${year}-${month}-${day} ${hours}:${minutes} 세션`;
+  }
+
+  function handleSessionNameBlur() {
+    const trimmed = sessionNameInput.trim();
+    if (trimmed === "") {
+      const defaultName = getDefaultSessionName();
+      setSessionNameInput(defaultName);
+      changeSessionName(defaultName);
+    } else {
+      changeSessionName(trimmed);
+    }
+  }
   
   return (
     <main className="p-2 space-y-2">
+      <div className="mb-3">
+        <input
+          type="text"
+          value={sessionNameInput}
+          onChange={(e) => setSessionNameInput(e.target.value)}
+          onBlur={handleSessionNameBlur}
+          placeholder="세션 이름을 입력하세요"
+          className="w-full px-3 py-2 text-base font-medium border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+        />
+      </div>
       {exercises.map((ex, i) => {
         return (
           <Accordion key={ex.id} type="single" collapsible>
             <AccordionItem value={`item-${i}`} className="rounded-lg border px-2">
               <AccordionTrigger className="py-3">
                 <div className="flex w-full items-center justify-between pr-2">
-                  <input
-                    type="text"
-                    value={ex.name}
-                    onFocus={() => originalNames.current[i] = ex.name}
-                    // react의 controlled input vs uncontrolled input
-                    onChange={(e) => {
-                      changeName(i, e.currentTarget.value)
-                    }
-                    }
-                    onBlur={(e) => {
-                      if(e.currentTarget.value.trim() === "" || e.currentTarget.value === originalNames.current[i]){
-                        changeName(i, originalNames.current[i]);
-                        console.log(e.currentTarget.value);
-                      }
-                    }} 
-                    
-                    className="text-base font-medium"
-                  />
+                  <span className="text-base font-medium">
+                    {ex.name}
+                  </span>
                   <PlusButton exerciseIndex={i} addSet={addSet} />
                 </div>
               </AccordionTrigger>

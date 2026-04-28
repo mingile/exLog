@@ -37,15 +37,18 @@ export async function POST(req: Request) {
   const body = await req.json();
   const workout_sets_db_id = body.workout_sets_db_id;
   const workout_exercise_db_id = body.workout_exercise_db_id;
+  const workout_session_db_id = body.workout_session_db_id;
 
-  if (!workout_sets_db_id || !workout_exercise_db_id) {
+  if (!workout_sets_db_id || !workout_exercise_db_id || !workout_session_db_id) {
     return NextResponse.json(
       { error: "Missing database ids" },
       { status: 400 }
     );
   }
 
-  if (workout_sets_db_id === workout_exercise_db_id) {
+  const ids = [workout_sets_db_id, workout_exercise_db_id, workout_session_db_id];
+  const uniqueIds = new Set(ids);
+  if (uniqueIds.size !== ids.length) {
     return NextResponse.json(
       { error: "Duplicate database ids are not allowed" },
       { status: 400 }

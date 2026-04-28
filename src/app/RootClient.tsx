@@ -203,15 +203,6 @@ export function RootClient() {
                 if (!properties.Part.select.name) return null;
                 return properties.Part.select.name;
             }
-            function getExercise(properties: any) {
-                if (!properties) return null;
-                if (!properties.Exercise) return null;
-                if (!Array.isArray(properties.Exercise.rich_text)) return null;
-                if (properties.Exercise.rich_text.length === 0) return null;
-                const exercise = properties.Exercise.rich_text.map((t:any)=>t.plain_text).join("");
-                if (exercise.trim() === "") return null;
-                return exercise;
-            }
             function getMemo(properties: any) {
                 if (!properties) return null;
                 if (!properties.Memo) return null;
@@ -242,6 +233,19 @@ export function RootClient() {
                 }
             }
 
+            function getRpe(properties: any) {
+                if (!properties) return null;
+                return properties.RPE?.number ?? null;
+            }
+
+            function getExerciseRelation(properties: any) {
+                if (!properties) return null;
+                if (!properties.Exercise) return null;
+                if (!Array.isArray(properties.Exercise.relation)) return null;
+                if (properties.Exercise.relation.length === 0) return null;
+                return properties.Exercise.relation[0]?.id ?? null;
+            }
+
             const rawRow = data.results.map((result: any) => {
               return {
                 title: getTitle(result.properties),
@@ -250,26 +254,32 @@ export function RootClient() {
                 reps: getReps(result.properties),
                 date: getDate(result.properties),
                 part: getPart(result.properties),
-                exercise: getExercise(result.properties),
+                exercisePageId: getExerciseRelation(result.properties),
                 memo: getMemo(result.properties),
                 equipment: getEquipment(result.properties),
+                rpe: getRpe(result.properties),
               };
             });
 
             setExercises((prev) => {
+                // Exercise pageId로 필터링
                 const filteredRow = rawRow.filter(
                     (row: any) =>
-                        row.part === selectedPart && prev.some((ex: any) => ex.name === row.exercise)
+                        row.exercisePageId && 
+                        prev.some((ex: any) => ex.exercisePageId === row.exercisePageId)
                 );
 
+                // Exercise pageId 기준으로 그룹핑
                 const groupedRow = filteredRow.reduce((acc: any, row: any) => {
-                    if (!acc[row.exercise]) {
-                        acc[row.exercise] = [];
+                    const key = row.exercisePageId;
+                    if (!acc[key]) {
+                        acc[key] = [];
                     }
-                    acc[row.exercise].push(row);
+                    acc[key].push(row);
                     return acc;
                 }, {});
 
+                // 각 그룹에서 최신 row 1개 선택 (날짜 최신, 같은 날짜면 setNo 큰 것)
                 const filteredRowbyExercise = Object.values(groupedRow).map((group: any) => {
                     return group.sort((a: any, b: any) => {
                         if (new Date(b.date).getTime() === new Date(a.date).getTime()) {
@@ -279,13 +289,15 @@ export function RootClient() {
                     })[0];
                 });
 
+                // Exercise pageId를 key로 맵 생성
                 const latestMap = filteredRowbyExercise.reduce((acc: any, row: any) => {
-                    acc[row.exercise] = row;
+                    acc[row.exercisePageId] = row;
                     return acc;
                 }, {});
 
                 return prev.map((ex: any) => {
-                    const latest = latestMap[ex.name];
+                    // Exercise pageId로 최신 기록 조회
+                    const latest = latestMap[ex.exercisePageId];
 
                     if (!latest) return ex;
                     if (ex.sets[0]?.done === true) return ex;
@@ -299,6 +311,7 @@ export function RootClient() {
                             reps: latest.reps ?? set.reps,
                             memo: latest.memo ?? set.memo,
                             equipment: latest.equipment ?? set.equipment,
+                            rpe: latest.rpe ?? set.rpe,
                         };
                     });
 
@@ -534,19 +547,6 @@ export function RootClient() {
             });
         });
     }
-
-    function changeName(exIdx: number, value: string){
-        setExercises((prev) =>
-            prev.map((ex,i) => {
-                if(i !== exIdx) return ex;
-                return{
-                    ...ex,
-                    name: value
-                }
-            })
-        )
-    }
-
 
     function changeReps(exIdx: number, setIdx: number, delta: number) {
         setExercises((prev) =>

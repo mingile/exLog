@@ -54,6 +54,17 @@ export async function POST(req: Request){
     };
 
     for(const exercise of exercises){
+      // 🔍 exercisePageId 검증 추가
+      if (!exercise.exercisePageId) {
+        console.error("❌ exercisePageId missing:", {
+          exerciseName: exercise.name,
+          exerciseId: exercise.id
+        });
+        return NextResponse.json({
+          error: `Exercise "${exercise.name}" has no exercisePageId. Please select from library.`
+        }, {status: 400});
+      }
+
       for(const set of exercise.sets){
         const notion_payload = {
           parent: {
@@ -84,16 +95,14 @@ export async function POST(req: Request){
               }
             },
             "Part": {
-              "select": { // notion Part 속성은 select임
-                "name": part
+              "select": {
+                "name": exercise.part || "기타"
               }
             },
             "Exercise": {
-              "rich_text": [
+              "relation": [
                 {
-                  "text": {
-                    "content": exercise.name
-                  }
+                  "id": exercise.exercisePageId
                 }
               ]
             },
