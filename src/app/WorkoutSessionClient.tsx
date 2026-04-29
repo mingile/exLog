@@ -227,6 +227,7 @@ function Row({
   const [draftRpe, setDraftRpe] = useState<string>(rpe ? String(rpe) : "");
   const [swipeOffset, setSwipeOffset] = useState<number>(0);
   const [isSwiping, setIsSwiping] = useState<boolean>(false);
+  const [isCollapsed, setIsCollapsed] = useState<boolean>(false); 
   const KG_TO_LB = 2.20462;
 
   useEffect(() => {
@@ -237,6 +238,10 @@ function Row({
   useEffect(() => {
     setDraftRpe(rpe ? String(rpe) : "");
   }, [rpe]);
+
+  useEffect(() => {
+    setIsCollapsed(done);
+  }, [done])
 
   function beginWeightEdit() {
     setDraftWeight(String(displayWeight));
@@ -329,35 +334,8 @@ function Row({
     setSwipeOffset(0);
   }
 
-  function handleMouseDown(e: React.MouseEvent) {
-    setIsSwiping(true);
-    setSwipeOffset(0);
-    (e.currentTarget as HTMLElement).dataset.startX = String(e.clientX);
-  }
-
-  function handleMouseMove(e: React.MouseEvent) {
-    if (!isSwiping) return;
-    
-    const startX = Number((e.currentTarget as HTMLElement).dataset.startX);
-    const currentX = e.clientX;
-    const diff = currentX - startX;
-
-    if (diff < 0) {
-      setSwipeOffset(Math.max(diff, -100));
-    }
-  }
-
-  function handleMouseUp() {
-    if (swipeOffset < -50) {
-      deleteSet(exId, setIndex);
-    }
-    setIsSwiping(false);
-    setSwipeOffset(0);
-  }
-
-  function handleMouseLeave() {
-    setIsSwiping(false);
-    setSwipeOffset(0);
+  function handleCollapse() {
+    setIsCollapsed(!isCollapsed);
   }
 
   return (
@@ -370,32 +348,43 @@ function Row({
       <div className="absolute inset-0 bg-red-500 flex items-center justify-end pr-4">
         <TrashIcon className="size-6 text-white" />
       </div>
-      
       <div 
-        className="rounded-xl border bg-card p-3 space-y-3 transition-transform"
-        style={{ transform: `translateX(${swipeOffset}px)` }}
-      >
+        className={`rounded-xl border bg-card p-3 space-y-3 ${isCollapsed? "bg-green-400" : "bg-card"}`}
+        style={{ transform: `translateX(${swipeOffset}px)`,transition: isCollapsed ? "none" : "all 0.3s ease-in-out" }}
+        >
         <div className="flex items-center justify-between">
-        <div className="relative bg-card p-3 space-y-3 transition-transform">세트 {setIndex + 1}
-        <Button variant="outline" className="ml-3 size-8" 
-        onClick={e => {
-          e.stopPropagation();
-          deleteSet(exId, setIndex);
-        }}>
-          <TrashIcon className="h-5 w-5" />
-        </Button>
+        <div className={`relative flex items-center gap-2 flex-wrap`} 
+        style={{ color: isCollapsed ? "black" : "", fontWeight: isCollapsed ? "bold" : "normal"}}>
+          <span>세트 {setIndex + 1}</span>
+          {isCollapsed ? (
+            <div className="flex items-center gap-2 flex-wrap ml-auto">
+              <span className="font-semibold text-md">{displayWeight}{displayUnit} × {reps}회</span>
+                {memo.trim() !== "" && (
+                  <span className="text-md text-gray-600 italic truncate max-w-[150px]">"{memo}"</span>
+                )}
+              </div>
+          ) : (
+            <Button variant="outline" className="ml-3 size-8" 
+            onClick={e => {
+              e.stopPropagation();
+              deleteSet(exId, setIndex);
+            }}>
+              <TrashIcon className="h-5 w-5" />
+            </Button>
+          )}
         </div>
-        <label className="flex items-center gap-2 text-sm text-muted-foreground">
+        <label className="flex items-center gap-2 text-sm text-muted-foreground" style={{ color: isCollapsed ? "black" : "" }}>
           완료
           <input
             type="checkbox"
             className="h-5 w-5 accent-blue-500"
             checked={done}
             onChange={() => onToggleDone(exerciseIndex, setIndex)}
-          />
+            />
         </label>
       </div>
-
+        {isCollapsed ? null : (
+              <>
       <div className="grid grid-cols-2 gap-2">
         <div className="rounded-lg bg-muted/50 p-3 text-center">
           <div className="text-xs text-muted-foreground">무게</div>
@@ -455,7 +444,6 @@ function Row({
           <div className="mt-1 text-lg font-semibold">{reps}회</div>
         </div>
       </div>
-
       <div className="grid grid-cols-2 gap-2">
         <ControlBlock
           label="무게 조절"
@@ -468,7 +456,6 @@ function Row({
           onPlus={() => onRepsDelta(exerciseIndex, setIndex, +1)}
         />
       </div>
-
       <div className="grid grid-cols-2 gap-2">
       <div className="items-center justify-center">
       <div className="text-xs text-muted-foreground text-center mb-2">기구</div>
@@ -525,6 +512,8 @@ function Row({
           placeholder="세트 메모"
         />
       </div>
+      </>
+        )}
       </div>
     </div>
   );

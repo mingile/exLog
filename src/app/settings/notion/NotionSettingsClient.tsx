@@ -237,27 +237,6 @@ export default function NotionSettingsPage({ notionConnected, dbConnected, onCon
 )}
 
         <div className="rounded-xl border bg-white p-6 shadow-sm space-y-5">
-          <div className="space-y-2">
-            <label htmlFor="sets-db" className="block text-sm font-medium">
-              Set DB
-            </label>
-            <select
-              id="sets-db"
-              value={selectedSetsDbId}
-              onChange={(e) => setSelectedSetsDbId(e.target.value)}
-              className="w-full rounded-md border px-3 py-2"
-            >
-              <option value="">선택하세요</option>
-              {setsOptions.map((db) => (
-                <option key={db.id} value={db.id}>
-                  {db.title}
-                </option>
-              ))}
-            </select>
-            <p className="text-xs text-gray-500">
-              세트 기록이 저장될 데이터베이스를 선택합니다.
-            </p>
-          </div>
 
           <div className="space-y-2">
             <label htmlFor="exercise-db" className="block text-sm font-medium">
@@ -302,7 +281,30 @@ export default function NotionSettingsPage({ notionConnected, dbConnected, onCon
               세션 정보가 저장될 데이터베이스를 선택합니다. (Sets를 묶는 상위 레코드)
             </p>
           </div>
+
+        <div className="space-y-2">
+            <label htmlFor="sets-db" className="block text-sm font-medium">
+              Workout Set DB
+            </label>
+            <select
+              id="sets-db"
+              value={selectedSetsDbId}
+              onChange={(e) => setSelectedSetsDbId(e.target.value)}
+              className="w-full rounded-md border px-3 py-2"
+            >
+              <option value="">선택하세요</option>
+              {setsOptions.map((db) => (
+                <option key={db.id} value={db.id}>
+                  {db.title}
+                </option>
+              ))}
+            </select>
+            <p className="text-xs text-gray-500">
+              세트 기록이 저장될 데이터베이스를 선택합니다.
+            </p>
+          </div>
         </div>
+
 
         <div className="rounded-xl border bg-gray-50 p-6 space-y-4">
           <div>
