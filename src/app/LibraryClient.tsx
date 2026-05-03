@@ -1,7 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { LibraryCategory, LibraryExercise, LibraryState, Exercise, SetItem, SessionDraft } from "./types";
+import {
+  LibraryCategory,
+  LibraryExercise,
+  LibraryState,
+  Exercise,
+  SetItem,
+  SessionDraft,
+} from "./types";
 import {
   transformNotionRowToLibraryExercise,
   groupExercisesByCategory,
@@ -36,7 +43,7 @@ function createDefaultSet(equipment?: string): SetItem {
 }
 
 function convertLibraryExerciseToSessionExercise(
-  libraryExercise: LibraryExercise
+  libraryExercise: LibraryExercise,
 ): Exercise {
   return {
     id: libraryExercise.id,
@@ -55,8 +62,11 @@ export function LibraryClient({ onConfirmSelection }: LibraryClientProps) {
   const [libraryState, setLibraryState] = useState<LibraryState>({
     status: "loading",
   });
-  const [selectedCategory, setSelectedCategory] = useState<LibraryCategory | null>(null);
-  const [selectedExercises, setSelectedExercises] = useState<Set<string>>(new Set());
+  const [selectedCategory, setSelectedCategory] =
+    useState<LibraryCategory | null>(null);
+  const [selectedExercises, setSelectedExercises] = useState<Set<string>>(
+    new Set(),
+  );
   const [validationError, setValidationError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -78,7 +88,7 @@ export function LibraryClient({ onConfirmSelection }: LibraryClientProps) {
         setLibraryState({
           status: "error",
           message: errorData.error || "Failed to fetch exercises",
-        }); 
+        });
         return;
       }
 
@@ -135,7 +145,7 @@ export function LibraryClient({ onConfirmSelection }: LibraryClientProps) {
       }
       return next;
     });
-    
+
     if (validationError) {
       setValidationError(null);
     }
@@ -153,7 +163,7 @@ export function LibraryClient({ onConfirmSelection }: LibraryClientProps) {
     }
 
     const selectedIds: string[] = Array.from(selectedExercises);
-    
+
     const exerciseMap = new Map<string, LibraryExercise>();
     for (const exercise of libraryState.exercises) {
       exerciseMap.set(exercise.id, exercise);
@@ -163,7 +173,9 @@ export function LibraryClient({ onConfirmSelection }: LibraryClientProps) {
     for (const id of selectedIds) {
       const libraryExercise = exerciseMap.get(id);
       if (libraryExercise) {
-        sessionExercises.push(convertLibraryExerciseToSessionExercise(libraryExercise));
+        sessionExercises.push(
+          convertLibraryExerciseToSessionExercise(libraryExercise),
+        );
       }
     }
 
@@ -180,7 +192,10 @@ export function LibraryClient({ onConfirmSelection }: LibraryClientProps) {
         exercises: sessionExercises,
       };
 
-      localStorage.setItem("workout.currentSession.v1", JSON.stringify(draftData));
+      localStorage.setItem(
+        "workout.currentSession.v1",
+        JSON.stringify(draftData),
+      );
 
       onConfirmSelection(draftData);
     } catch (error) {
@@ -211,7 +226,9 @@ export function LibraryClient({ onConfirmSelection }: LibraryClientProps) {
     return (
       <div className="flex flex-col h-screen items-center justify-center px-4">
         <p className="text-gray-500 mb-4">등록된 운동이 없습니다</p>
-        <p className="text-sm text-gray-400">Exercise DB에 운동을 추가해주세요</p>
+        <p className="text-sm text-gray-400">
+          Exercise DB에 운동을 추가해주세요
+        </p>
       </div>
     );
   }
@@ -265,7 +282,9 @@ export function LibraryClient({ onConfirmSelection }: LibraryClientProps) {
               >
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
-                    <h3 className="font-medium text-gray-900">{exercise.name}</h3>
+                    <h3 className="font-medium text-gray-900">
+                      {exercise.name}
+                    </h3>
                     <div className="flex gap-2 mt-1">
                       {exercise.equipment && (
                         <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
@@ -311,8 +330,8 @@ export function LibraryClient({ onConfirmSelection }: LibraryClientProps) {
             <p className="text-sm text-red-600">{validationError}</p>
           </div>
         )}
-        <Button 
-          className="w-full" 
+        <Button
+          className="w-full"
           onClick={handleConfirmSelection}
           variant={selectedExercises.size === 0 ? "outline" : "default"}
         >
