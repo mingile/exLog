@@ -9,13 +9,14 @@ import {
 import { Button } from "@/components/ui/button";
 import { Exercises, SessionMetadata } from "./types";
 import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { TrashIcon } from "lucide-react";
+import { convertInputToKg } from "@/lib/weightUnit";
+import { nextWeight } from "@/lib/weightUnit";
 
 export function WorkoutSessionClient({
   exercises,
   displayWeightUnit,
-  nextWeight,
   addSet,
   changeWeight,
   changeReps,
@@ -31,8 +32,15 @@ export function WorkoutSessionClient({
   changeSessionName,
 }: {
   exercises: Exercises;
-  displayWeightUnit: (weight: number, unit: "kg" | "lb") => { displayWeight: number, displayUnit: "kg" | "lb" };
-  nextWeight: (weight: number, equipment: string, direction: "increase"|"decrease") => number;
+  displayWeightUnit: (
+    weight: number,
+    unit: "kg" | "lb",
+  ) => { displayWeight: number; displayUnit: "kg" | "lb" };
+  nextWeight: (
+    weight: number,
+    equipment: string,
+    direction: "increase" | "decrease",
+  ) => number;
   addSet: (exIdx: number) => void;
   changeWeight: (exIdx: number, setIdx: number, nextWeight: number) => void;
   changeReps: (exIdx: number, setIdx: number, delta: number) => void;
@@ -59,10 +67,10 @@ export function WorkoutSessionClient({
   function getDefaultSessionName(): string {
     const now = new Date();
     const year = now.getFullYear();
-    const month = String(now.getMonth() + 1).padStart(2, '0');
-    const day = String(now.getDate()).padStart(2, '0');
-    const hours = String(now.getHours()).padStart(2, '0');
-    const minutes = String(now.getMinutes()).padStart(2, '0');
+    const month = String(now.getMonth() + 1).padStart(2, "0");
+    const day = String(now.getDate()).padStart(2, "0");
+    const hours = String(now.getHours()).padStart(2, "0");
+    const minutes = String(now.getMinutes()).padStart(2, "0");
     return `${year}-${month}-${day} ${hours}:${minutes} 세션`;
   }
 
@@ -76,7 +84,7 @@ export function WorkoutSessionClient({
       changeSessionName(trimmed);
     }
   }
-  
+
   return (
     <main className="p-2 space-y-2">
       <div className="mb-3">
@@ -92,12 +100,13 @@ export function WorkoutSessionClient({
       {exercises.map((ex, i) => {
         return (
           <Accordion key={ex.id} type="single" collapsible>
-            <AccordionItem value={`item-${i}`} className="rounded-lg border px-2">
+            <AccordionItem
+              value={`item-${i}`}
+              className="rounded-lg border px-2"
+            >
               <AccordionTrigger className="py-3">
                 <div className="flex w-full items-center justify-between pr-2">
-                  <span className="text-base font-medium">
-                    {ex.name}
-                  </span>
+                  <span className="text-base font-medium">{ex.name}</span>
                   <PlusButton exerciseIndex={i} addSet={addSet} />
                 </div>
               </AccordionTrigger>
@@ -148,13 +157,15 @@ export function WorkoutSessionClient({
         >
           Notion 연동
         </Button>
-        <Button variant="outline" onClick={() => router.push("/settings/notion")}>
+        <Button
+          variant="outline"
+          onClick={() => router.push("/settings/notion")}
+        >
           Notion 설정
         </Button>
       </div>
     </main>
   );
-
 
   function PlusButton({
     exerciseIndex,
@@ -213,8 +224,15 @@ function Row({
   memo: string;
   changeMemo: (exIdx: number, setIdx: number, value: string) => void;
   deleteSet: (exId: string, setIdx: number) => void;
-  displayWeightUnit: (weight: number, unit: "kg" | "lb") => { displayWeight: number, displayUnit: "kg" | "lb" };
-  nextWeight: (weight: number, equipment: string, direction: "increase"|"decrease") => number;
+  displayWeightUnit: (
+    weight: number,
+    unit: "kg" | "lb",
+  ) => { displayWeight: number; displayUnit: "kg" | "lb" };
+  nextWeight: (
+    weight: number,
+    equipment: string,
+    direction: "increase" | "decrease",
+  ) => number;
   changeEquipment: (exIdx: number, setIdx: number, equipment: string) => void;
   changeUnit: (exIdx: number, setIdx: number, unit: "kg" | "lb") => void;
   unit: "kg" | "lb";
@@ -227,8 +245,7 @@ function Row({
   const [draftRpe, setDraftRpe] = useState<string>(rpe ? String(rpe) : "");
   const [swipeOffset, setSwipeOffset] = useState<number>(0);
   const [isSwiping, setIsSwiping] = useState<boolean>(false);
-  const [isCollapsed, setIsCollapsed] = useState<boolean>(false); 
-  const KG_TO_LB = 2.20462;
+  const [isCollapsed, setIsCollapsed] = useState<boolean>(false);
 
   useEffect(() => {
     if (isEditingWeight) return;
@@ -241,33 +258,15 @@ function Row({
 
   useEffect(() => {
     setIsCollapsed(done);
-  }, [done])
+  }, [done]);
 
   function beginWeightEdit() {
     setDraftWeight(String(displayWeight));
     setIsEditingWeight(true);
   }
 
-  function convertInputToKg(value: string): number | null {
-    const trimmed = value.trim();
-    if (trimmed === "") return null;
-
-    const parsed = Number(trimmed);
-    if (!Number.isFinite(parsed)) return null;
-
-    if (unit === "kg") {
-      const normalizedKg = Math.round(parsed * 10) / 10;
-      if (normalizedKg < 0) return null;
-      return normalizedKg;
-    }
-
-    const normalizedLb = Math.round(parsed);
-    if (normalizedLb < 0) return null;
-    return Math.round((normalizedLb / KG_TO_LB) * 10) / 10;
-  }
-
   function commitWeightEdit() {
-    const nextKg = convertInputToKg(draftWeight);
+    const nextKg = convertInputToKg(draftWeight, unit);
 
     if (nextKg === null) {
       setDraftWeight(String(displayWeight));
@@ -281,19 +280,19 @@ function Row({
 
   function commitRpeEdit() {
     const trimmed = draftRpe.trim();
-  
+
     if (trimmed === "") {
       changeRpe(exerciseIndex, setIndex, null);
       return;
     }
-  
+
     const nextRpe = Number(trimmed);
-  
+
     if (!Number.isInteger(nextRpe) || nextRpe < 6 || nextRpe > 10) {
       setDraftRpe(rpe !== null ? String(rpe) : "");
       return;
     }
-  
+
     changeRpe(exerciseIndex, setIndex, nextRpe);
   }
 
@@ -315,7 +314,7 @@ function Row({
 
   function handleTouchMove(e: React.TouchEvent) {
     if (!isSwiping) return;
-    
+
     const touch = e.touches[0];
     const startX = Number((e.currentTarget as HTMLElement).dataset.startX);
     const currentX = touch.clientX;
@@ -339,7 +338,7 @@ function Row({
   }
 
   return (
-    <div 
+    <div
       className="relative overflow-hidden rounded-xl"
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
@@ -348,171 +347,233 @@ function Row({
       <div className="absolute inset-0 bg-red-500 flex items-center justify-end pr-4">
         <TrashIcon className="size-6 text-white" />
       </div>
-      <div 
-        className={`rounded-xl border bg-card p-3 space-y-3 ${isCollapsed? "bg-green-400" : "bg-card"}`}
-        style={{ transform: `translateX(${swipeOffset}px)`,transition: isCollapsed ? "none" : "all 0.3s ease-in-out" }}
-        >
+      <div
+        className={`rounded-xl border bg-card p-3 space-y-3 ${isCollapsed ? "bg-green-400" : "bg-card"}`}
+        style={{
+          transform: `translateX(${swipeOffset}px)`,
+          transition: isCollapsed ? "none" : "all 0.3s ease-in-out",
+        }}
+      >
         <div className="flex items-center justify-between">
-        <div className={`relative flex items-center gap-2 flex-wrap`} 
-        style={{ color: isCollapsed ? "black" : "", fontWeight: isCollapsed ? "bold" : "normal"}}>
-          <span>세트 {setIndex + 1}</span>
-          {isCollapsed ? (
-            <div className="flex items-center gap-2 flex-wrap ml-auto">
-              <span className="font-semibold text-md">{displayWeight}{displayUnit} × {reps}회</span>
+          <div
+            className={`relative flex items-center gap-2 flex-wrap`}
+            style={{
+              color: isCollapsed ? "black" : "",
+              fontWeight: isCollapsed ? "bold" : "normal",
+            }}
+          >
+            <span>세트 {setIndex + 1}</span>
+            {isCollapsed ? (
+              <div className="flex items-center gap-2 flex-wrap ml-auto">
+                <span className="font-semibold text-md">
+                  {displayWeight}
+                  {displayUnit} × {reps}회
+                </span>
                 {memo.trim() !== "" && (
-                  <span className="text-md text-gray-600 italic truncate max-w-[150px]">"{memo}"</span>
+                  <span className="text-md text-gray-600 italic truncate max-w-[150px]">
+                    "{memo}"
+                  </span>
                 )}
               </div>
-          ) : (
-            <Button variant="outline" className="ml-3 size-8" 
-            onClick={e => {
-              e.stopPropagation();
-              deleteSet(exId, setIndex);
-            }}>
-              <TrashIcon className="h-5 w-5" />
-            </Button>
-          )}
-        </div>
-        <label className="flex items-center gap-2 text-sm text-muted-foreground" style={{ color: isCollapsed ? "black" : "" }}>
-          완료
-          <input
-            type="checkbox"
-            className="h-5 w-5 accent-blue-500"
-            checked={done}
-            onChange={() => onToggleDone(exerciseIndex, setIndex)}
-            />
-        </label>
-      </div>
-        {isCollapsed ? null : (
-              <>
-      <div className="grid grid-cols-2 gap-2">
-        <div className="rounded-lg bg-muted/50 p-3 text-center">
-          <div className="text-xs text-muted-foreground">무게</div>
-          {isEditingWeight ? (
-            <div className="mt-1 flex items-center justify-center gap-1">
-              <input
-                type="number"
-                inputMode="decimal"
-                step={displayUnit === "kg" ? "0.1" : "1"}
-                className="w-20 rounded-md border bg-background px-2 py-1 text-center text-lg font-semibold outline-none focus:border-blue-400"
-                value={draftWeight}
-                onChange={(e) => setDraftWeight(e.currentTarget.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    e.currentTarget.blur();
-                  }
-                  if (e.key === "Escape") {
-                    e.preventDefault();
-                    cancelWeightEdit();
-                  }
+            ) : (
+              <Button
+                variant="outline"
+                className="ml-3 size-8"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  deleteSet(exId, setIndex);
                 }}
-                onBlur={commitWeightEdit}
-                autoFocus
-              />
-              <span className="text-lg font-semibold">{displayUnit}</span>
-            </div>
-          ) : (
-            <button
-              type="button"
-              className="mt-1 text-lg font-semibold"
-              onClick={beginWeightEdit}
-            >
-              {displayWeight}{displayUnit}
-            </button>
-          )}
-          <div className="mt-2 flex justify-center gap-2">
-            <Button
-              type="button"
-              variant={unit === "kg" ? "default" : "outline"}
-              className="h-7 px-3 text-xs"
-              onClick={() => changeUnit(exerciseIndex, setIndex, "kg")}
-            >
-              kg
-            </Button>
-            <Button
-              type="button"
-              variant={unit === "lb" ? "default" : "outline"}
-              className="h-7 px-3 text-xs"
-              onClick={() => changeUnit(exerciseIndex, setIndex, "lb")}
-            >
-              lb
-            </Button>
+              >
+                <TrashIcon className="h-5 w-5" />
+              </Button>
+            )}
           </div>
-        </div>
-        <div className="rounded-lg bg-muted/50 p-3 text-center">
-          <div className="text-xs text-muted-foreground">횟수</div>
-          <div className="mt-1 text-lg font-semibold">{reps}회</div>
-        </div>
-      </div>
-      <div className="grid grid-cols-2 gap-2">
-        <ControlBlock
-          label="무게 조절"
-          onMinus={() => onWeightChange(exerciseIndex, setIndex, nextWeight(weight, equipment, "decrease"))}
-          onPlus={() => onWeightChange(exerciseIndex, setIndex, nextWeight(weight, equipment, "increase"))}
-        />
-        <ControlBlock
-          label="횟수 조절"
-          onMinus={() => onRepsDelta(exerciseIndex, setIndex, -1)}
-          onPlus={() => onRepsDelta(exerciseIndex, setIndex, +1)}
-        />
-      </div>
-      <div className="grid grid-cols-2 gap-2">
-      <div className="items-center justify-center">
-      <div className="text-xs text-muted-foreground text-center mb-2">기구</div>
-        <select
-          className="w-full rounded-md border px-3 py-2 text-sm outline-none focus:border-blue-400"
-          value={equipment}
-          onChange={(e) => changeEquipment(exerciseIndex, setIndex, e.target.value)}
+          <label
+            className="flex items-center gap-2 text-sm text-muted-foreground"
+            style={{ color: isCollapsed ? "black" : "" }}
           >
-          <option value="cable-machine">케이블 머신</option>
-          <option value="smith-machine">스미스 머신</option>
-          <option value="plate-machine">원판 머신</option>
-          <option value="barbell">바벨</option>
-          <option value="dumbbell">덤벨</option>
-        </select>
-            </div>
-          <div className="items-center justify-center">
-          <div className="text-xs text-muted-foreground text-center mb-2">운동 강도</div>
-          <div className="flex items-center gap-1">
-          <input
-            placeholder="6-10 사이 정수를 입력하세요"
-            type="number"
-            inputMode="decimal"
-            step="1"
-            value={draftRpe}
-            className="w-full rounded-md border px-3 py-2 text-sm outline-none focus:border-blue-400"
-            onChange={(e) => setDraftRpe(e.currentTarget.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                e.currentTarget.blur();
-              }
-              if (e.key === "Escape") {
-                e.preventDefault();
-                cancelRpeEdit();
-              }
-            }}
-            onBlur={commitRpeEdit}
+            완료
+            <input
+              type="checkbox"
+              className="h-5 w-5 accent-blue-500"
+              checked={done}
+              onChange={() => onToggleDone(exerciseIndex, setIndex)}
             />
-            <Button type="button" variant="outline" className="h-8 ml-1" onClick={() => changeRpe(exerciseIndex, setIndex, rpe !== null && rpe > 6 ? rpe - 1 : 6)}>
-              -
-            </Button>
-            <Button type="button" variant="outline" className="h-8 mr-1" onClick={() => changeRpe(exerciseIndex, setIndex, rpe !== null && rpe < 10 ? rpe + 1 : 10)}>
-              +
-            </Button>
+          </label>
+        </div>
+        {isCollapsed ? null : (
+          <>
+            <div className="grid grid-cols-2 gap-2">
+              <div className="rounded-lg bg-muted/50 p-3 text-center">
+                <div className="text-xs text-muted-foreground">무게</div>
+                {isEditingWeight ? (
+                  <div className="mt-1 flex items-center justify-center gap-1">
+                    <input
+                      type="number"
+                      inputMode="decimal"
+                      step={displayUnit === "kg" ? "0.1" : "1"}
+                      className="w-20 rounded-md border bg-background px-2 py-1 text-center text-lg font-semibold outline-none focus:border-blue-400"
+                      value={draftWeight}
+                      onChange={(e) => setDraftWeight(e.currentTarget.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.currentTarget.blur();
+                        }
+                        if (e.key === "Escape") {
+                          e.preventDefault();
+                          cancelWeightEdit();
+                        }
+                      }}
+                      onBlur={commitWeightEdit}
+                      autoFocus
+                    />
+                    <span className="text-lg font-semibold">{displayUnit}</span>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    className="mt-1 text-lg font-semibold"
+                    onClick={beginWeightEdit}
+                  >
+                    {displayWeight}
+                    {displayUnit}
+                  </button>
+                )}
+                <div className="mt-2 flex justify-center gap-2">
+                  <Button
+                    type="button"
+                    variant={unit === "kg" ? "default" : "outline"}
+                    className="h-7 px-3 text-xs"
+                    onClick={() => changeUnit(exerciseIndex, setIndex, "kg")}
+                  >
+                    kg
+                  </Button>
+                  <Button
+                    type="button"
+                    variant={unit === "lb" ? "default" : "outline"}
+                    className="h-7 px-3 text-xs"
+                    onClick={() => changeUnit(exerciseIndex, setIndex, "lb")}
+                  >
+                    lb
+                  </Button>
+                </div>
+              </div>
+              <div className="rounded-lg bg-muted/50 p-3 text-center">
+                <div className="text-xs text-muted-foreground">횟수</div>
+                <div className="mt-1 text-lg font-semibold">{reps}회</div>
+              </div>
             </div>
-          </div>
-      </div>
-      <div className="space-y-1">
-        <div className="text-xs text-muted-foreground">메모</div>
-        <input
-          className="w-full rounded-md border px-3 py-2 text-sm outline-none focus:border-blue-400"
-          type="text"
-          value={memo}
-          onChange={(e) => changeMemo(exerciseIndex, setIndex, e.target.value)}
-          placeholder="세트 메모"
-        />
-      </div>
-      </>
+            <div className="grid grid-cols-2 gap-2">
+              <ControlBlock
+                label="무게 조절"
+                onMinus={() =>
+                  onWeightChange(
+                    exerciseIndex,
+                    setIndex,
+                    nextWeight(weight, equipment, "decrease"),
+                  )
+                }
+                onPlus={() =>
+                  onWeightChange(
+                    exerciseIndex,
+                    setIndex,
+                    nextWeight(weight, equipment, "increase"),
+                  )
+                }
+              />
+              <ControlBlock
+                label="횟수 조절"
+                onMinus={() => onRepsDelta(exerciseIndex, setIndex, -1)}
+                onPlus={() => onRepsDelta(exerciseIndex, setIndex, +1)}
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <div className="items-center justify-center">
+                <div className="text-xs text-muted-foreground text-center mb-2">
+                  기구
+                </div>
+                <select
+                  className="w-full rounded-md border px-3 py-2 text-sm outline-none focus:border-blue-400"
+                  value={equipment}
+                  onChange={(e) =>
+                    changeEquipment(exerciseIndex, setIndex, e.target.value)
+                  }
+                >
+                  <option value="cable-machine">케이블 머신</option>
+                  <option value="smith-machine">스미스 머신</option>
+                  <option value="plate-machine">원판 머신</option>
+                  <option value="barbell">바벨</option>
+                  <option value="dumbbell">덤벨</option>
+                </select>
+              </div>
+              <div className="items-center justify-center">
+                <div className="text-xs text-muted-foreground text-center mb-2">
+                  운동 강도
+                </div>
+                <div className="flex items-center gap-1">
+                  <input
+                    placeholder="6-10 사이 정수를 입력하세요"
+                    type="number"
+                    inputMode="decimal"
+                    step="1"
+                    value={draftRpe}
+                    className="w-full rounded-md border px-3 py-2 text-sm outline-none focus:border-blue-400"
+                    onChange={(e) => setDraftRpe(e.currentTarget.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.currentTarget.blur();
+                      }
+                      if (e.key === "Escape") {
+                        e.preventDefault();
+                        cancelRpeEdit();
+                      }
+                    }}
+                    onBlur={commitRpeEdit}
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="h-8 ml-1"
+                    onClick={() =>
+                      changeRpe(
+                        exerciseIndex,
+                        setIndex,
+                        rpe !== null && rpe > 6 ? rpe - 1 : 6,
+                      )
+                    }
+                  >
+                    -
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="h-8 mr-1"
+                    onClick={() =>
+                      changeRpe(
+                        exerciseIndex,
+                        setIndex,
+                        rpe !== null && rpe < 10 ? rpe + 1 : 10,
+                      )
+                    }
+                  >
+                    +
+                  </Button>
+                </div>
+              </div>
+            </div>
+            <div className="space-y-1">
+              <div className="text-xs text-muted-foreground">메모</div>
+              <input
+                className="w-full rounded-md border px-3 py-2 text-sm outline-none focus:border-blue-400"
+                type="text"
+                value={memo}
+                onChange={(e) =>
+                  changeMemo(exerciseIndex, setIndex, e.target.value)
+                }
+                placeholder="세트 메모"
+              />
+            </div>
+          </>
         )}
       </div>
     </div>
@@ -530,12 +591,24 @@ function ControlBlock({
 }) {
   return (
     <div className="rounded-lg border p-2">
-      <div className="mb-2 text-center text-xs text-muted-foreground">{label}</div>
+      <div className="mb-2 text-center text-xs text-muted-foreground">
+        {label}
+      </div>
       <div className="grid grid-cols-2 gap-2">
-        <Button type="button" variant="outline" className="h-10" onClick={onMinus}>
+        <Button
+          type="button"
+          variant="outline"
+          className="h-10"
+          onClick={onMinus}
+        >
           -
         </Button>
-        <Button type="button" variant="outline" className="h-10" onClick={onPlus}>
+        <Button
+          type="button"
+          variant="outline"
+          className="h-10"
+          onClick={onPlus}
+        >
           +
         </Button>
       </div>

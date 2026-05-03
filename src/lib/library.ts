@@ -15,7 +15,7 @@ function extractTitle(property: any): string | null {
   if (!property) return null;
   if (!property.title) return null;
   if (!property.title.length) return null;
-  const text =  property.title.map((t: any) => t.plain_text).join("");
+  const text = property.title.map((t: any) => t.plain_text).join("");
   if (text.trim() === "") return null;
   return text.trim();
 }
@@ -38,24 +38,26 @@ function extractSelect(property: any): string | null {
 
 function normalizeCategory(categoryFromNotion: string | null): LibraryCategory {
   if (!categoryFromNotion) return "기타";
-  
+
   const normalized = categoryFromNotion.trim();
-  
+
   if (CATEGORY_ORDER.includes(normalized as LibraryCategory)) {
     return normalized as LibraryCategory;
   }
-  
+
   return "기타";
 }
 
-export function transformNotionRowToLibraryExercise(row: any): LibraryExercise | null {
+export function transformNotionRowToLibraryExercise(
+  row: any,
+): LibraryExercise | null {
   const properties = row.properties;
   if (!properties) return null;
 
   const exerciseId = extractRichText(properties.exercise_id);
   const name = extractTitle(properties["이름"]);
   const notionPageId = row.id; // Notion page id
-  
+
   if (!exerciseId) {
     console.warn("exercise_id missing in row:", row.id);
     return null;
@@ -68,7 +70,7 @@ export function transformNotionRowToLibraryExercise(row: any): LibraryExercise |
 
   const categoryRaw = extractSelect(properties["카테고리"]);
   const category = normalizeCategory(categoryRaw);
-  
+
   const equipment = extractSelect(properties["장비"]) || undefined;
   const primaryEffect = extractRichText(properties["주요 효과"]) || undefined;
 
@@ -83,7 +85,7 @@ export function transformNotionRowToLibraryExercise(row: any): LibraryExercise |
 }
 
 export function groupExercisesByCategory(
-  exercises: LibraryExercise[]
+  exercises: LibraryExercise[],
 ): Map<LibraryCategory, LibraryExercise[]> {
   const grouped = new Map<LibraryCategory, LibraryExercise[]>();
 
@@ -102,7 +104,7 @@ export function groupExercisesByCategory(
 }
 
 export function getOrderedCategories(
-  groupedMap: Map<LibraryCategory, LibraryExercise[]>
+  groupedMap: Map<LibraryCategory, LibraryExercise[]>,
 ): LibraryCategory[] {
   return CATEGORY_ORDER.filter((cat) => {
     const exercises = groupedMap.get(cat);
@@ -111,7 +113,7 @@ export function getOrderedCategories(
 }
 
 export function getFirstValidCategory(
-  categories: LibraryCategory[]
+  categories: LibraryCategory[],
 ): LibraryCategory | null {
   return categories.length > 0 ? categories[0] : null;
 }
