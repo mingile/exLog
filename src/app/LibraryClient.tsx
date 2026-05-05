@@ -4,19 +4,17 @@ import { useEffect, useState } from "react";
 import {
   LibraryCategory,
   LibraryExercise,
-  LibraryState,
   Exercise,
   SetItem,
   SessionDraft,
 } from "./types";
 import {
-  transformNotionRowToLibraryExercise,
   groupExercisesByCategory,
-  getOrderedCategories,
   getFirstValidCategory,
 } from "@/lib/library";
 import { createSessionMetadata } from "@/lib/session-utils";
 import { Button } from "@/components/ui/button";
+import { useExerciseLibrary } from "@/hooks/useExerciseLibrary";
 
 const CATEGORY_ORDER: LibraryCategory[] = [
   "등",
@@ -59,9 +57,7 @@ interface LibraryClientProps {
 }
 
 export function LibraryClient({ onConfirmSelection }: LibraryClientProps) {
-  const [libraryState, setLibraryState] = useState<LibraryState>({
-    status: "loading",
-  });
+  const { libraryState, refetch } = useExerciseLibrary();
   const [selectedCategory, setSelectedCategory] =
     useState<LibraryCategory | null>(null);
   const [selectedExercises, setSelectedExercises] = useState<Set<string>>(
@@ -70,70 +66,13 @@ export function LibraryClient({ onConfirmSelection }: LibraryClientProps) {
   const [validationError, setValidationError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetchExercises();
-  }, []);
-
-  async function fetchExercises() {
-    try {
-      setLibraryState({ status: "loading" });
-
-      const res = await fetch("/api/notion/exercise-read", {
-        method: "GET",
-        credentials: "include",
-        cache: "no-store",
-      });
-
-      if (!res.ok) {
-        const errorData = await res.json();
-        setLibraryState({
-          status: "error",
-          message: errorData.error || "Failed to fetch exercises",
-        });
-        return;
-      }
-
-      const data = await res.json();
-      const notionRows = data.data || [];
-
-      if (notionRows.length === 0) {
-        setLibraryState({ status: "empty" });
-        return;
-      }
-
-      const exercises: LibraryExercise[] = [];
-      for (const row of notionRows) {
-        const exercise = transformNotionRowToLibraryExercise(row);
-        if (exercise) {
-          exercises.push(exercise);
-        }
-      }
-
-      if (exercises.length === 0) {
-        setLibraryState({ status: "empty" });
-        return;
-      }
-
-      const grouped = groupExercisesByCategory(exercises);
-      const categories = getOrderedCategories(grouped);
-
-      setLibraryState({
-        status: "success",
-        exercises,
-        categories,
-      });
-
-      const firstCategory = getFirstValidCategory(categories);
+    if (libraryState.status === "success" && selectedCategory === null) {
+      const firstCategory = getFirstValidCategory(libraryState.categories);
       if (firstCategory) {
         setSelectedCategory(firstCategory);
       }
-    } catch (error) {
-      console.error("Failed to fetch exercises:", error);
-      setLibraryState({
-        status: "error",
-        message: error instanceof Error ? error.message : "Unknown error",
-      });
     }
-  }
+  }, [libraryState, selectedCategory]);
 
   function toggleExerciseSelection(exerciseId: string) {
     setSelectedExercises((prev) => {
@@ -217,7 +156,7 @@ export function LibraryClient({ onConfirmSelection }: LibraryClientProps) {
       <div className="flex flex-col h-screen items-center justify-center px-4">
         <p className="text-red-500 mb-4">운동 목록을 불러오지 못했습니다</p>
         <p className="text-sm text-gray-500 mb-4">{libraryState.message}</p>
-        <Button onClick={fetchExercises}>다시 시도</Button>
+        <Button onClick={refetch}>다시 시도</Button>
       </div>
     );
   }

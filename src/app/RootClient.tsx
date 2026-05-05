@@ -387,7 +387,7 @@ export function RootClient() {
     if (unit === "lb") {
       displayWeight = Math.round(kgToLb(weight));
     } else {
-      displayWeight = Math.round(lbToKg(weight));
+      displayWeight = Math.round(weight * 10) / 10;
     }
 
     return { displayWeight, displayUnit };
@@ -534,6 +534,20 @@ export function RootClient() {
     );
   }
 
+  function addExercisesToSession(newExercises: Exercises) {
+    setExercises((prev) => {
+      const existingPageIds = new Set(
+        prev.map((ex) => ex.exercisePageId).filter(Boolean),
+      );
+
+      const uniqueNewExercises = newExercises.filter(
+        (ex) => !existingPageIds.has(ex.exercisePageId),
+      );
+
+      return [...prev, ...uniqueNewExercises];
+    });
+  }
+
   function clearDoneStatus() {
     if (confirm("체크 상태를 초기화하시겠습니까?")) {
       setExercises((prev) =>
@@ -668,6 +682,7 @@ export function RootClient() {
           changeRpe={changeRpe}
           sessionMetadata={sessionMetadata}
           changeSessionName={changeSessionName}
+          addExercisesToSession={addExercisesToSession}
         />
         <div className="overflow-y-auto f1lex-grow pb-16">
           <WorkoutHistoryClient
