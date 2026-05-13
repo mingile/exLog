@@ -187,20 +187,6 @@ export function WorkoutSessionClient({
         <Button onClick={() => setShowHistory(!showHistory)}>
           {showHistory ? "기록 닫기" : "지난기록"}
         </Button>
-        <Button
-          variant="outline"
-          onClick={() => {
-            router.push("/api/notion/auth");
-          }}
-        >
-          Notion 연동
-        </Button>
-        <Button
-          variant="outline"
-          onClick={() => router.push("/settings/notion")}
-        >
-          Notion 설정
-        </Button>
       </div>
     </main>
   );
