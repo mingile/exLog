@@ -20,6 +20,7 @@ export function RootClient() {
   );
   const [sessionMetadata, setSessionMetadata] =
     useState<SessionMetadata | null>(null);
+  const [selectedDate, setSelectedDate] = useState<string | null>(null);
 
   const [notionStatusLoading, setNotionStatusLoading] = useState<boolean>(true);
   const [notionConnected, setNotionConnected] = useState<boolean>(false);
@@ -106,7 +107,7 @@ export function RootClient() {
             case "덤벨":
               return "dumbbell";
             default:
-              return null;
+              return "cable-machine";
           }
         }
 
@@ -652,44 +653,56 @@ export function RootClient() {
   if (entryMode === "session") {
     return (
       <div className="flex flex-col h-100vh min-h-screen">
-        <HeaderControls
-          onSavedHistory={onSavedHistory}
-          date={date}
-          clearDoneStatus={clearDoneStatus}
-          exercises={exercises}
-          setExercises={setExercises}
-          saving={saving}
-          setSaving={setSaving}
-          notionReady={dbConnected}
-          setNotionReady={setDbConnected}
-          onStartNewSession={startNewSession}
-          sessionMetadata={sessionMetadata}
-        />
-        <WorkoutSessionClient
-          exercises={exercises}
-          changeReps={changeReps}
-          changeWeight={changeWeight}
-          toggleDone={toggleDone}
-          addSet={addSet}
-          setShowHistory={setShowHistory}
-          showHistory={showHistory}
-          changeMemo={changeMemo}
-          deleteSet={deleteSet}
-          displayWeightUnit={displayWeightUnit}
-          nextWeight={nextWeight}
-          changeEquipment={changeEquipment}
-          changeUnit={changeUnit}
-          changeRpe={changeRpe}
-          sessionMetadata={sessionMetadata}
-          changeSessionName={changeSessionName}
-          addExercisesToSession={addExercisesToSession}
-        />
-        <div className="overflow-y-auto f1lex-grow pb-16">
-          <WorkoutHistoryClient
+        <div className="pb-2">
+          <HeaderControls
+            onSavedHistory={onSavedHistory}
+            date={date}
+            clearDoneStatus={clearDoneStatus}
+            exercises={exercises}
+            setExercises={setExercises}
+            saving={saving}
+            setSaving={setSaving}
+            notionReady={dbConnected}
+            setNotionReady={setDbConnected}
+            onStartNewSession={startNewSession}
+            sessionMetadata={sessionMetadata}
+            changeSessionName={changeSessionName}
+            selectedDate={selectedDate}
+            setSelectedDate={setSelectedDate}
             showHistory={showHistory}
+            setShowHistory={setShowHistory}
             historyVersion={historyVersion}
           />
         </div>
+        {!showHistory && (
+          <WorkoutSessionClient
+            exercises={exercises}
+            changeReps={changeReps}
+            changeWeight={changeWeight}
+            toggleDone={toggleDone}
+            addSet={addSet}
+            setShowHistory={setShowHistory}
+            showHistory={showHistory}
+            changeMemo={changeMemo}
+            deleteSet={deleteSet}
+            displayWeightUnit={displayWeightUnit}
+            nextWeight={nextWeight}
+            changeEquipment={changeEquipment}
+            changeUnit={changeUnit}
+            changeRpe={changeRpe}
+            sessionMetadata={sessionMetadata}
+            addExercisesToSession={addExercisesToSession}
+          />
+        )}
+        {showHistory && (
+          <div className="overflow-y-auto flex-grow pb-16">
+            <WorkoutHistoryClient
+              showHistory={showHistory}
+              historyVersion={historyVersion}
+              selectedDate={selectedDate}
+            />
+          </div>
+        )}
       </div>
     );
   }

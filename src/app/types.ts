@@ -50,3 +50,12 @@ export type LibraryState =
     | { status: "error"; message: string }
     | { status: "empty" }
     | { status: "success"; exercises: LibraryExercise[]; categories: LibraryCategory[] };
+
+export type DateInfo = {
+    date: Date;
+    dayOfMonth: number;
+    dayOfWeek: string;
+    hasSession: boolean;
+    isToday: boolean;
+    isFuture: boolean;
+};

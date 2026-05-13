@@ -39,7 +39,6 @@ export function WorkoutSessionClient({
   changeUnit,
   changeRpe,
   sessionMetadata,
-  changeSessionName,
   addExercisesToSession,
 }: {
   exercises: Exercises;
@@ -64,52 +63,12 @@ export function WorkoutSessionClient({
   changeUnit: (exIdx: number, setIdx: number, unit: "kg" | "lb") => void;
   changeRpe: (exIdx: number, setIdx: number, rpe: null | number) => void;
   sessionMetadata: SessionMetadata | null;
-  changeSessionName: (newName: string) => void;
   addExercisesToSession: (newExercises: Exercises) => void;
 }) {
-  const router = useRouter();
-  const [sessionNameInput, setSessionNameInput] = useState("");
   const [isAddExerciseSheetOpen, setIsAddExerciseSheetOpen] = useState(false);
-
-  useEffect(() => {
-    if (sessionMetadata) {
-      setSessionNameInput(sessionMetadata.sessionName);
-    }
-  }, [sessionMetadata]);
-
-  function getDefaultSessionName(): string {
-    const now = new Date();
-    const year = now.getFullYear();
-    const month = String(now.getMonth() + 1).padStart(2, "0");
-    const day = String(now.getDate()).padStart(2, "0");
-    const hours = String(now.getHours()).padStart(2, "0");
-    const minutes = String(now.getMinutes()).padStart(2, "0");
-    return `${year}-${month}-${day} ${hours}:${minutes} 세션`;
-  }
-
-  function handleSessionNameBlur() {
-    const trimmed = sessionNameInput.trim();
-    if (trimmed === "") {
-      const defaultName = getDefaultSessionName();
-      setSessionNameInput(defaultName);
-      changeSessionName(defaultName);
-    } else {
-      changeSessionName(trimmed);
-    }
-  }
 
   return (
     <main className="p-2 space-y-2">
-      <div className="mb-3">
-        <input
-          type="text"
-          value={sessionNameInput}
-          onChange={(e) => setSessionNameInput(e.target.value)}
-          onBlur={handleSessionNameBlur}
-          placeholder="세션 이름을 입력하세요"
-          className="w-full px-3 py-2 text-base font-medium border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-        />
-      </div>
       {exercises.map((ex, i) => {
         return (
           <Accordion key={ex.id} type="single" collapsible>
@@ -372,7 +331,7 @@ function Row({
         <TrashIcon className="size-6 text-white" />
       </div>
       <div
-        className={`rounded-xl border bg-card p-3 space-y-3 ${isCollapsed ? "bg-green-400" : "bg-card"}`}
+        className={`rounded-xl border bg-card p-3 space-y-3 ${isCollapsed ? "bg-green-100" : "bg-card"}`}
         style={{
           transform: `translateX(${swipeOffset}px)`,
           transition: isCollapsed ? "none" : "all 0.3s ease-in-out",
@@ -386,15 +345,19 @@ function Row({
               fontWeight: isCollapsed ? "bold" : "normal",
             }}
           >
-            <span>세트 {setIndex + 1}</span>
+            <span
+              className={`${isCollapsed ? "text-green-700" : "text-black"}`}
+            >
+              세트 {setIndex + 1}
+            </span>
             {isCollapsed ? (
-              <div className="flex items-center gap-2 flex-wrap ml-auto">
+              <div className="flex items-center gap-2 flex-wrap ml-auto text-green-700">
                 <span className="font-semibold text-md">
                   {displayWeight}
                   {displayUnit} × {reps}회
                 </span>
                 {memo.trim() !== "" && (
-                  <span className="text-md text-gray-600 italic truncate max-w-[150px]">
+                  <span className="text-md text-green-800 italic truncate max-w-[150px]">
                     "{memo}"
                   </span>
                 )}
@@ -439,6 +402,7 @@ function Row({
                       className="w-20 rounded-md border bg-background px-2 py-1 text-center text-lg font-semibold outline-none focus:border-blue-400"
                       value={draftWeight}
                       onChange={(e) => setDraftWeight(e.currentTarget.value)}
+                      onFocus={(e) => e.target.select()}
                       onKeyDown={(e) => {
                         if (e.key === "Enter") {
                           e.currentTarget.blur();

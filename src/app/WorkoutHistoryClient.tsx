@@ -8,7 +8,7 @@ import { TrashIcon } from "lucide-react";
 
 const sessionKey = `workout.sessions.v1`;
 
-export function WorkoutHistoryClient({showHistory, historyVersion}: {showHistory: boolean, historyVersion: number}) {
+export function WorkoutHistoryClient({showHistory, historyVersion, selectedDate}: {showHistory: boolean, historyVersion: number, selectedDate: string | null}) {
     const [sessions, setSessions] = useState<Session[]>([]);
     const [swipingSet, setSwipingSet] = useState<string | null>(null);
     const [swipeOffset, setSwipeOffset] = useState<number>(0);
@@ -22,7 +22,18 @@ export function WorkoutHistoryClient({showHistory, historyVersion}: {showHistory
                 if(!Array.isArray(parsedHistory)) {
                     return ;
                 }
-                setSessions(parsedHistory);
+                
+                // selectedDate가 있으면 필터링
+                let filteredSessions = parsedHistory;
+                if (selectedDate) {
+                    filteredSessions = parsedHistory.filter(session => {
+                        const sessionDate = new Date(session.savedAt);
+                        const dateStr = `${sessionDate.getFullYear()}-${String(sessionDate.getMonth() + 1).padStart(2, '0')}-${String(sessionDate.getDate()).padStart(2, '0')}`;
+                        return dateStr === selectedDate;
+                    });
+                }
+                
+                setSessions(filteredSessions);
             }else{
                 setSessions([]);
             }
@@ -31,7 +42,7 @@ export function WorkoutHistoryClient({showHistory, historyVersion}: {showHistory
             setSessions([]);
             localStorage.removeItem(sessionKey);
         }
-    }, [showHistory, historyVersion]);
+    }, [showHistory, historyVersion, selectedDate]);
      
     function groupBySessionName(sessions: Session[]){
         const groupedSessions: {[sessionName: string]: Session[]} = {};
@@ -151,6 +162,7 @@ export function WorkoutHistoryClient({showHistory, historyVersion}: {showHistory
     if (!showHistory) return null;
     const grouped = groupBySessionName(sessions);
     const sessionNames = Object.keys(grouped).sort((a,b)=> b.localeCompare(a));
+    
     return(
         <main className="p-2">
             {sessionNames.map((sessionName, i) => {
@@ -160,7 +172,12 @@ export function WorkoutHistoryClient({showHistory, historyVersion}: {showHistory
                 const parts = Array.from(partGrouped.keys());
                 
                 return(
-                    <Accordion key={session.id} type="single" collapsible>
+                    <Accordion 
+                        key={session.id} 
+                        type="single" 
+                        collapsible
+                        defaultValue={selectedDate ? `item-${i}` : undefined}
+                    >
                         <AccordionItem value={`item-${i}`}>
                             <AccordionTrigger><div>{sessionName}</div></AccordionTrigger>
                             <AccordionContent>
@@ -168,7 +185,7 @@ export function WorkoutHistoryClient({showHistory, historyVersion}: {showHistory
                                     const partExercises = partGrouped.get(part) || [];
                                     return(
                                         <div key={part}>
-                                        <Collapsible>
+                                        <Collapsible defaultOpen={selectedDate ? true : false}>
                                                 <div className="ps-4 flex">
                                                 <CollapsibleTrigger>
                                                     <div className="text-md font-bold">
@@ -179,7 +196,7 @@ export function WorkoutHistoryClient({showHistory, historyVersion}: {showHistory
                                                 <CollapsibleContent>
                                                     {partExercises.map((ex) => {
                                                         return(
-                                                        <Collapsible key={ex.id}>
+                                                        <Collapsible key={ex.id} defaultOpen={selectedDate ? true : false}>
                                                             <CollapsibleTrigger>
                                                                 <div className="ps-8">
                                                                     {ex.name}

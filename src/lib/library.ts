@@ -48,6 +48,27 @@ function normalizeCategory(categoryFromNotion: string | null): LibraryCategory {
   return "기타";
 }
 
+function normalizeEquipment(
+  equipmentFromNotion: string | null,
+): string | undefined {
+  if (!equipmentFromNotion) return undefined;
+
+  switch (equipmentFromNotion.trim()) {
+    case "케이블":
+      return "cable-machine";
+    case "스미스":
+      return "smith-machine";
+    case "원판":
+      return "plate-machine";
+    case "바벨":
+      return "barbell";
+    case "덤벨":
+      return "dumbbell";
+    default:
+      return "cable-machine";
+  }
+}
+
 export function transformNotionRowToLibraryExercise(
   row: any,
 ): LibraryExercise | null {
@@ -71,7 +92,9 @@ export function transformNotionRowToLibraryExercise(
   const categoryRaw = extractSelect(properties["카테고리"]);
   const category = normalizeCategory(categoryRaw);
 
-  const equipment = extractSelect(properties["장비"]) || undefined;
+  const equipment =
+    normalizeEquipment(extractSelect(properties["장비"])) || "cable-machine";
+
   const primaryEffect = extractRichText(properties["주요 효과"]) || undefined;
 
   return {
