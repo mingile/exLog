@@ -31,8 +31,6 @@ export function WorkoutSessionClient({
   changeWeight,
   changeReps,
   toggleDone,
-  setShowHistory,
-  showHistory,
   changeMemo,
   deleteSet,
   changeEquipment,
@@ -40,6 +38,9 @@ export function WorkoutSessionClient({
   changeRpe,
   sessionMetadata,
   addExercisesToSession,
+  onSave,
+  onStartNewSession,
+  saving,
 }: {
   exercises: Exercises;
   displayWeightUnit: (
@@ -55,8 +56,6 @@ export function WorkoutSessionClient({
   changeWeight: (exIdx: number, setIdx: number, nextWeight: number) => void;
   changeReps: (exIdx: number, setIdx: number, delta: number) => void;
   toggleDone: (exIdx: number, setIdx: number) => void;
-  setShowHistory: (show: boolean) => void;
-  showHistory: boolean;
   changeMemo: (exIdx: number, setIdx: number, value: string) => void;
   deleteSet: (exId: string, setIdx: number) => void;
   changeEquipment: (exIdx: number, setIdx: number, equipment: string) => void;
@@ -64,6 +63,9 @@ export function WorkoutSessionClient({
   changeRpe: (exIdx: number, setIdx: number, rpe: null | number) => void;
   sessionMetadata: SessionMetadata | null;
   addExercisesToSession: (newExercises: Exercises) => void;
+  onSave: () => void;
+  onStartNewSession: () => void;
+  saving: boolean;
 }) {
   const [isAddExerciseSheetOpen, setIsAddExerciseSheetOpen] = useState(false);
 
@@ -142,10 +144,11 @@ export function WorkoutSessionClient({
         </SheetContent>
       </Sheet>
 
-      <div className="grid grid-cols-1 gap-2 pt-2">
-        <Button onClick={() => setShowHistory(!showHistory)}>
-          {showHistory ? "기록 닫기" : "지난기록"}
+      <div className="grid grid-cols-2 gap-2 pt-2">
+        <Button onClick={onSave} disabled={saving}>
+          {saving ? "저장중..." : "저장"}
         </Button>
+        <Button onClick={onStartNewSession}>새 세션</Button>
       </div>
     </main>
   );
