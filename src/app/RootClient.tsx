@@ -23,6 +23,7 @@ export function RootClient() {
   const [showHistory, setShowHistory] = useState<boolean>(false);
   const [historyVersion, setHistoryVersion] = useState<number>(0);
   const [saving, setSaving] = useState<boolean>(false);
+  const savingRef = useRef<boolean>(false);
   const [entryMode, setEntryMode] = useState<"loading" | "session" | "library">(
     "loading",
   );
@@ -572,8 +573,13 @@ export function RootClient() {
   }
 
   async function saveSession() {
-    console.log("1. saveSession 시작, saving:", saving);
-    if (saving) return;
+    // useRef 기반 lock으로 중복 실행 방지
+    if (savingRef.current) {
+      console.log("이미 저장 중입니다");
+      return;
+    }
+    
+    savingRef.current = true;
     setSaving(true);
     const savedAt = new Date().toISOString();
 
@@ -625,6 +631,7 @@ export function RootClient() {
         description: "라이브러리에서 운동을 다시 선택해주세요.",
         duration: 3000,
       });
+      savingRef.current = false;
       setSaving(false);
       return;
     }
@@ -830,6 +837,7 @@ export function RootClient() {
         return;
       }
     } finally {
+      savingRef.current = false;
       setSaving(false);
     }
   }
