@@ -2,8 +2,15 @@
 
 import { WorkoutSessionClient } from "./WorkoutSessionClient";
 import { HeaderControls } from "./HeaderControls";
-import { useEffect, useState } from "react";
-import { Exercises, Part, SessionDraft, SessionMetadata, Session, SavedExercise } from "./types";
+import { useEffect, useState, useRef } from "react";
+import {
+  Exercises,
+  Part,
+  SessionDraft,
+  SessionMetadata,
+  Session,
+  SavedExercise,
+} from "./types";
 import { WorkoutHistoryClient } from "./WorkoutHistoryClient";
 import NotionSettingsPage from "./settings/notion/NotionSettingsClient";
 import { LibraryClient } from "./LibraryClient";
@@ -112,11 +119,6 @@ export function RootClient() {
           }
         }
 
-        function getRpe(properties: any) {
-          if (!properties) return null;
-          return properties.RPE?.number ?? null;
-        }
-
         function getExerciseRelation(properties: any) {
           if (!properties) return null;
           if (!properties.Exercise) return null;
@@ -136,7 +138,6 @@ export function RootClient() {
             exercisePageId: getExerciseRelation(result.properties),
             memo: getMemo(result.properties),
             equipment: getEquipment(result.properties),
-            rpe: getRpe(result.properties),
           };
         });
 
@@ -195,7 +196,6 @@ export function RootClient() {
                 reps: latest.reps ?? set.reps,
                 memo: latest.memo ?? set.memo,
                 equipment: latest.equipment ?? set.equipment,
-                rpe: latest.rpe ?? set.rpe,
               };
             });
 
@@ -231,7 +231,6 @@ export function RootClient() {
       equipment: string;
       memo: string;
       unit?: "kg" | "lb";
-      rpe: number | null;
     } {
       if (!isObject(v)) return false;
       return (
@@ -241,8 +240,7 @@ export function RootClient() {
         typeof v.synced === "boolean" &&
         typeof v.equipment === "string" &&
         typeof v.memo === "string" &&
-        (v.unit === undefined || v.unit === "kg" || v.unit === "lb") &&
-        (v.rpe === undefined || v.rpe === null || isNumber(v.rpe))
+        (v.unit === undefined || v.unit === "kg" || v.unit === "lb")
       );
     }
     function isExercise(
@@ -266,7 +264,6 @@ export function RootClient() {
         equipment: string;
         memo: string;
         unit?: "kg" | "lb";
-        rpe: number | null;
       }[];
     }[] {
       if (!Array.isArray(v)) return false;
@@ -311,7 +308,6 @@ export function RootClient() {
               ...set,
               unit:
                 set.unit ?? (set.equipment === "cable-machine" ? "lb" : "kg"),
-              rpe: set.rpe ?? null,
             })),
           }));
           setExercises(migratedExercises);
@@ -328,7 +324,6 @@ export function RootClient() {
               ...set,
               unit:
                 set.unit ?? (set.equipment === "cable-machine" ? "lb" : "kg"),
-              rpe: set.rpe ?? null,
             })),
             part: parsedEx.selectedPart,
           }));
@@ -416,7 +411,7 @@ export function RootClient() {
           ...ex,
           sets: ex.sets.map((s, j) => {
             if (j !== setIdx) return s;
-            return { ...s, reps: s.reps + delta, synced: false };
+            return { ...s, reps: Math.max(0, s.reps + delta), synced: false };
           }),
         };
       }),
@@ -483,21 +478,6 @@ export function RootClient() {
     );
   }
 
-  function changeRpe(exIdx: number, setIdx: number, rpe: null | number) {
-    setExercises((prev) =>
-      prev.map((ex, i) => {
-        if (i !== exIdx) return ex;
-        return {
-          ...ex,
-          sets: ex.sets.map((s, j) => {
-            if (j !== setIdx) return s;
-            return { ...s, rpe, synced: false };
-          }),
-        };
-      }),
-    );
-  }
-
   function toggleDone(exIdx: number, setIdx: number) {
     setExercises((prev) =>
       prev.map((ex, i) => {
@@ -528,7 +508,6 @@ export function RootClient() {
               equipment: ex.sets[ex.sets.length - 1].equipment,
               memo: "",
               unit: ex.sets[ex.sets.length - 1].unit,
-              rpe: null,
             },
           ],
         };
@@ -606,14 +585,6 @@ export function RootClient() {
       .map((ex) => {
         const doneSets = ex.sets
           .map((set, i) => {
-            console.log(`세트 ${i}:`, {
-              weight: set.weight,
-              reps: set.reps,
-              done: set.done,
-              synced: set.synced,
-              memo: set.memo,
-              rpe: set.rpe,
-            });
             return {
               set,
               setNo: i + 1,
@@ -642,7 +613,6 @@ export function RootClient() {
               reps: set.reps,
               memo: set.memo,
               equipment: set.equipment,
-              rpe: set.rpe,
             };
           }),
         };
@@ -663,14 +633,6 @@ export function RootClient() {
       .map((ex) => {
         const doneSets = ex.sets
           .map((set, i) => {
-            console.log(`세트 ${i}:`, {
-              weight: set.weight,
-              reps: set.reps,
-              done: set.done,
-              synced: set.synced,
-              memo: set.memo,
-              rpe: set.rpe,
-            });
             return {
               set,
               setNo: i + 1,
@@ -699,12 +661,11 @@ export function RootClient() {
               reps: set.reps,
               memo: set.memo,
               equipment: set.equipment,
-              rpe: set.rpe,
             };
           }),
         };
       });
-    
+
     const notionPayload = {
       saved_at: savedAt,
       exercises: notionExercises,
@@ -717,10 +678,9 @@ export function RootClient() {
       sessionName: sessionName,
       exercises: localExercises,
     };
-    
+
     try {
       if (localExercises.length > 0) {
-        console.log("5. savedExercises.length > 0");
         const sessionKey = "workout.sessions.v1";
         const session = localStorage.getItem(sessionKey);
         let sessionData: Session[] = [];
@@ -980,7 +940,6 @@ export function RootClient() {
             nextWeight={nextWeight}
             changeEquipment={changeEquipment}
             changeUnit={changeUnit}
-            changeRpe={changeRpe}
             sessionMetadata={sessionMetadata}
             addExercisesToSession={addExercisesToSession}
             onSave={saveSession}

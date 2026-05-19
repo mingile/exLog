@@ -203,11 +203,10 @@ export function WorkoutHistoryClient({showHistory, historyVersion, selectedDate}
                                                                     </div>
                                                             </CollapsibleTrigger>
                                                             <CollapsibleContent>
-                                                                    <div className="ps-8 grid grid-cols-4 justify-items-center">
+                                                                    <div className="ps-8 grid grid-cols-3 justify-items-center">
                                                                         <div>세트번호</div>
                                                                         <div>무게</div>
                                                                         <div>횟수</div>
-                                                                        <div>RPE</div>
                                                                     </div>
                                                                     {ex.sets.map((set: SavedExercise['sets'][0]) => {
                                                                         const setKey = `${session.id}-${ex.id}-${set.setNo}`;
@@ -232,13 +231,12 @@ export function WorkoutHistoryClient({showHistory, historyVersion, selectedDate}
                                                                                     <TrashIcon className="size-5 text-white" />
                                                                                 </div>
                                                                                 <div 
-                                                                                    className="grid grid-cols-4 ps-8 justify-items-center bg-white transition-transform"
+                                                                                    className="grid grid-cols-3 ps-8 justify-items-center bg-white transition-transform"
                                                                                     style={{ transform: `translateX(${offset}px)` }}
                                                                                 >
                                                                                     <div>{set.setNo}</div>
                                                                                     <div>{set.weight+"kg"}</div>
                                                                                     <div>{set.reps}</div>
-                                                                                    <div>{set.rpe ?? "미입력"}</div>
                                                                                 </div>
                                                                             </div>
                                                                         )

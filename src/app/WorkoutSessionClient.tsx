@@ -35,7 +35,6 @@ export function WorkoutSessionClient({
   deleteSet,
   changeEquipment,
   changeUnit,
-  changeRpe,
   sessionMetadata,
   addExercisesToSession,
   onSave,
@@ -60,7 +59,6 @@ export function WorkoutSessionClient({
   deleteSet: (exId: string, setIdx: number) => void;
   changeEquipment: (exIdx: number, setIdx: number, equipment: string) => void;
   changeUnit: (exIdx: number, setIdx: number, unit: "kg" | "lb") => void;
-  changeRpe: (exIdx: number, setIdx: number, rpe: null | number) => void;
   sessionMetadata: SessionMetadata | null;
   addExercisesToSession: (newExercises: Exercises) => void;
   onSave: () => void;
@@ -98,7 +96,6 @@ export function WorkoutSessionClient({
                       memo={set.memo || ""}
                       done={set.done}
                       exId={ex.id}
-                      rpe={set.rpe ?? null}
                       deleteSet={deleteSet}
                       onWeightChange={changeWeight}
                       onRepsDelta={changeReps}
@@ -109,7 +106,6 @@ export function WorkoutSessionClient({
                       changeEquipment={changeEquipment}
                       changeUnit={changeUnit}
                       unit={set.unit}
-                      changeRpe={changeRpe}
                     />
                   ))}
                 </div>
@@ -194,8 +190,6 @@ function Row({
   changeEquipment,
   changeUnit,
   unit,
-  changeRpe,
-  rpe,
 }: {
   exId: string;
   exerciseIndex: number;
@@ -222,13 +216,10 @@ function Row({
   changeEquipment: (exIdx: number, setIdx: number, equipment: string) => void;
   changeUnit: (exIdx: number, setIdx: number, unit: "kg" | "lb") => void;
   unit: "kg" | "lb";
-  changeRpe: (exIdx: number, setIdx: number, rpe: null | number) => void;
-  rpe: null | number;
 }) {
   const { displayWeight, displayUnit } = displayWeightUnit(weight, unit);
   const [isEditingWeight, setIsEditingWeight] = useState(false);
   const [draftWeight, setDraftWeight] = useState<string>(String(displayWeight));
-  const [draftRpe, setDraftRpe] = useState<string>(rpe ? String(rpe) : "");
   const [swipeOffset, setSwipeOffset] = useState<number>(0);
   const [isSwiping, setIsSwiping] = useState<boolean>(false);
   const [isCollapsed, setIsCollapsed] = useState<boolean>(false);
@@ -237,10 +228,6 @@ function Row({
     if (isEditingWeight) return;
     setDraftWeight(String(displayWeight));
   }, [displayWeight, isEditingWeight]);
-
-  useEffect(() => {
-    setDraftRpe(rpe ? String(rpe) : "");
-  }, [rpe]);
 
   useEffect(() => {
     setIsCollapsed(done);
@@ -262,28 +249,6 @@ function Row({
 
     onWeightChange(exerciseIndex, setIndex, nextKg);
     setIsEditingWeight(false);
-  }
-
-  function commitRpeEdit() {
-    const trimmed = draftRpe.trim();
-
-    if (trimmed === "") {
-      changeRpe(exerciseIndex, setIndex, null);
-      return;
-    }
-
-    const nextRpe = Number(trimmed);
-
-    if (!Number.isInteger(nextRpe) || nextRpe < 6 || nextRpe > 10) {
-      setDraftRpe(rpe !== null ? String(rpe) : "");
-      return;
-    }
-
-    changeRpe(exerciseIndex, setIndex, nextRpe);
-  }
-
-  function cancelRpeEdit() {
-    setDraftRpe(rpe !== null ? String(rpe) : "");
   }
 
   function cancelWeightEdit() {
@@ -382,7 +347,7 @@ function Row({
             className="flex items-center gap-2 text-sm text-muted-foreground"
             style={{ color: isCollapsed ? "black" : "" }}
           >
-            완료
+            {done ? "완료" : "진행중"}
             <input
               type="checkbox"
               className="h-5 w-5 accent-blue-500"
@@ -394,15 +359,49 @@ function Row({
         {isCollapsed ? null : (
           <>
             <div className="grid grid-cols-2 gap-2">
-              <div className="rounded-lg bg-muted/50 p-3 text-center">
-                <div className="text-xs text-muted-foreground">무게</div>
-                {isEditingWeight ? (
-                  <div className="mt-1 flex items-center justify-center gap-1">
+              <div className="rounded-lg bg-muted/50 p-3">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-xs text-muted-foreground">무게</span>
+                  <div className="flex gap-1">
+                    <Button
+                      type="button"
+                      variant={unit === "kg" ? "default" : "outline"}
+                      className="h-5 px-2 text-xs"
+                      onClick={() => changeUnit(exerciseIndex, setIndex, "kg")}
+                    >
+                      kg
+                    </Button>
+                    <Button
+                      type="button"
+                      variant={unit === "lb" ? "default" : "outline"}
+                      className="h-5 px-2 text-xs"
+                      onClick={() => changeUnit(exerciseIndex, setIndex, "lb")}
+                    >
+                      lb
+                    </Button>
+                  </div>
+                </div>
+                <div className="flex items-center justify-between gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="h-10 px-3"
+                    onClick={() =>
+                      onWeightChange(
+                        exerciseIndex,
+                        setIndex,
+                        nextWeight(weight, equipment, "decrease"),
+                      )
+                    }
+                  >
+                    -
+                  </Button>
+                  {isEditingWeight ? (
                     <input
                       type="number"
                       inputMode="decimal"
                       step={displayUnit === "kg" ? "0.1" : "1"}
-                      className="w-20 rounded-md border bg-background px-2 py-1 text-center text-lg font-semibold outline-none focus:border-blue-400"
+                      className="flex-1 min-w-0 rounded-md border bg-background px-2 py-1 text-center text-base font-semibold outline-none focus:border-blue-400"
                       value={draftWeight}
                       onChange={(e) => setDraftWeight(e.currentTarget.value)}
                       onFocus={(e) => e.target.select()}
@@ -418,132 +417,25 @@ function Row({
                       onBlur={commitWeightEdit}
                       autoFocus
                     />
-                    <span className="text-lg font-semibold">{displayUnit}</span>
-                  </div>
-                ) : (
-                  <button
-                    type="button"
-                    className="mt-1 text-lg font-semibold"
-                    onClick={beginWeightEdit}
-                  >
-                    {displayWeight}
-                    {displayUnit}
-                  </button>
-                )}
-                <div className="mt-2 flex justify-center gap-2">
-                  <Button
-                    type="button"
-                    variant={unit === "kg" ? "default" : "outline"}
-                    className="h-7 px-3 text-xs"
-                    onClick={() => changeUnit(exerciseIndex, setIndex, "kg")}
-                  >
-                    kg
-                  </Button>
-                  <Button
-                    type="button"
-                    variant={unit === "lb" ? "default" : "outline"}
-                    className="h-7 px-3 text-xs"
-                    onClick={() => changeUnit(exerciseIndex, setIndex, "lb")}
-                  >
-                    lb
-                  </Button>
-                </div>
-              </div>
-              <div className="rounded-lg bg-muted/50 p-3 text-center">
-                <div className="text-xs text-muted-foreground">횟수</div>
-                <div className="mt-1 text-lg font-semibold">{reps}회</div>
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-2">
-              <ControlBlock
-                label="무게 조절"
-                onMinus={() =>
-                  onWeightChange(
-                    exerciseIndex,
-                    setIndex,
-                    nextWeight(weight, equipment, "decrease"),
-                  )
-                }
-                onPlus={() =>
-                  onWeightChange(
-                    exerciseIndex,
-                    setIndex,
-                    nextWeight(weight, equipment, "increase"),
-                  )
-                }
-              />
-              <ControlBlock
-                label="횟수 조절"
-                onMinus={() => onRepsDelta(exerciseIndex, setIndex, -1)}
-                onPlus={() => onRepsDelta(exerciseIndex, setIndex, +1)}
-              />
-            </div>
-            <div className="grid grid-cols-2 gap-2">
-              <div className="items-center justify-center">
-                <div className="text-xs text-muted-foreground text-center mb-2">
-                  기구
-                </div>
-                <select
-                  className="w-full rounded-md border px-3 py-2 text-sm outline-none focus:border-blue-400"
-                  value={equipment}
-                  onChange={(e) =>
-                    changeEquipment(exerciseIndex, setIndex, e.target.value)
-                  }
-                >
-                  <option value="cable-machine">케이블 머신</option>
-                  <option value="smith-machine">스미스 머신</option>
-                  <option value="plate-machine">원판 머신</option>
-                  <option value="barbell">바벨</option>
-                  <option value="dumbbell">덤벨</option>
-                </select>
-              </div>
-              <div className="items-center justify-center">
-                <div className="text-xs text-muted-foreground text-center mb-2">
-                  운동 강도
-                </div>
-                <div className="flex items-center gap-1">
-                  <input
-                    placeholder="6-10 사이 정수를 입력하세요"
-                    type="number"
-                    inputMode="decimal"
-                    step="1"
-                    value={draftRpe}
-                    className="w-full rounded-md border px-3 py-2 text-sm outline-none focus:border-blue-400"
-                    onChange={(e) => setDraftRpe(e.currentTarget.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") {
-                        e.currentTarget.blur();
-                      }
-                      if (e.key === "Escape") {
-                        e.preventDefault();
-                        cancelRpeEdit();
-                      }
-                    }}
-                    onBlur={commitRpeEdit}
-                  />
+                  ) : (
+                    <button
+                      type="button"
+                      className="flex-1 min-w-0 text-base font-semibold truncate"
+                      onClick={beginWeightEdit}
+                    >
+                      {displayWeight}
+                      {displayUnit}
+                    </button>
+                  )}
                   <Button
                     type="button"
                     variant="outline"
-                    className="h-8 ml-1"
+                    className="h-10 px-3"
                     onClick={() =>
-                      changeRpe(
+                      onWeightChange(
                         exerciseIndex,
                         setIndex,
-                        rpe !== null && rpe > 6 ? rpe - 1 : 6,
-                      )
-                    }
-                  >
-                    -
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className="h-8 mr-1"
-                    onClick={() =>
-                      changeRpe(
-                        exerciseIndex,
-                        setIndex,
-                        rpe !== null && rpe < 10 ? rpe + 1 : 10,
+                        nextWeight(weight, equipment, "increase"),
                       )
                     }
                   >
@@ -551,6 +443,46 @@ function Row({
                   </Button>
                 </div>
               </div>
+              <div className="rounded-lg bg-muted/50 p-3">
+                <div className="text-xs text-muted-foreground mb-2">횟수</div>
+                <div className="flex items-center justify-between gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="h-10 px-3"
+                    onClick={() => onRepsDelta(exerciseIndex, setIndex, -1)}
+                  >
+                    -
+                  </Button>
+                  <div className="flex-1 text-center text-lg font-semibold">
+                    {reps}회
+                  </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="h-10 px-3"
+                    onClick={() => onRepsDelta(exerciseIndex, setIndex, +1)}
+                  >
+                    +
+                  </Button>
+                </div>
+              </div>
+            </div>
+            <div>
+              <select
+                className="w-full rounded-md border px-3 py-2 text-sm outline-none focus:border-blue-400"
+                value={equipment}
+                onChange={(e) =>
+                  changeEquipment(exerciseIndex, setIndex, e.target.value)
+                }
+              >
+                <option value="">기구 선택</option>
+                <option value="cable-machine">케이블 머신</option>
+                <option value="smith-machine">스미스 머신</option>
+                <option value="plate-machine">원판 머신</option>
+                <option value="barbell">바벨</option>
+                <option value="dumbbell">덤벨</option>
+              </select>
             </div>
             <div className="space-y-1">
               <div className="text-xs text-muted-foreground">메모</div>
@@ -571,42 +503,6 @@ function Row({
   );
 }
 
-function ControlBlock({
-  label,
-  onMinus,
-  onPlus,
-}: {
-  label: string;
-  onMinus: () => void;
-  onPlus: () => void;
-}) {
-  return (
-    <div className="rounded-lg border p-2">
-      <div className="mb-2 text-center text-xs text-muted-foreground">
-        {label}
-      </div>
-      <div className="grid grid-cols-2 gap-2">
-        <Button
-          type="button"
-          variant="outline"
-          className="h-10"
-          onClick={onMinus}
-        >
-          -
-        </Button>
-        <Button
-          type="button"
-          variant="outline"
-          className="h-10"
-          onClick={onPlus}
-        >
-          +
-        </Button>
-      </div>
-    </div>
-  );
-}
-
 function createDefaultSet(equipment?: string): SetItem {
   return {
     weight: 0,
@@ -616,7 +512,6 @@ function createDefaultSet(equipment?: string): SetItem {
     equipment: equipment || "cable-machine",
     memo: "",
     unit: equipment === "cable-machine" ? "lb" : "kg",
-    rpe: null,
   };
 }
 

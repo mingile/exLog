@@ -36,7 +36,6 @@ function createDefaultSet(equipment?: string): SetItem {
     equipment: equipment || "cable-machine",
     memo: "",
     unit: "kg",
-    rpe: null,
   };
 }
 
