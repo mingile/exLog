@@ -581,261 +581,256 @@ export function RootClient() {
     
     savingRef.current = true;
     setSaving(true);
-    const savedAt = new Date().toISOString();
-
-    // done === true인 세트만 추출 (Notion 저장용)
-    const notionExercises: (SavedExercise & {
-      part: string;
-      exercisePageId?: string;
-    })[] = exercises
-      .map((ex) => {
-        const doneSets = ex.sets
-          .map((set, i) => {
-            return {
-              set,
-              setNo: i + 1,
-            };
-          })
-          .filter(({ set }) => {
-            const pass = set.done && !set.synced;
-            return pass;
-          });
-        return {
-          ...ex,
-          sets: doneSets,
-        };
-      })
-      .filter((ex) => ex.sets.length > 0)
-      .map((ex) => {
-        return {
-          id: ex.id,
-          name: ex.name,
-          part: ex.part || "기타",
-          exercisePageId: ex.exercisePageId,
-          sets: ex.sets.map(({ set, setNo }) => {
-            return {
-              setNo,
-              weight: set.weight,
-              reps: set.reps,
-              memo: set.memo,
-              equipment: set.equipment,
-            };
-          }),
-        };
-      });
-
-    // exercisePageId 없는 운동 체크
-    const hasInvalidExercise = notionExercises.some((ex) => !ex.exercisePageId);
-    if (hasInvalidExercise && dbConnected) {
-      toast.error("일부 운동에 Exercise 정보가 없습니다.", {
-        description: "라이브러리에서 운동을 다시 선택해주세요.",
-        duration: 3000,
-      });
-      savingRef.current = false;
-      setSaving(false);
-      return;
-    }
-
-    const localExercises: (SavedExercise & { part: string })[] = exercises
-      .map((ex) => {
-        const doneSets = ex.sets
-          .map((set, i) => {
-            return {
-              set,
-              setNo: i + 1,
-            };
-          })
-          .filter(({ set }) => {
-            const pass = set.done;
-            return pass;
-          });
-        return {
-          ...ex,
-          sets: doneSets,
-        };
-      })
-      .filter((ex) => ex.sets.length > 0)
-      .map((ex) => {
-        return {
-          id: ex.id,
-          name: ex.name,
-          part: ex.part || "기타",
-          exercisePageId: ex.exercisePageId,
-          sets: ex.sets.map(({ set, setNo }) => {
-            return {
-              setNo,
-              weight: set.weight,
-              reps: set.reps,
-              memo: set.memo,
-              equipment: set.equipment,
-            };
-          }),
-        };
-      });
-
-    const notionPayload = {
-      saved_at: savedAt,
-      exercises: notionExercises,
-    };
-    const sessionId = sessionMetadata?.sessionId || new Date().toISOString();
-    const sessionName = sessionMetadata?.sessionName || "세션";
-    const localPayload = {
-      id: sessionId,
-      savedAt: savedAt,
-      sessionName: sessionName,
-      exercises: localExercises,
-    };
 
     try {
-      if (localExercises.length > 0) {
-        const sessionKey = "workout.sessions.v1";
-        const session = localStorage.getItem(sessionKey);
-        let sessionData: Session[] = [];
-        try {
-          if (session) {
-            console.log(session);
-            sessionData = JSON.parse(session);
-            // session이 깨졌거나 객체인 경우 배열로 변환
-            if (!Array.isArray(sessionData)) {
-              sessionData = [];
-            }
-          }
-        } catch (e) {
-          console.error("올바르지 않은 JSON 데이터", e);
-          localStorage.setItem(sessionKey, JSON.stringify([localPayload]));
-          return;
-        }
+      const savedAt = new Date().toISOString();
+      const sessionId = sessionMetadata?.sessionId || new Date().toISOString();
+      const sessionName = sessionMetadata?.sessionName || "세션";
 
-        const filtered = sessionData.filter((s) => s.id !== localPayload.id);
-        const nextSessions = [localPayload, ...filtered];
+      // ===== Phase 1: 로컬 저장용 데이터 준비 =====
+      // done=true 세트만 추출 (history 저장용)
+      const localExercises: (SavedExercise & { part: string })[] = exercises
+        .map((ex) => {
+          const doneSets = ex.sets
+            .map((set, i) => ({ set, setNo: i + 1 }))
+            .filter(({ set }) => set.done);
+          return {
+            ...ex,
+            sets: doneSets,
+          };
+        })
+        .filter((ex) => ex.sets.length > 0)
+        .map((ex) => {
+          return {
+            id: ex.id,
+            name: ex.name,
+            part: ex.part || "기타",
+            exercisePageId: ex.exercisePageId,
+            sets: ex.sets.map(({ set, setNo }) => ({
+              setNo,
+              weight: set.weight,
+              reps: set.reps,
+              memo: set.memo,
+              equipment: set.equipment,
+            })),
+          };
+        });
 
-        if (dbConnected && notionExercises.length > 0) {
-          // 1. Session row 확보
-          if (!sessionMetadata) {
-            toast.error("세션 정보가 없습니다.", {
-              duration: 2000,
-            });
-            return;
-          }
-
-          const finalSessionName =
-            sessionMetadata.sessionName.trim() ||
-            (() => {
-              const now = new Date(sessionMetadata.startedAt);
-              const year = now.getFullYear();
-              const month = String(now.getMonth() + 1).padStart(2, "0");
-              const day = String(now.getDate()).padStart(2, "0");
-              const hours = String(now.getHours()).padStart(2, "0");
-              const minutes = String(now.getMinutes()).padStart(2, "0");
-              return `${year}-${month}-${day} ${hours}:${minutes} 세션`;
-            })();
-
-          let sessionPageId: string;
-          try {
-            const sessionResponse = await fetch("/api/notion/session-ensure", {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({
-                sessionId: sessionMetadata.sessionId,
-                sessionName: sessionMetadata.sessionName,
-                startedAt: sessionMetadata.startedAt,
-              }),
-            });
-
-            if (!sessionResponse.ok) {
-              const errorData = await sessionResponse.json();
-              toast.error("Session 생성 실패: " + errorData.error, {
-                description: "Sets 저장이 중단되었습니다.",
-                duration: 3000,
-              });
-              return;
-            }
-
-            const sessionData = await sessionResponse.json();
-            sessionPageId = sessionData.pageId;
-            console.log(
-              `Session ${sessionData.created ? "생성" : "조회"} 완료:`,
-              sessionPageId,
-            );
-          } catch (error) {
-            console.error("Session 확보 중 오류:", error);
-            toast.error("Session 확보 중 오류가 발생했습니다.", {
-              description: "Sets 저장이 중단되었습니다.",
-              duration: 3000,
-            });
-            return;
-          }
-
-          // 2. Sets 저장 (Session relation 포함)
-          try {
-            const writeResponse = await fetch("/api/notion/write", {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({
-                ...notionPayload,
-                sessionPageId,
-              }),
-            });
-
-            if (writeResponse.ok) {
-              const data = await writeResponse.json();
-              setExercises((prev) =>
-                prev.map((ex) => ({
-                  ...ex,
-                  sets: ex.sets.map((set) =>
-                    set.done && !set.synced ? { ...set, synced: true } : set,
-                  ),
-                })),
-              );
-              localStorage.setItem(sessionKey, JSON.stringify(nextSessions));
-              onSavedHistory();
-              toast.success(
-                `노션에 ${data.created_count}개 세트 저장되었습니다`,
-                {
-                  duration: 2000,
-                },
-              );
-            } else {
-              const errorData = await writeResponse.json();
-              toast.error("노션에 세트 저장 실패: " + errorData.error, {
-                description: "Session은 생성되었으나 Sets 저장 실패",
-                duration: 3000,
-              });
-              return;
-            }
-          } catch (error) {
-            console.error("Sets 저장 중 오류:", error);
-            toast.error("Sets 저장 중 오류가 발생했습니다.", {
-              description: "Session은 생성되었으나 Sets 저장 실패",
-              duration: 3000,
-            });
-            return;
-          }
-        } else if (dbConnected && notionExercises.length === 0) {
-          toast.info("새로 저장할 세트가 없습니다.", {
-            description: "모든 세트가 이미 저장되었습니다.",
-            duration: 2000,
-          });
-          localStorage.setItem(sessionKey, JSON.stringify(nextSessions));
-          onSavedHistory();
-        } else {
-          toast.success(`로컬에 저장 완료!`, {
-            description: "노션에 저장하려면 연결을 해주세요.",
-            duration: 2000,
-          });
-          localStorage.setItem(sessionKey, JSON.stringify(nextSessions));
-          onSavedHistory();
-        }
-      } else {
-        toast.error("새로 저장할 내용이 없습니다.", {
+      if (localExercises.length === 0) {
+        toast.error("저장할 내용이 없습니다.", {
           duration: 1000,
         });
         return;
       }
+
+      // ===== Phase 2: localStorage 우선 저장 =====
+      // 2-1. currentSession snapshot 생성 및 저장
+      const currentSessionSnapshot: SessionDraft = {
+        session: sessionMetadata!,
+        exercises: exercises,
+      };
+      localStorage.setItem(
+        "workout.currentSession.v1",
+        JSON.stringify(currentSessionSnapshot)
+      );
+
+      // 2-2. workout.sessions.v1 저장
+      const historyPayload = {
+        id: sessionId,
+        savedAt: savedAt,
+        sessionName: sessionName,
+        exercises: localExercises,
+      };
+
+      const sessionKey = "workout.sessions.v1";
+      let sessionData: Session[] = [];
+      try {
+        const session = localStorage.getItem(sessionKey);
+        if (session) {
+          sessionData = JSON.parse(session);
+          if (!Array.isArray(sessionData)) {
+            sessionData = [];
+          }
+        }
+      } catch (e) {
+        console.error("올바르지 않은 JSON 데이터", e);
+        sessionData = [];
+      }
+
+      const filtered = sessionData.filter((s) => s.id !== sessionId);
+      const nextSessions = [historyPayload, ...filtered];
+      localStorage.setItem(sessionKey, JSON.stringify(nextSessions));
+      onSavedHistory();
+      
+      toast.success("로컬 저장 완료");
+
+      // ===== Phase 3: Notion 동기화 (선택적) =====
+      if (!dbConnected) {
+        toast.info("Notion 미연결", {
+          description: "로컬에만 저장되었습니다.",
+          duration: 2000,
+        });
+        return;
+      }
+
+      if (!sessionMetadata) {
+        toast.warning("세션 정보가 없어 Notion 동기화를 건너뜁니다.", {
+          duration: 2000,
+        });
+        return;
+      }
+
+      // 저장된 snapshot에서 synced=false 세트만 추출
+      const notionExercises: (SavedExercise & {
+        part: string;
+        exercisePageId?: string;
+      })[] = exercises
+        .map((ex) => {
+          const unsyncedSets = ex.sets
+            .map((set, i) => ({ set, setNo: i + 1 }))
+            .filter(({ set }) => set.done && !set.synced);
+          return {
+            ...ex,
+            sets: unsyncedSets,
+          };
+        })
+        .filter((ex) => ex.sets.length > 0)
+        .map((ex) => {
+          return {
+            id: ex.id,
+            name: ex.name,
+            part: ex.part || "기타",
+            exercisePageId: ex.exercisePageId,
+            sets: ex.sets.map(({ set, setNo }) => ({
+              setNo,
+              weight: set.weight,
+              reps: set.reps,
+              memo: set.memo,
+              equipment: set.equipment,
+            })),
+          };
+        });
+
+      if (notionExercises.length === 0) {
+        toast.info("모든 세트가 이미 동기화됨", {
+          duration: 2000,
+        });
+        return;
+      }
+
+      // exercisePageId 없는 운동 체크
+      const hasInvalidExercise = notionExercises.some(
+        (ex) => !ex.exercisePageId
+      );
+      if (hasInvalidExercise) {
+        toast.warning("일부 운동에 Exercise 정보가 없습니다.", {
+          description: "로컬은 저장됨, Notion 동기화는 건너뜀",
+          duration: 3000,
+        });
+        return;
+      }
+
+      // 3-1. Notion Session 확보
+      let sessionPageId: string;
+      try {
+        const sessionResponse = await fetch("/api/notion/session-ensure", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            sessionId: sessionMetadata.sessionId,
+            sessionName: sessionMetadata.sessionName,
+            startedAt: sessionMetadata.startedAt,
+          }),
+        });
+
+        if (!sessionResponse.ok) {
+          const errorData = await sessionResponse.json();
+          toast.warning("Notion Session 생성 실패", {
+            description: "로컬은 저장됨: " + errorData.error,
+            duration: 3000,
+          });
+          return;
+        }
+
+        const sessionDataResponse = await sessionResponse.json();
+        sessionPageId = sessionDataResponse.pageId;
+        console.log(
+          `Session ${sessionDataResponse.created ? "생성" : "조회"} 완료:`,
+          sessionPageId
+        );
+      } catch (error) {
+        console.error("Session 확보 중 오류:", error);
+        toast.warning("Notion Session 확보 실패", {
+          description: "로컬은 저장됨, 네트워크 확인 필요",
+          duration: 3000,
+        });
+        return;
+      }
+
+      // 3-2. Notion Sets 저장
+      try {
+        const writeResponse = await fetch("/api/notion/write", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            saved_at: savedAt,
+            exercises: notionExercises,
+            sessionPageId,
+          }),
+        });
+
+        if (!writeResponse.ok) {
+          const errorData = await writeResponse.json();
+          toast.warning("Notion Sets 저장 실패", {
+            description: "로컬은 저장됨: " + errorData.error,
+            duration: 3000,
+          });
+          return;
+        }
+
+        const data = await writeResponse.json();
+
+        // ===== Phase 4: synced 상태 업데이트 =====
+        // 4-1. exercises state 갱신
+        const updatedExercises = exercises.map((ex) => ({
+          ...ex,
+          sets: ex.sets.map((set) =>
+            set.done && !set.synced ? { ...set, synced: true } : set
+          ),
+        }));
+
+        // 4-2. currentSession만 재저장
+        const updatedCurrentSession: SessionDraft = {
+          session: sessionMetadata,
+          exercises: updatedExercises,
+        };
+        localStorage.setItem(
+          "workout.currentSession.v1",
+          JSON.stringify(updatedCurrentSession)
+        );
+
+        // 4-3. state 갱신
+        setExercises(updatedExercises);
+
+        toast.success(`Notion에 ${data.created_count}개 세트 동기화 완료`, {
+          duration: 2000,
+        });
+      } catch (error) {
+        console.error("Sets 저장 중 오류:", error);
+        toast.warning("Notion Sets 저장 중 오류", {
+          description: "로컬은 저장됨, 네트워크 확인 필요",
+          duration: 3000,
+        });
+      }
+    } catch (error) {
+      console.error("저장 중 예상치 못한 오류:", error);
+      toast.error("저장 중 오류 발생", {
+        duration: 2000,
+      });
     } finally {
       savingRef.current = false;
       setSaving(false);
