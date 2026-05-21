@@ -16,6 +16,12 @@ import NotionSettingsPage from "./settings/notion/NotionSettingsClient";
 import { LibraryClient } from "./LibraryClient";
 import { kgToLb, lbToKg, nextWeight } from "@/lib/weightUnit";
 import { toast } from "sonner";
+import {
+  createLocalExercisesPayload,
+  createHistoryPayload,
+  createNotionExercisesPayload,
+  markSyncedSets,
+} from "@/lib/workoutSessionPayload";
 
 export function RootClient() {
   const [exercises, setExercises] = useState<Exercises>([]);
@@ -589,32 +595,7 @@ export function RootClient() {
 
       // ===== Phase 1: 로컬 저장용 데이터 준비 =====
       // done=true 세트만 추출 (history 저장용)
-      const localExercises: (SavedExercise & { part: string })[] = exercises
-        .map((ex) => {
-          const doneSets = ex.sets
-            .map((set, i) => ({ set, setNo: i + 1 }))
-            .filter(({ set }) => set.done);
-          return {
-            ...ex,
-            sets: doneSets,
-          };
-        })
-        .filter((ex) => ex.sets.length > 0)
-        .map((ex) => {
-          return {
-            id: ex.id,
-            name: ex.name,
-            part: ex.part || "기타",
-            exercisePageId: ex.exercisePageId,
-            sets: ex.sets.map(({ set, setNo }) => ({
-              setNo,
-              weight: set.weight,
-              reps: set.reps,
-              memo: set.memo,
-              equipment: set.equipment,
-            })),
-          };
-        });
+      const localExercises = createLocalExercisesPayload(exercises);
 
       if (localExercises.length === 0) {
         toast.error("저장할 내용이 없습니다.", {
@@ -635,12 +616,12 @@ export function RootClient() {
       );
 
       // 2-2. workout.sessions.v1 저장
-      const historyPayload = {
-        id: sessionId,
-        savedAt: savedAt,
-        sessionName: sessionName,
-        exercises: localExercises,
-      };
+      const historyPayload = createHistoryPayload({
+        sessionId,
+        sessionName,
+        savedAt,
+        localExercises,
+      });
 
       const sessionKey = "workout.sessions.v1";
       let sessionData: Session[] = [];
@@ -681,35 +662,7 @@ export function RootClient() {
       }
 
       // 저장된 snapshot에서 synced=false 세트만 추출
-      const notionExercises: (SavedExercise & {
-        part: string;
-        exercisePageId?: string;
-      })[] = exercises
-        .map((ex) => {
-          const unsyncedSets = ex.sets
-            .map((set, i) => ({ set, setNo: i + 1 }))
-            .filter(({ set }) => set.done && !set.synced);
-          return {
-            ...ex,
-            sets: unsyncedSets,
-          };
-        })
-        .filter((ex) => ex.sets.length > 0)
-        .map((ex) => {
-          return {
-            id: ex.id,
-            name: ex.name,
-            part: ex.part || "기타",
-            exercisePageId: ex.exercisePageId,
-            sets: ex.sets.map(({ set, setNo }) => ({
-              setNo,
-              weight: set.weight,
-              reps: set.reps,
-              memo: set.memo,
-              equipment: set.equipment,
-            })),
-          };
-        });
+      const notionExercises = createNotionExercisesPayload(exercises);
 
       if (notionExercises.length === 0) {
         toast.info("모든 세트가 이미 동기화됨", {
@@ -796,12 +749,7 @@ export function RootClient() {
 
         // ===== Phase 4: synced 상태 업데이트 =====
         // 4-1. exercises state 갱신
-        const updatedExercises = exercises.map((ex) => ({
-          ...ex,
-          sets: ex.sets.map((set) =>
-            set.done && !set.synced ? { ...set, synced: true } : set
-          ),
-        }));
+        const updatedExercises = markSyncedSets(exercises);
 
         // 4-2. currentSession만 재저장
         const updatedCurrentSession: SessionDraft = {
