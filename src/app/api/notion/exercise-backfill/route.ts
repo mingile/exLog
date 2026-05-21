@@ -1,3 +1,5 @@
+// Notion Exercise DB 마이그레이션용 백필(backfill) API
+
 import { getMongoDb } from "@/lib/mongodb";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
@@ -30,18 +32,27 @@ export async function POST() {
     const connection = await collection.findOne({ user_key });
 
     if (!connection) {
-      return NextResponse.json({ error: "No connection found" }, { status: 404 });
+      return NextResponse.json(
+        { error: "No connection found" },
+        { status: 404 },
+      );
     }
 
     const accessToken = connection.access_token;
     const exerciseDbId = connection.workout_exercise_db_id;
 
     if (!accessToken) {
-      return NextResponse.json({ error: "No access token found" }, { status: 401 });
+      return NextResponse.json(
+        { error: "No access token found" },
+        { status: 401 },
+      );
     }
 
     if (!exerciseDbId) {
-      return NextResponse.json({ error: "Exercise database not configured" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Exercise database not configured" },
+        { status: 400 },
+      );
     }
 
     const result: BackfillResult = {
@@ -74,7 +85,7 @@ export async function POST() {
             "Content-Type": "application/json",
           },
           body: JSON.stringify(queryBody),
-        }
+        },
       );
 
       if (!queryResponse.ok) {
@@ -82,7 +93,7 @@ export async function POST() {
         console.error("Failed to query Exercise DB:", errorData);
         return NextResponse.json(
           { error: "Failed to query Exercise DB", details: errorData },
-          { status: queryResponse.status }
+          { status: queryResponse.status },
         );
       }
 
@@ -93,12 +104,18 @@ export async function POST() {
       for (const page of pages) {
         try {
           const exerciseIdProp = page.properties?.exercise_id;
-          
+
           let hasExerciseId = false;
           if (exerciseIdProp) {
-            if (exerciseIdProp.type === "rich_text" && exerciseIdProp.rich_text?.length > 0) {
+            if (
+              exerciseIdProp.type === "rich_text" &&
+              exerciseIdProp.rich_text?.length > 0
+            ) {
               hasExerciseId = true;
-            } else if (exerciseIdProp.type === "title" && exerciseIdProp.title?.length > 0) {
+            } else if (
+              exerciseIdProp.type === "title" &&
+              exerciseIdProp.title?.length > 0
+            ) {
               hasExerciseId = true;
             }
           }
@@ -132,7 +149,7 @@ export async function POST() {
                   },
                 },
               }),
-            }
+            },
           );
 
           if (!updateResponse.ok) {
@@ -172,7 +189,7 @@ export async function POST() {
         error: "Exercise backfill failed",
         message: error instanceof Error ? error.message : "Unknown error",
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

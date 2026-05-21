@@ -15,9 +15,16 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { Exercises, SessionMetadata, Exercise, SetItem } from "./types";
+import {
+  Exercises,
+  SessionMetadata,
+  Exercise,
+  SetItem,
+  Session,
+} from "./types";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { ruleDecision } from "@/lib/weightUnit";
 import { TrashIcon, Plus } from "lucide-react";
 import { convertInputToKg } from "@/lib/weightUnit";
 import { nextWeight } from "@/lib/weightUnit";
@@ -66,12 +73,23 @@ export function WorkoutSessionClient({
   saving: boolean;
 }) {
   const [isAddExerciseSheetOpen, setIsAddExerciseSheetOpen] = useState(false);
+  const [openAccordionIndex, setOpenAccordionIndex] = useState<number | null>(
+    null,
+  );
 
   return (
     <main className="p-2 space-y-2">
       {exercises.map((ex, i) => {
         return (
-          <Accordion key={ex.id} type="single" collapsible>
+          <Accordion
+            key={ex.id}
+            type="single"
+            collapsible
+            value={openAccordionIndex === i ? `item-${i}` : ""}
+            onValueChange={(val) =>
+              setOpenAccordionIndex(val === `item-${i}` ? i : null)
+            }
+          >
             <AccordionItem
               value={`item-${i}`}
               className="rounded-lg border px-2"
@@ -79,7 +97,9 @@ export function WorkoutSessionClient({
               <AccordionTrigger className="py-3">
                 <div className="flex w-full items-center justify-between pr-2">
                   <span className="text-base font-medium">{ex.name}</span>
-                  <PlusButton exerciseIndex={i} addSet={addSet} />
+                  {openAccordionIndex === i && (
+                    <PlusButton exerciseIndex={i} addSet={addSet} />
+                  )}
                 </div>
               </AccordionTrigger>
 
@@ -515,6 +535,87 @@ function createDefaultSet(equipment?: string): SetItem {
   };
 }
 
+function getPreviousRecord(
+  exerciseName: string,
+  equipment?: string,
+): SetItem[] {
+  try {
+    const sessionKey = "workout.sessions.v1";
+    const sessionsData = localStorage.getItem(sessionKey);
+
+    if (!sessionsData) {
+      return [createDefaultSet(equipment)];
+    }
+
+    const sessions: Session[] = JSON.parse(sessionsData);
+
+    if (!Array.isArray(sessions) || sessions.length === 0) {
+      return [createDefaultSet(equipment)];
+    }
+
+    // savedAt 기준으로 내림차순 정렬 (최신 순)
+    const sortedSessions = [...sessions].sort((a, b) => {
+      const dateA = new Date(a.savedAt).getTime();
+      const dateB = new Date(b.savedAt).getTime();
+      return dateB - dateA;
+    });
+
+    // 1차 시도: 운동명 + Equipment 모두 일치하는 기록 찾기
+    if (equipment) {
+      for (const session of sortedSessions) {
+        const foundExercise = session.exercises.find(
+          (ex) =>
+            ex.name === exerciseName &&
+            ex.sets.some((set) => set.equipment === equipment),
+        );
+
+        if (foundExercise && foundExercise.sets.length > 0) {
+          const matchingSets = foundExercise.sets.filter(
+            (set) => set.equipment === equipment,
+          );
+          if (matchingSets.length > 0) {
+            return matchingSets.map((set) => ({
+              weight: set.weight,
+              reps: set.reps,
+              done: false,
+              synced: false,
+              equipment: set.equipment,
+              memo: "",
+              unit: ruleDecision(set.equipment).unit,
+            }));
+          }
+        }
+      }
+    }
+
+    // 2차 시도: 운동명만 일치하는 기록 찾기
+    for (const session of sortedSessions) {
+      const foundExercise = session.exercises.find(
+        (ex) => ex.name === exerciseName,
+      );
+
+      if (foundExercise && foundExercise.sets.length > 0) {
+        return foundExercise.sets.map((set) => ({
+          weight: set.weight,
+          reps: set.reps,
+          done: false,
+          synced: false,
+          equipment: set.equipment || equipment || "cable-machine",
+          memo: "",
+          unit: ruleDecision(set.equipment || equipment || "cable-machine")
+            .unit,
+        }));
+      }
+    }
+
+    // 이전 기록을 찾지 못한 경우
+    return [createDefaultSet(equipment)];
+  } catch (error) {
+    console.error("Failed to load previous record:", error);
+    return [createDefaultSet(equipment)];
+  }
+}
+
 function AddExerciseBottomSheet({
   exercises: currentExercises,
   addExercisesToSession,
@@ -567,7 +668,7 @@ function AddExerciseBottomSheet({
         newExercises.push({
           id: libraryEx.id,
           name: libraryEx.name,
-          sets: [createDefaultSet(libraryEx.equipment)],
+          sets: getPreviousRecord(libraryEx.name, libraryEx.equipment),
           part: libraryEx.category as string,
           exercisePageId: libraryEx.notionPageId,
         });
