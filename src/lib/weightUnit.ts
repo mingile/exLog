@@ -46,7 +46,7 @@ export function nextWeight(
   console.log("delta", delta);
   if (weight + delta < 0) return 0;
   console.log("weight + delta", weight + delta);
-  return weight + delta;
+  return Math.round((weight + delta) * 10) / 10;
 }
 
 export function ruleDecision(equipment: string): {
