@@ -6,6 +6,10 @@ import { TrashIcon } from "lucide-react";
 
 const sessionKey = `workout.sessions.v1`;
 
+function getLocalDateString(isoString: string): string {
+    return new Date(isoString).toLocaleDateString('sv-SE');
+}
+
 export function WorkoutHistoryClient({showHistory, historyVersion, selectedDate}: {showHistory: boolean, historyVersion: number, selectedDate: string | null}) {
     const [sessions, setSessions] = useState<Session[]>([]);
     const [swipingSet, setSwipingSet] = useState<string | null>(null);
@@ -28,8 +32,7 @@ export function WorkoutHistoryClient({showHistory, historyVersion, selectedDate}
                 let filteredSessions = parsedHistory;
                 if (selectedDate) {
                     filteredSessions = parsedHistory.filter(session => {
-                        // ISO 문자열에서 직접 날짜 부분만 추출 (YYYY-MM-DD)
-                        const dateStr = session.savedAt.split('T')[0];
+                        const dateStr = getLocalDateString(session.savedAt);
                         console.log(`Session ${session.id}: dateStr=${dateStr}, selectedDate=${selectedDate}, match=${dateStr === selectedDate}`);
                         return dateStr === selectedDate;
                     });
@@ -50,8 +53,7 @@ export function WorkoutHistoryClient({showHistory, historyVersion, selectedDate}
     function groupByDate(sessions: Session[]): Map<string, Session[]> {
         const grouped = new Map<string, Session[]>();
         sessions.forEach(session => {
-            // ISO 문자열에서 직접 날짜 부분만 추출 (YYYY-MM-DD)
-            const dateStr = session.savedAt.split('T')[0];
+            const dateStr = getLocalDateString(session.savedAt);
             if (!grouped.has(dateStr)) {
                 grouped.set(dateStr, []);
             }
