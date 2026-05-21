@@ -1,9 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Session, SavedExercise } from "./types";
-import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "@/components/ui/collapsible";
 import { TrashIcon } from "lucide-react";
 
 const sessionKey = `workout.sessions.v1`;
@@ -18,6 +16,9 @@ export function WorkoutHistoryClient({showHistory, historyVersion, selectedDate}
         const history = localStorage.getItem(sessionKey);
         try{
             const parsedHistory: Session[] = history ? JSON.parse(history) : [];
+            console.log('Parsed history from localStorage:', parsedHistory.length, 'sessions');
+            console.log('selectedDate prop:', selectedDate);
+            
             if (history){
                 if(!Array.isArray(parsedHistory)) {
                     return ;
@@ -27,12 +28,14 @@ export function WorkoutHistoryClient({showHistory, historyVersion, selectedDate}
                 let filteredSessions = parsedHistory;
                 if (selectedDate) {
                     filteredSessions = parsedHistory.filter(session => {
-                        const sessionDate = new Date(session.savedAt);
-                        const dateStr = `${sessionDate.getFullYear()}-${String(sessionDate.getMonth() + 1).padStart(2, '0')}-${String(sessionDate.getDate()).padStart(2, '0')}`;
+                        // ISO 문자열에서 직접 날짜 부분만 추출 (YYYY-MM-DD)
+                        const dateStr = session.savedAt.split('T')[0];
+                        console.log(`Session ${session.id}: dateStr=${dateStr}, selectedDate=${selectedDate}, match=${dateStr === selectedDate}`);
                         return dateStr === selectedDate;
                     });
                 }
                 
+                console.log('Filtered sessions:', filteredSessions.length);
                 setSessions(filteredSessions);
             }else{
                 setSessions([]);
@@ -44,30 +47,30 @@ export function WorkoutHistoryClient({showHistory, historyVersion, selectedDate}
         }
     }, [showHistory, historyVersion, selectedDate]);
      
-    function groupBySessionName(sessions: Session[]){
-        const groupedSessions: {[sessionName: string]: Session[]} = {};
+    function groupByDate(sessions: Session[]): Map<string, Session[]> {
+        const grouped = new Map<string, Session[]>();
         sessions.forEach(session => {
-            let sessionName = session.sessionName;
-            if (!sessionName) {
-                // sessionName이 없으면 savedAt에서 생성
-                const date = new Date(session.savedAt);
-                if (!isNaN(date.getTime())) {
-                    const year = date.getFullYear();
-                    const month = String(date.getMonth() + 1).padStart(2, '0');
-                    const day = String(date.getDate()).padStart(2, '0');
-                    const hours = String(date.getHours()).padStart(2, '0');
-                    const minutes = String(date.getMinutes()).padStart(2, '0');
-                    sessionName = `${year}-${month}-${day} ${hours}:${minutes} 세션`;
-                } else {
-                    sessionName = "세션";
-                }
+            // ISO 문자열에서 직접 날짜 부분만 추출 (YYYY-MM-DD)
+            const dateStr = session.savedAt.split('T')[0];
+            if (!grouped.has(dateStr)) {
+                grouped.set(dateStr, []);
             }
-            if(!groupedSessions[sessionName]){
-                groupedSessions[sessionName] = [];
-            }
-            groupedSessions[sessionName].push(session);
+            grouped.get(dateStr)!.push(session);
         });
-        return groupedSessions;
+        return grouped;
+    }
+    
+    function formatDateHeader(dateStr: string): string {
+        const [year, month, day] = dateStr.split('-');
+        return `${year}년 ${parseInt(month)}월 ${parseInt(day)}일`;
+    }
+    
+    function getSessionSummary(session: Session) {
+        const exerciseCount = session.exercises.length;
+        const totalSets = session.exercises.reduce((sum, ex) => sum + ex.sets.length, 0);
+        const parts = Array.from(new Set(session.exercises.map(ex => ex.part || "기타")));
+        const partsStr = parts.join(" · ");
+        return { exerciseCount, totalSets, partsStr };
     }
     
     function groupExercisesByPart(exercises: (SavedExercise & { part?: string })[]): Map<string, (SavedExercise & { part?: string })[]> {
@@ -80,6 +83,12 @@ export function WorkoutHistoryClient({showHistory, historyVersion, selectedDate}
             grouped.get(part)!.push(ex);
         });
         return grouped;
+    }
+
+    function deleteSession(sessionId: string) {
+        const updatedSessions = sessions.filter(session => session.id !== sessionId);
+        localStorage.setItem(sessionKey, JSON.stringify(updatedSessions));
+        setSessions(updatedSessions);
     }
 
     function deleteSet(sessionId: string, exerciseId: string, setNo: number) {
@@ -160,61 +169,87 @@ export function WorkoutHistoryClient({showHistory, historyVersion, selectedDate}
     }
     
     if (!showHistory) return null;
-    const grouped = groupBySessionName(sessions);
-    const sessionNames = Object.keys(grouped).sort((a,b)=> b.localeCompare(a));
+    
+    if (sessions.length === 0) {
+        return (
+            <main className="p-4 text-center text-gray-500">
+                저장된 운동 기록이 없습니다.
+            </main>
+        );
+    }
+    
+    const dateGrouped = groupByDate(sessions);
+    const dateEntries = Array.from(dateGrouped.entries())
+        .sort((a, b) => b[0].localeCompare(a[0]));
+    
+    console.log('Total sessions:', sessions.length);
+    console.log('Date grouped:', dateGrouped);
+    console.log('Date entries:', dateEntries);
     
     return(
-        <main className="p-2">
-            {sessionNames.map((sessionName, i) => {
-                const sessionList = grouped[sessionName];
-                const session = sessionList[0];
-                const partGrouped = groupExercisesByPart(session.exercises);
-                const parts = Array.from(partGrouped.keys());
+        <main className="p-4 space-y-6">
+            {dateEntries.map(([dateStr, dateSessions]) => {
+                const sortedSessions = dateSessions.sort((a, b) => 
+                    new Date(b.savedAt).getTime() - new Date(a.savedAt).getTime()
+                );
                 
-                return(
-                    <Accordion 
-                        key={session.id} 
-                        type="single" 
-                        collapsible
-                        defaultValue={selectedDate ? `item-${i}` : undefined}
-                    >
-                        <AccordionItem value={`item-${i}`}>
-                            <AccordionTrigger><div>{sessionName}</div></AccordionTrigger>
-                            <AccordionContent>
-                                {parts.map((part) => {
-                                    const partExercises = partGrouped.get(part) || [];
-                                    return(
-                                        <div key={part}>
-                                        <Collapsible defaultOpen={selectedDate ? true : false}>
-                                                <div className="ps-4 flex">
-                                                <CollapsibleTrigger>
-                                                    <div className="text-md font-bold">
+                console.log(`Date ${dateStr}: ${sortedSessions.length} sessions`);
+                
+                return (
+                    <div key={dateStr} className="space-y-4">
+                        <h2 className="text-xl font-bold text-gray-800 sticky top-0 bg-white py-2">
+                            {formatDateHeader(dateStr)}
+                        </h2>
+                        
+                        {sortedSessions.map((session) => {
+                            const { exerciseCount, totalSets, partsStr } = getSessionSummary(session);
+                            const partGrouped = groupExercisesByPart(session.exercises);
+                            const parts = Array.from(partGrouped.keys());
+                            
+                            return (
+                                <div key={session.id} className="border rounded-lg p-4 bg-white shadow-sm">
+                                    <div className="flex justify-between items-start mb-2">
+                                        <div>
+                                            <h3 className="text-lg font-semibold">
+                                                {session.sessionName || "운동 세션"}
+                                            </h3>
+                                            <p className="text-sm text-gray-600">
+                                                {partsStr} · {exerciseCount} exercises · {totalSets} sets
+                                            </p>
+                                        </div>
+                                        <button
+                                            onClick={() => deleteSession(session.id)}
+                                            className="text-red-500 hover:text-red-700 p-2"
+                                            title="세션 삭제"
+                                        >
+                                            <TrashIcon className="size-5" />
+                                        </button>
+                                    </div>
+                                    
+                                    <div className="space-y-4 mt-4">
+                                        {parts.map((part) => {
+                                            const partExercises = partGrouped.get(part) || [];
+                                            return (
+                                                <div key={part} className="border-l-4 border-blue-500 pl-3">
+                                                    <h4 className="text-md font-bold text-gray-700 mb-2">
                                                         {part}
-                                                    </div>
-                                                </CollapsibleTrigger>
-                                                    </div>
-                                                <CollapsibleContent>
-                                                    {partExercises.map((ex) => {
-                                                        return(
-                                                        <Collapsible key={ex.id} defaultOpen={selectedDate ? true : false}>
-                                                            <CollapsibleTrigger>
-                                                                <div className="ps-8">
+                                                    </h4>
+                                                    
+                                                    <div className="space-y-3">
+                                                        {partExercises.map((ex) => (
+                                                            <div key={ex.id} className="pl-2">
+                                                                <p className="text-sm font-medium text-gray-800 mb-1">
                                                                     {ex.name}
-                                                                    </div>
-                                                            </CollapsibleTrigger>
-                                                            <CollapsibleContent>
-                                                                    <div className="ps-8 grid grid-cols-3 justify-items-center">
-                                                                        <div>세트번호</div>
-                                                                        <div>무게</div>
-                                                                        <div>횟수</div>
-                                                                    </div>
-                                                                    {ex.sets.map((set: SavedExercise['sets'][0]) => {
+                                                                </p>
+                                                                
+                                                                <ul className="space-y-1">
+                                                                    {ex.sets.map((set) => {
                                                                         const setKey = `${session.id}-${ex.id}-${set.setNo}`;
                                                                         const isActive = swipingSet === setKey;
                                                                         const offset = isActive ? swipeOffset : 0;
                                                                         
-                                                                        return(
-                                                                            <div 
+                                                                        return (
+                                                                            <li
                                                                                 key={set.setNo}
                                                                                 className="relative overflow-hidden cursor-pointer"
                                                                                 onTouchStart={(e) => handleTouchStart(e, setKey)}
@@ -225,38 +260,33 @@ export function WorkoutHistoryClient({showHistory, historyVersion, selectedDate}
                                                                                 onMouseUp={() => handleMouseUp(session.id, ex.id, set.setNo)}
                                                                                 onMouseLeave={handleMouseLeave}
                                                                             >
-                                                                                <div 
-                                                                                    className="absolute inset-0 bg-red-500 flex items-center justify-end pr-4"
-                                                                                >
-                                                                                    <TrashIcon className="size-5 text-white" />
+                                                                                <div className="absolute inset-0 bg-red-500 flex items-center justify-end pr-4">
+                                                                                    <TrashIcon className="size-4 text-white" />
                                                                                 </div>
                                                                                 <div 
-                                                                                    className="grid grid-cols-3 ps-8 justify-items-center bg-white transition-transform"
+                                                                                    className="bg-white text-sm text-gray-700 py-1 transition-transform"
                                                                                     style={{ transform: `translateX(${offset}px)` }}
                                                                                 >
-                                                                                    <div>{set.setNo}</div>
-                                                                                    <div>{set.weight+"kg"}</div>
-                                                                                    <div>{set.reps}</div>
+                                                                                    {set.weight}kg × {set.reps}
                                                                                 </div>
-                                                                            </div>
-                                                                        )
+                                                                            </li>
+                                                                        );
                                                                     })}
-                                                                </CollapsibleContent>
-                                                            </Collapsible>
-                                                        )
-                                                    })}
-                                                </CollapsibleContent>
-                                                </Collapsible>
-                                            </div>
-                                    )
-                                })}
-                            </AccordionContent>
-                        </AccordionItem>
-                    </Accordion>
-                )
+                                                                </ul>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
+                );
             })}
         </main>
     );
-
 }
 
