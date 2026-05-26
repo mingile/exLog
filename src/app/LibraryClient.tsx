@@ -8,24 +8,10 @@ import {
   SetItem,
   SessionDraft,
 } from "./types";
-import {
-  groupExercisesByCategory,
-  getFirstValidCategory,
-} from "@/lib/library";
+import { groupExercisesByCategory, getFirstValidCategory } from "@/lib/library";
 import { createSessionMetadata } from "@/lib/session-utils";
 import { Button } from "@/components/ui/button";
 import { useExerciseLibrary } from "@/hooks/useExerciseLibrary";
-
-const CATEGORY_ORDER: LibraryCategory[] = [
-  "등",
-  "가슴",
-  "하체",
-  "어깨",
-  "팔",
-  "코어",
-  "유산소",
-  "기타",
-];
 
 function createDefaultSet(equipment?: string): SetItem {
   return {
@@ -181,6 +167,13 @@ export function LibraryClient({ onConfirmSelection }: LibraryClientProps) {
     <div className="flex flex-col h-screen">
       <header className="p-4 border-b">
         <h1 className="text-xl font-bold">운동 라이브러리</h1>
+        {libraryState.status === "success" &&
+          libraryState.source === "builtin" &&
+          libraryState.message && (
+            <div className="mt-2 px-3 py-2 bg-blue-50 border border-blue-200 rounded text-xs text-blue-700">
+              {libraryState.message}
+            </div>
+          )}
       </header>
 
       <div className="flex-1 overflow-y-auto">

@@ -832,16 +832,6 @@ export function RootClient() {
     );
   }
 
-  if (!dbConnected) {
-    return (
-      <NotionSettingsPage
-        notionConnected={notionConnected}
-        dbConnected={dbConnected}
-        onConnectionComplete={refreshNotionStatus}
-      />
-    );
-  }
-
   if (entryMode === "loading") {
     return (
       <div className="flex flex-col h-100vh min-h-screen text-center items-center justify-center">

@@ -48,7 +48,7 @@ export type LibraryState =
     | { status: "loading" }
     | { status: "error"; message: string }
     | { status: "empty" }
-    | { status: "success"; exercises: LibraryExercise[]; categories: LibraryCategory[] };
+    | { status: "success"; exercises: LibraryExercise[]; categories: LibraryCategory[]; source: "builtin" | "notion"; message?: string };
 
 export type DateInfo = {
     date: Date;

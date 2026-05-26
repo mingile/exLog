@@ -6,6 +6,18 @@ import {
   getOrderedCategories,
   getFirstValidCategory,
 } from "@/lib/library";
+import builtinExercises from "@/data/exercises.json";
+
+function transformBuiltinExerciseToLibraryExercise(
+  builtin: { id: string; name: string; part: string; equipment: string },
+): LibraryExercise {
+  return {
+    id: builtin.id,
+    name: builtin.name,
+    category: builtin.part as LibraryCategory,
+    equipment: builtin.equipment,
+  };
+}
 
 export function useExerciseLibrary() {
   const [libraryState, setLibraryState] = useState<LibraryState>({
@@ -15,6 +27,44 @@ export function useExerciseLibrary() {
   async function fetchExercises() {
     try {
       setLibraryState({ status: "loading" });
+
+      const statusRes = await fetch("/api/notion/status", {
+        method: "GET",
+        credentials: "include",
+        cache: "no-store",
+      });
+
+      let notionConnected = false;
+      let dbConnected = false;
+
+      if (statusRes.ok) {
+        const statusData = await statusRes.json();
+        notionConnected = statusData.notionConnected || false;
+        dbConnected = statusData.dbConnected || false;
+      }
+
+      if (!notionConnected || !dbConnected) {
+        const exercises: LibraryExercise[] = builtinExercises.map(
+          transformBuiltinExerciseToLibraryExercise,
+        );
+
+        if (exercises.length === 0) {
+          setLibraryState({ status: "empty" });
+          return;
+        }
+
+        const grouped = groupExercisesByCategory(exercises);
+        const categories = getOrderedCategories(grouped);
+
+        setLibraryState({
+          status: "success",
+          exercises,
+          categories,
+          source: "builtin",
+          message: "노션 미연동 상태입니다. 기본 운동 목록을 사용 중입니다.",
+        });
+        return;
+      }
 
       const res = await fetch("/api/notion/exercise-read", {
         method: "GET",
@@ -59,6 +109,7 @@ export function useExerciseLibrary() {
         status: "success",
         exercises,
         categories,
+        source: "notion",
       });
     } catch (error) {
       console.error("Failed to fetch exercises:", error);

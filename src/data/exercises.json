@@ -1,0 +1,121 @@
+[
+    {
+      "id": "ex_7a12bc34de56f001",
+      "name": "벤치프레스",
+      "part": "가슴",
+      "equipment": "barbell"
+    },
+    {
+      "id": "ex_7a12bc34de56f002",
+      "name": "팩덱플라이",
+      "part": "가슴",
+      "equipment": "barbell"
+    },
+    {
+      "id": "ex_7a12bc34de56f005",
+      "name": "푸쉬업",
+      "part": "가슴",
+      "equipment": "bodyweight"
+    },
+  
+    {
+      "id": "ex_7a12bc34de56f006",
+      "name": "랫풀다운",
+      "part": "등",
+      "equipment": "cable-machine"
+    },
+    {
+      "id": "ex_7a12bc34de56f008",
+      "name": "시티드로우",
+      "part": "등",
+      "equipment": "cable-machine"
+    },
+    {
+      "id": "ex_7a12bc34de56f009",
+      "name": "풀업",
+      "part": "등",
+      "equipment": "bodyweight"
+    },
+  
+    {
+      "id": "ex_7a12bc34de56f010",
+      "name": "스쿼트",
+      "part": "하체",
+      "equipment": "barbell"
+    },
+    {
+      "id": "ex_7a12bc34de56f011",
+      "name": "레그프레스",
+      "part": "하체",
+      "equipment": "plate-machine"
+    },
+    {
+      "id": "ex_7a12bc34de56f012",
+      "name": "레그컬",
+      "part": "하체",
+      "equipment": "plate-machine"
+    },
+    {
+      "id": "ex_7a12bc34de56f013",
+      "name": "레그익스텐션",
+      "part": "하체",
+      "equipment": "plate-machine"
+    },
+  
+    {
+      "id": "ex_7a12bc34de56f014",
+      "name": "숄더프레스",
+      "part": "어깨",
+      "equipment": "plate-machine"
+    },
+    {
+      "id": "ex_7a12bc34de56f016",
+      "name": "사이드 레터럴 레이즈",
+      "part": "어깨",
+      "equipment": "dumbbell"
+    },
+  
+    {
+      "id": "ex_7a12bc34de56f017",
+      "name": "바벨컬",
+      "part": "팔",
+      "equipment": "barbell"
+    },
+    {
+      "id": "ex_7a12bc34de56f018",
+      "name": "덤벨컬",
+      "part": "팔",
+      "equipment": "dumbbell"
+    },
+    {
+      "id": "ex_7a12bc34de56f019",
+      "name": "트라이셉스 푸쉬다운",
+      "part": "팔",
+      "equipment": "cable-machine"
+    },
+  
+    {
+      "id": "ex_7a12bc34de56f020",
+      "name": "크런치",
+      "part": "코어",
+      "equipment": "bodyweight"
+    },
+    {
+      "id": "ex_7a12bc34de56f021",
+      "name": "플랭크",
+      "part": "코어",
+      "equipment": "bodyweight"
+    },
+    {
+      "id": "ex_7a12bc34de56f022",
+      "name": "러닝",
+      "part": "유산소",
+      "equipment": "cardio-machine"
+    },
+    {
+      "id": "ex_7a12bc34de56f023",
+      "name": "사이클",
+      "part": "유산소",
+      "equipment": "cardio-machine"
+    }
+  ]
