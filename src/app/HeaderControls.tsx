@@ -182,7 +182,7 @@ export function HeaderControls({
 
   return (
     <header className="sticky top-0 z-50 bg-background/95 backdrop-blur border-b supports-[backdrop-filter]:bg-background/60">
-      <div className="px-4 py-2 space-y-2">
+      <div className="px-2 py-2 space-y-2">
         {/* 첫 번째 행: 세션 이름 입력 */}
         <div className="flex items-center gap-2">
           <input
