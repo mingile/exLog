@@ -191,7 +191,7 @@ export function HeaderControls({
             onChange={(e) => setSessionNameInput(e.target.value)}
             onBlur={handleSessionNameBlur}
             placeholder="세션 이름을 입력하세요"
-            className="flex-1 px-3 py-1.5 text-2xl font-medium rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="flex-1 px-1 py-1.5 text-xl font-medium rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
           {/* 설정 메뉴 */}
           <div
