@@ -8,11 +8,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import type {
-  Session,
-  SessionMetadata,
-  DateInfo,
-} from "./types";
+import type { Session, SessionMetadata, DateInfo } from "./types";
 import React, { useState, useRef, useEffect, useMemo } from "react";
 import { Settings, History } from "lucide-react";
 import { WorkoutHistoryClient } from "./WorkoutHistoryClient";
@@ -202,68 +198,78 @@ export function HeaderControls({
             className="relative hover:bg-accent rounded-full p-1"
             ref={menuRef}
           >
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setIsMenuOpen(!isMenuOpen)}
-                className="relative "
-              >
-                <Settings className="size-6" />
-                {/* 연결 상태 인디케이터 */}
-                <div
-                  className={`absolute top-1 right-1.25 w-2 h-2 rounded-full ${
-                    notionReady ? "bg-green-500" : "bg-red-500"
-                  }`}
-                />
-              </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
+              className="relative "
+            >
+              <Settings className="size-6" />
+              {/* 연결 상태 인디케이터 */}
+              <div
+                className={`absolute top-1 right-1.25 w-2 h-2 rounded-full ${
+                  notionReady ? "bg-green-500" : "bg-red-500"
+                }`}
+              />
+            </Button>
 
-              {/* 드롭다운 메뉴 */}
-              {isMenuOpen && (
-                <div className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
-                  <div className="px-4 py-3 border-b border-gray-100">
-                    <div className="flex items-center gap-2">
-                      <div
-                        className={`w-3 h-3 rounded-full ${
-                          notionReady ? "bg-green-500" : "bg-red-500"
-                        }`}
-                      />
-                      <span className="text-sm font-medium">
-                        Notion {notionReady ? "연결됨" : "연결 안됨"}
-                      </span>
-                    </div>
-                  </div>
-                  <div className="px-2 py-1">
-                    <Button
-                      variant="ghost"
-                      className="w-full justify-start text-sm h-auto py-2"
-                      onClick={() => {
-                        fetch("/api/notion/disconnect", {
-                          method: "POST",
-                        })
-                          .then((data) => {
-                            if (data.ok) {
-                              toast.success("Notion 연결 해제 완료", {
-                                duration: 1000,
-                              });
-                              checkNotionStatus();
-                              setIsMenuOpen(false);
-                            }
-                          })
-                          .catch((err) => {
-                            toast.error(
-                              "Notion 연결 해제 중 오류가 발생했습니다.",
-                              {
-                                duration: 1000,
-                              },
-                            );
-                          });
-                      }}
-                    >
-                      연결 해제
-                    </Button>
+            {/* 드롭다운 메뉴 */}
+            {isMenuOpen && (
+              <div className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
+                <div className="px-4 py-3 border-b border-gray-100">
+                  <div className="flex items-center gap-2">
+                    <div
+                      className={`w-3 h-3 rounded-full ${
+                        notionReady ? "bg-green-500" : "bg-red-500"
+                      }`}
+                    />
+                    <span className="text-sm font-medium">
+                      Notion {notionReady ? "연결됨" : "연결 안됨"}
+                    </span>
                   </div>
                 </div>
-              )}
+                <div className="px-2 py-1">
+                  <Button
+                    variant="ghost"
+                    className="w-full justify-start text-sm h-auto py-2"
+                    onClick={() => {
+                      window.location.href = "/settings/notion";
+                      setIsMenuOpen(false);
+                    }}
+                  >
+                    Notion 연동 설정
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    className="w-full justify-start text-sm h-auto py-2"
+                    onClick={() => {
+                      fetch("/api/notion/disconnect", {
+                        method: "POST",
+                      })
+                        .then((data) => {
+                          if (data.ok) {
+                            toast.success("Notion 연결 해제 완료", {
+                              duration: 1000,
+                            });
+                            checkNotionStatus();
+                            setIsMenuOpen(false);
+                          }
+                        })
+                        .catch((err) => {
+                          toast.error(
+                            "Notion 연결 해제 중 오류가 발생했습니다.",
+                            {
+                              duration: 1000,
+                            },
+                          );
+                        });
+                    }}
+                  >
+                    연결 해제
+                  </Button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 

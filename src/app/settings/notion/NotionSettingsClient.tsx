@@ -14,7 +14,11 @@ type NotionSettingsPageProps = {
   onConnectionComplete: () => void | Promise<void>;
 };
 
-export default function NotionSettingsPage({ notionConnected, dbConnected, onConnectionComplete }: NotionSettingsPageProps) {
+export default function NotionSettingsPage({
+  notionConnected,
+  dbConnected,
+  onConnectionComplete,
+}: NotionSettingsPageProps) {
   const [databases, setDatabases] = useState<DatabaseOption[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -26,15 +30,16 @@ export default function NotionSettingsPage({ notionConnected, dbConnected, onCon
   const [selectedSessionDbId, setSelectedSessionDbId] = useState("");
 
   const handleCompleteConnection = async () => {
-    if (!selectedSetsDbId || !selectedExerciseDbId || !selectedSessionDbId) return;
+    if (!selectedSetsDbId || !selectedExerciseDbId || !selectedSessionDbId)
+      return;
     const ids = [selectedSetsDbId, selectedExerciseDbId, selectedSessionDbId];
     const uniqueIds = new Set(ids);
     if (uniqueIds.size !== ids.length) return;
-  
+
     try {
       setSubmitting(true);
       setSubmitError(null);
-  
+
       const res = await fetch("/api/notion/connection", {
         method: "POST",
         headers: {
@@ -46,16 +51,15 @@ export default function NotionSettingsPage({ notionConnected, dbConnected, onCon
           workout_session_db_id: selectedSessionDbId,
         }),
       });
-  
+
       const data = await res.json();
-  
+
       if (!res.ok) {
         throw new Error(data?.error || "연결 저장 실패");
       }
-      
+
       await onConnectionComplete();
       window.location.href = "/";
-  
     } catch (err) {
       const message =
         err instanceof Error ? err.message : "알 수 없는 오류가 발생했습니다.";
@@ -65,7 +69,9 @@ export default function NotionSettingsPage({ notionConnected, dbConnected, onCon
     }
   };
 
-  const fetchDatabaseOptions = async (mode: "initial" | "refresh" = "initial") => {
+  const fetchDatabaseOptions = async (
+    mode: "initial" | "refresh" = "initial",
+  ) => {
     try {
       if (mode === "initial") {
         setLoading(true);
@@ -105,69 +111,79 @@ export default function NotionSettingsPage({ notionConnected, dbConnected, onCon
       setLoading(false);
       return;
     }
-  
+
     fetchDatabaseOptions("initial");
   }, [notionConnected, dbConnected]);
 
+  const setsOptions = databases.filter(
+    (db) => db.id !== selectedExerciseDbId && db.id !== selectedSessionDbId,
+  );
+  const exerciseOptions = databases.filter(
+    (db) => db.id !== selectedSetsDbId && db.id !== selectedSessionDbId,
+  );
 
-  const setsOptions =  databases.filter((db) => db.id !== selectedExerciseDbId && db.id !== selectedSessionDbId);
-  const exerciseOptions =  databases.filter((db) => db.id !== selectedSetsDbId && db.id !== selectedSessionDbId);
+  const sessionOptions = databases.filter(
+    (db) => db.id !== selectedSetsDbId && db.id !== selectedExerciseDbId,
+  );
 
-  const sessionOptions =  databases.filter((db) => db.id !== selectedSetsDbId && db.id !== selectedExerciseDbId);
-
-  const selectedSetsDb = databases.find((db) => db.id === selectedSetsDbId) ?? null;
-  const selectedExerciseDb = databases.find((db) => db.id === selectedExerciseDbId) ?? null;
-  const selectedSessionDb = databases.find((db) => db.id === selectedSessionDbId) ?? null;
+  const selectedSetsDb =
+    databases.find((db) => db.id === selectedSetsDbId) ?? null;
+  const selectedExerciseDb =
+    databases.find((db) => db.id === selectedExerciseDbId) ?? null;
+  const selectedSessionDb =
+    databases.find((db) => db.id === selectedSessionDbId) ?? null;
 
   const isCompleteEnabled =
     !!selectedSetsDbId &&
     !!selectedExerciseDbId &&
     !!selectedSessionDbId &&
-    new Set([selectedSetsDbId, selectedExerciseDbId, selectedSessionDbId]).size === 3;
+    new Set([selectedSetsDbId, selectedExerciseDbId, selectedSessionDbId])
+      .size === 3;
 
-    if (!notionConnected) {
-      return (
-        <div className="mx-auto max-w-3xl p-6">
-          <div className="space-y-6">
-            <div className="rounded-xl border bg-white p-6 shadow-sm">
-              <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                <div>
-                  <h1 className="text-2xl font-semibold">Notion 연결</h1>
-                  <p className="mt-2 text-sm text-gray-600">
-                    먼저 Notion OAuth 연결을 완료해야 데이터베이스를 선택할 수 있습니다.
-                  </p>
-                </div>
-    
-                <Link
-                  href="/"
-                  className="rounded-md border px-4 py-2 text-sm font-medium"
-                >
-                  홈으로
-                </Link>
-              </div>
-            </div>
-    
-            <div className="rounded-xl border bg-white p-6 shadow-sm space-y-4">
+  if (!notionConnected) {
+    return (
+      <div className="mx-auto max-w-3xl p-6">
+        <div className="space-y-6">
+          <div className="rounded-xl border bg-white p-6 shadow-sm">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
               <div>
-                <h2 className="text-lg font-semibold">1단계. Notion 계정 연결</h2>
+                <h1 className="text-2xl font-semibold">Notion 연결</h1>
                 <p className="mt-2 text-sm text-gray-600">
-                  아래 버튼을 눌러 Notion 계정을 연결한 뒤 다시 돌아오세요.
+                  먼저 Notion OAuth 연결을 완료해야 데이터베이스를 선택할 수
+                  있습니다.
                 </p>
               </div>
-    
-              <div>
-                <a
-                  href="/api/notion/auth"
-                  className="inline-flex rounded-md bg-black px-4 py-2 text-sm font-medium text-white"
-                >
-                  Notion 연동하기
-                </a>
-              </div>
+
+              <Link
+                href="/"
+                className="rounded-md border px-4 py-2 text-sm font-medium"
+              >
+                홈으로
+              </Link>
+            </div>
+          </div>
+
+          <div className="rounded-xl border bg-white p-6 shadow-sm space-y-4">
+            <div>
+              <h2 className="text-lg font-semibold">1단계. Notion 계정 연결</h2>
+              <p className="mt-2 text-sm text-gray-600">
+                아래 버튼을 눌러 Notion 계정을 연결한 뒤 다시 돌아오세요.
+              </p>
+            </div>
+
+            <div>
+              <a
+                href="/api/notion/auth"
+                className="inline-flex rounded-md bg-black px-4 py-2 text-sm font-medium text-white"
+              >
+                Notion 연동하기
+              </a>
             </div>
           </div>
         </div>
-      );
-    }
+      </div>
+    );
+  }
 
   if (loading) {
     return (
@@ -215,29 +231,28 @@ export default function NotionSettingsPage({ notionConnected, dbConnected, onCon
         </div>
 
         {error && (
-  <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700 space-y-3">
-    <div>에러: {error}</div>
+          <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700 space-y-3">
+            <div>에러: {error}</div>
 
-    <div className="flex gap-2">
-      <a
-        href="/api/notion/auth"
-        className="inline-flex rounded-md border border-red-300 bg-white px-4 py-2 text-sm font-medium text-red-700"
-      >
-        Notion 연동 다시 하기
-      </a>
+            <div className="flex gap-2">
+              <a
+                href="/api/notion/auth"
+                className="inline-flex rounded-md border border-red-300 bg-white px-4 py-2 text-sm font-medium text-red-700"
+              >
+                Notion 연동 다시 하기
+              </a>
 
-      <Link
-        href="/"
-        className="inline-flex rounded-md border border-red-300 bg-white px-4 py-2 text-sm font-medium text-red-700"
-      >
-        홈으로
-      </Link>
-    </div>
-  </div>
-)}
+              <Link
+                href="/"
+                className="inline-flex rounded-md border border-red-300 bg-white px-4 py-2 text-sm font-medium text-red-700"
+              >
+                홈으로
+              </Link>
+            </div>
+          </div>
+        )}
 
         <div className="rounded-xl border bg-white p-6 shadow-sm space-y-5">
-
           <div className="space-y-2">
             <label htmlFor="exercise-db" className="block text-sm font-medium">
               Workout Exercise DB
@@ -278,11 +293,12 @@ export default function NotionSettingsPage({ notionConnected, dbConnected, onCon
               ))}
             </select>
             <p className="text-xs text-gray-500">
-              세션 정보가 저장될 데이터베이스를 선택합니다. (Sets를 묶는 상위 레코드)
+              세션 정보가 저장될 데이터베이스를 선택합니다. (Sets를 묶는 상위
+              레코드)
             </p>
           </div>
 
-        <div className="space-y-2">
+          <div className="space-y-2">
             <label htmlFor="sets-db" className="block text-sm font-medium">
               Workout Set DB
             </label>
@@ -304,7 +320,6 @@ export default function NotionSettingsPage({ notionConnected, dbConnected, onCon
             </p>
           </div>
         </div>
-
 
         <div className="rounded-xl border bg-gray-50 p-6 space-y-4">
           <div>
@@ -330,7 +345,9 @@ export default function NotionSettingsPage({ notionConnected, dbConnected, onCon
             <div className="rounded-md border bg-white p-4">
               <div className="font-medium">Workout Exercise DB</div>
               <div className="mt-1 text-gray-700">
-                {selectedExerciseDb ? selectedExerciseDb.title : "아직 선택 안 됨"}
+                {selectedExerciseDb
+                  ? selectedExerciseDb.title
+                  : "아직 선택 안 됨"}
               </div>
               {selectedExerciseDb && (
                 <div className="mt-1 break-all text-xs text-gray-500">
@@ -342,7 +359,9 @@ export default function NotionSettingsPage({ notionConnected, dbConnected, onCon
             <div className="rounded-md border bg-white p-4">
               <div className="font-medium">Workout Session DB</div>
               <div className="mt-1 text-gray-700">
-                {selectedSessionDb ? selectedSessionDb.title : "아직 선택 안 됨"}
+                {selectedSessionDb
+                  ? selectedSessionDb.title
+                  : "아직 선택 안 됨"}
               </div>
               {selectedSessionDb && (
                 <div className="mt-1 break-all text-xs text-gray-500">
@@ -364,7 +383,7 @@ export default function NotionSettingsPage({ notionConnected, dbConnected, onCon
               className="rounded-md bg-black px-4 py-2 text-sm font-medium text-white disabled:cursor-not-allowed disabled:bg-gray-300"
             >
               {submitting ? "저장 중..." : "연결 완료"}
-            </button> 
+            </button>
           </div>
         </div>
 

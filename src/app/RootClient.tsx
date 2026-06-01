@@ -12,7 +12,6 @@ import {
   SavedExercise,
 } from "./types";
 import { WorkoutHistoryClient } from "./WorkoutHistoryClient";
-import NotionSettingsPage from "./settings/notion/NotionSettingsClient";
 import { LibraryClient } from "./LibraryClient";
 import { kgToLb, lbToKg, nextWeight } from "@/lib/weightUnit";
 import { toast } from "sonner";
@@ -584,7 +583,7 @@ export function RootClient() {
       console.log("이미 저장 중입니다");
       return;
     }
-    
+
     savingRef.current = true;
     setSaving(true);
 
@@ -612,7 +611,7 @@ export function RootClient() {
       };
       localStorage.setItem(
         "workout.currentSession.v1",
-        JSON.stringify(currentSessionSnapshot)
+        JSON.stringify(currentSessionSnapshot),
       );
 
       // 2-2. workout.sessions.v1 저장
@@ -642,7 +641,7 @@ export function RootClient() {
       const nextSessions = [historyPayload, ...filtered];
       localStorage.setItem(sessionKey, JSON.stringify(nextSessions));
       onSavedHistory();
-      
+
       toast.success("로컬 저장 완료");
 
       // ===== Phase 3: Notion 동기화 (선택적) =====
@@ -673,7 +672,7 @@ export function RootClient() {
 
       // exercisePageId 없는 운동 체크
       const hasInvalidExercise = notionExercises.some(
-        (ex) => !ex.exercisePageId
+        (ex) => !ex.exercisePageId,
       );
       if (hasInvalidExercise) {
         toast.warning("일부 운동에 Exercise 정보가 없습니다.", {
@@ -711,7 +710,7 @@ export function RootClient() {
         sessionPageId = sessionDataResponse.pageId;
         console.log(
           `Session ${sessionDataResponse.created ? "생성" : "조회"} 완료:`,
-          sessionPageId
+          sessionPageId,
         );
       } catch (error) {
         console.error("Session 확보 중 오류:", error);
@@ -758,7 +757,7 @@ export function RootClient() {
         };
         localStorage.setItem(
           "workout.currentSession.v1",
-          JSON.stringify(updatedCurrentSession)
+          JSON.stringify(updatedCurrentSession),
         );
 
         // 4-3. state 갱신

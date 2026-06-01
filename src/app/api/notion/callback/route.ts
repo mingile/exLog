@@ -10,18 +10,18 @@ export async function GET(request: Request){
     const state = url.searchParams.get('state');
     
     if(!code || !state){
-        return NextResponse.redirect(new URL("/api/notion/auth", process.env.APP_BASE_URL));
+        return NextResponse.redirect(new URL("/settings/notion?error=missing_params", process.env.APP_BASE_URL));
     }
     
     const cookieStore = await cookies();
     const savedState = cookieStore.get("notion_oauth_state")?.value;
     let user_key = cookieStore.get("user_key")?.value;
     if(!user_key){
-        return NextResponse.redirect(new URL("/api/notion/auth", process.env.APP_BASE_URL));
+        return NextResponse.redirect(new URL("/settings/notion?error=no_user_key", process.env.APP_BASE_URL));
     }
 
     if(!savedState || savedState !== state){
-        return NextResponse.redirect(new URL("/api/notion/auth", process.env.APP_BASE_URL));
+        return NextResponse.redirect(new URL("/settings/notion?error=invalid_state", process.env.APP_BASE_URL));
     } else {
         cookieStore.set("notion_oauth_state", "", {
             httpOnly: true,
@@ -43,7 +43,7 @@ export async function GET(request: Request){
             hasClientSecret: !!clientSecret,
             hasRedirectUri: !!redirectUri,
         });
-        return NextResponse.redirect(new URL("/api/notion/auth", process.env.APP_BASE_URL));
+        return NextResponse.redirect(new URL("/settings/notion?error=missing_env", process.env.APP_BASE_URL));
     }
     
         const credentials = Buffer.from(`${process.env.NOTION_CLIENT_ID}:${process.env.NOTION_CLIENT_SECRET}`).toString("base64");
@@ -77,7 +77,7 @@ export async function GET(request: Request){
                     status: tokenResponse.status,
                     tokenData,
                 });
-                return NextResponse.redirect(new URL("/api/notion/auth", process.env.APP_BASE_URL));
+                return NextResponse.redirect(new URL("/settings/notion?error=token_exchange_failed", process.env.APP_BASE_URL));
             }
     
             console.log("Notion token 교환 성공", {
@@ -119,13 +119,13 @@ export async function GET(request: Request){
                     path: "/",
                 });
 
-                return NextResponse.redirect(new URL('/', process.env.APP_BASE_URL));
+                return NextResponse.redirect(new URL('/settings/notion', process.env.APP_BASE_URL));
             }catch(error){
                 console.error("Notion temp 정보 저장 중 예외", error);
-                return NextResponse.redirect(new URL("/api/notion/auth", process.env.APP_BASE_URL));
+                return NextResponse.redirect(new URL("/settings/notion?error=db_save_failed", process.env.APP_BASE_URL));
             }
     }catch(error){
         console.error("Notion token 교환 중 예외", error);
-        return NextResponse.redirect(new URL("/api/notion/auth", process.env.APP_BASE_URL));
+        return NextResponse.redirect(new URL("/settings/notion?error=token_exception", process.env.APP_BASE_URL));
     }
 }
