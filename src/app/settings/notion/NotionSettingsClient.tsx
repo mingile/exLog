@@ -143,6 +143,10 @@ export default function NotionSettingsPage({
   if (!notionConnected) {
     return (
       <div className="mx-auto max-w-3xl p-6">
+        <div>
+          notionConnected: {String(notionConnected)}
+          dbConnected: {String(dbConnected)}
+        </div>
         <div className="space-y-6">
           <div className="rounded-xl border bg-white p-6 shadow-sm">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">

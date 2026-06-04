@@ -3,41 +3,47 @@ import { NextResponse } from "next/server";
 import crypto from "crypto";
 
 export async function GET() {
-    // state 생성 (랜덤)
-    const randomState = crypto.randomUUID();
-    // state를 HttpOnly 쿠키로 저장 (콜백에서 검증용)
-    const cookieStore = await cookies();
-    
-    let user_key = cookieStore.get("user_key")?.value;
-    if(!user_key){
-        user_key = crypto.randomUUID();
-        cookieStore.set("user_key", user_key, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === "production",
-            maxAge: 60*60*24*30, // 30일
-            path: "/",
-        });
-    }
+  // state 생성 (랜덤)
+  const randomState = crypto.randomUUID();
+  // state를 HttpOnly 쿠키로 저장 (콜백에서 검증용)
+  const cookieStore = await cookies();
 
-    cookieStore.set("notion_oauth_state", randomState, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        maxAge: 60*10,
-        path: "/",
+  let user_key = cookieStore.get("user_key")?.value;
+  if (!user_key) {
+    user_key = crypto.randomUUID();
+    cookieStore.set("user_key", user_key, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      maxAge: 60 * 60 * 24 * 30, // 30일
+      path: "/",
     });
+  }
 
-    console.log("AUTHORIZE:", process.env.NOTION_AUTHORIZE_URL);
-    // Notion authorize URL 구성
-    const authUrl = new URL(process.env.NOTION_AUTHORIZE_URL ?? "");
-    // client_id
-    authUrl.searchParams.set("client_id", process.env.NOTION_CLIENT_ID ?? "");
-    // redirect_uri
-    authUrl.searchParams.set("redirect_uri", process.env.NOTION_REDIRECT_URI ?? "");
-    // response_type=code
-    authUrl.searchParams.set("response_type", "code");
-    // state
-    authUrl.searchParams.set("state", randomState);
+  cookieStore.set("notion_oauth_state", randomState, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    maxAge: 60 * 10,
+    path: "/",
+  });
 
-    // 302 redirect 응답 
-    return NextResponse.redirect(authUrl);
+  console.log("AUTHORIZE:", process.env.NOTION_AUTHORIZE_URL);
+  // Notion authorize URL 구성
+  const authUrl = new URL(process.env.NOTION_AUTHORIZE_URL ?? "");
+  // client_id
+  authUrl.searchParams.set("client_id", process.env.NOTION_CLIENT_ID ?? "");
+  // redirect_uri
+  authUrl.searchParams.set(
+    "redirect_uri",
+    process.env.NOTION_REDIRECT_URI ?? "",
+  );
+  // response_type=code
+  authUrl.searchParams.set("response_type", "code");
+  // state
+  authUrl.searchParams.set("state", randomState);
+
+  // owner
+  authUrl.searchParams.set("owner", "user");
+
+  // 302 redirect 응답
+  return NextResponse.redirect(authUrl);
 }

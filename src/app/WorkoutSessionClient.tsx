@@ -440,7 +440,7 @@ function Row({
                   ) : (
                     <button
                       type="button"
-                      className="flex-1 min-w-0 text-base font-semibold truncate"
+                      className="flex-1 min-w-0 text-md font-semibold truncate"
                       onClick={beginWeightEdit}
                     >
                       {displayWeight}
@@ -474,7 +474,7 @@ function Row({
                   >
                     -
                   </Button>
-                  <div className="flex-1 text-center text-lg font-semibold">
+                  <div className="flex-1 text-center text-md font-semibold">
                     {reps}회
                   </div>
                   <Button

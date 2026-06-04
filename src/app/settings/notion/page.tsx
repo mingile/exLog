@@ -6,28 +6,41 @@ import NotionSettingsClient from "./NotionSettingsClient";
 export default function Page() {
   const [notionConnected, setNotionConnected] = useState(false);
   const [dbConnected, setDbConnected] = useState(false);
-  const fetchNotionStatus = async () => {
+  const [notionStatusLoading, setNotionStatusLoading] = useState(false);
+
+  async function refreshNotionStatus() {
     try {
-      const res = await fetch("/api/notion/status");
+      setNotionStatusLoading(true);
+
+      const res = await fetch("/api/notion/status", {
+        method: "GET",
+        credentials: "include",
+        cache: "no-store",
+      });
+
       const data = await res.json();
-      if (res.ok) {
-        setNotionConnected(data.notionConnected || false);
-        setDbConnected(data.dbConnected || false);
-      }
-    } catch (error) {
-      console.error("Failed to fetch notion status", error);
+
+      setNotionConnected(!!data.notionConnected);
+      setDbConnected(!!data.dbConnected);
+      console.log(notionConnected, dbConnected);
+    } catch (err) {
+      console.error("Notion 상태 조회 중 오류", err);
+      setNotionConnected(false);
+      setDbConnected(false);
+    } finally {
+      setNotionStatusLoading(false);
     }
-  };
+  }
 
   useEffect(() => {
-    fetchNotionStatus();
+    refreshNotionStatus();
   }, []);
 
   return (
     <NotionSettingsClient
       notionConnected={notionConnected}
       dbConnected={dbConnected}
-      onConnectionComplete={fetchNotionStatus}
+      onConnectionComplete={refreshNotionStatus}
     />
   );
 }
