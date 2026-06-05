@@ -1,5 +1,5 @@
-export type SetItem = { weight: number; reps: number; done: boolean, synced: boolean, equipment: string, memo: string, unit: "kg" | "lb" };
-export type Exercise = { id: string; name: string; sets: SetItem[]; part?: string; exercisePageId?: string };
+export type SetItem = { weight: number; reps: number; done: boolean, synced: boolean, equipment: string, memo: string, unit: "kg" | "lb", setType?: "warmup" | "main" };
+export type Exercise = { id: string; name: string; sets: SetItem[]; part?: string; exercisePageId?: string; targetMainSetCount?: number; targetWarmupSetCount?: number };
 export type Exercises = Exercise[];
 export type Part = "back" | "chest" | "legs" | "shoulders";
 export type Session = { 

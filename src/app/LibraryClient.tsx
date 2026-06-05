@@ -5,25 +5,13 @@ import {
   LibraryCategory,
   LibraryExercise,
   Exercise,
-  SetItem,
   SessionDraft,
 } from "./types";
 import { groupExercisesByCategory, getFirstValidCategory } from "@/lib/library";
 import { createSessionMetadata } from "@/lib/session-utils";
 import { Button } from "@/components/ui/button";
 import { useExerciseLibrary } from "@/hooks/useExerciseLibrary";
-
-function createDefaultSet(equipment?: string): SetItem {
-  return {
-    weight: 0,
-    reps: 0,
-    done: false,
-    synced: false,
-    equipment: equipment || "cable-machine",
-    memo: "",
-    unit: "kg",
-  };
-}
+import { getPreviousRecord } from "@/lib/previous-record";
 
 function convertLibraryExerciseToSessionExercise(
   libraryExercise: LibraryExercise,
@@ -31,7 +19,7 @@ function convertLibraryExerciseToSessionExercise(
   return {
     id: libraryExercise.id,
     name: libraryExercise.name,
-    sets: [createDefaultSet(libraryExercise.equipment)],
+    sets: getPreviousRecord(libraryExercise.name, libraryExercise.equipment),
     part: libraryExercise.category,
     exercisePageId: libraryExercise.notionPageId,
   };

@@ -23,13 +23,26 @@ import {
   Session,
 } from "./types";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { ruleDecision } from "@/lib/weightUnit";
-import { TrashIcon, Plus } from "lucide-react";
+import { TrashIcon, Plus, CheckCircle2 } from "lucide-react";
 import { convertInputToKg } from "@/lib/weightUnit";
 import { nextWeight } from "@/lib/weightUnit";
 import { useExerciseLibrary } from "@/hooks/useExerciseLibrary";
 import { groupExercisesByCategory } from "@/lib/library";
+import { getPreviousRecord, createDefaultSet } from "@/lib/previous-record";
+
+function getCompletedMainSetCount(exercise: Exercise): number {
+  return exercise.sets.filter(
+    (set) => (set.setType ?? "main") === "main" && set.done,
+  ).length;
+}
+
+function isExerciseCompleted(exercise: Exercise): boolean {
+  const completedMainSets = getCompletedMainSetCount(exercise);
+  const targetMainSets = exercise.targetMainSetCount || 0;
+  return completedMainSets >= targetMainSets && targetMainSets > 0;
+}
 
 export function WorkoutSessionClient({
   exercises,
@@ -42,6 +55,9 @@ export function WorkoutSessionClient({
   deleteSet,
   changeEquipment,
   changeUnit,
+  changeSetType,
+  changeTargetMainSetCount,
+  changeTargetWarmupSetCount,
   sessionMetadata,
   addExercisesToSession,
   onSave,
@@ -66,6 +82,13 @@ export function WorkoutSessionClient({
   deleteSet: (exId: string, setIdx: number) => void;
   changeEquipment: (exIdx: number, setIdx: number, equipment: string) => void;
   changeUnit: (exIdx: number, setIdx: number, unit: "kg" | "lb") => void;
+  changeSetType: (
+    exIdx: number,
+    setIdx: number,
+    setType: "warmup" | "main",
+  ) => void;
+  changeTargetMainSetCount: (exIdx: number, delta: number) => void;
+  changeTargetWarmupSetCount: (exIdx: number, delta: number) => void;
   sessionMetadata: SessionMetadata | null;
   addExercisesToSession: (newExercises: Exercises) => void;
   onSave: () => void;
@@ -76,10 +99,31 @@ export function WorkoutSessionClient({
   const [openAccordionIndex, setOpenAccordionIndex] = useState<number | null>(
     null,
   );
+  const autoCollapsedExercisesRef = useRef<Set<string>>(new Set());
+
+  useEffect(() => {
+    exercises.forEach((ex, i) => {
+      const completed = isExerciseCompleted(ex);
+      const wasAutoCollapsed = autoCollapsedExercisesRef.current.has(ex.id);
+
+      if (completed && !wasAutoCollapsed) {
+        autoCollapsedExercisesRef.current.add(ex.id);
+        if (openAccordionIndex === i) {
+          setOpenAccordionIndex(null);
+        }
+      } else if (!completed && wasAutoCollapsed) {
+        autoCollapsedExercisesRef.current.delete(ex.id);
+      }
+    });
+  }, [exercises, openAccordionIndex]);
 
   return (
     <main className="p-2 space-y-2">
       {exercises.map((ex, i) => {
+        const completed = isExerciseCompleted(ex);
+        const completedCount = getCompletedMainSetCount(ex);
+        const targetCount = ex.targetMainSetCount || 0;
+
         return (
           <Accordion
             key={ex.id}
@@ -92,18 +136,83 @@ export function WorkoutSessionClient({
           >
             <AccordionItem
               value={`item-${i}`}
-              className="rounded-lg border px-2"
+              className={`rounded-lg border px-2 transition-colors ${
+                completed
+                  ? "bg-green-50 border-green-300"
+                  : ""
+              }`}
             >
               <AccordionTrigger className="py-3">
                 <div className="flex w-full items-center justify-between pr-2">
-                  <span className="text-base font-medium">{ex.name}</span>
-                  {openAccordionIndex === i && (
-                    <PlusButton exerciseIndex={i} addSet={addSet} />
-                  )}
+                  <div className="flex items-center gap-2">
+                    <span className={`text-base font-medium ${completed ? "text-green-700" : ""}`}>
+                      {ex.name}
+                    </span>
+                    {completed && (
+                      <CheckCircle2 className="h-4 w-4 text-green-600" />
+                    )}
+                  </div>
+                  <span className={`text-sm ${completed ? "text-green-700 font-semibold" : "text-muted-foreground"}`}>
+                    {completedCount} / {targetCount}
+                  </span>
                 </div>
               </AccordionTrigger>
 
               <AccordionContent className="pb-3">
+                <div className="mb-3 space-y-2">
+                  <div className="flex items-center justify-between rounded-lg bg-muted/30 px-3 py-2">
+                    <span className="text-sm text-muted-foreground">
+                      목표 웜업세트
+                    </span>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="h-7 w-7 p-0"
+                        onClick={() => changeTargetWarmupSetCount(i, -1)}
+                      >
+                        -
+                      </Button>
+                      <span className="w-8 text-center font-semibold">
+                        {ex.targetWarmupSetCount || 0}
+                      </span>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="h-7 w-7 p-0"
+                        onClick={() => changeTargetWarmupSetCount(i, +1)}
+                      >
+                        +
+                      </Button>
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between rounded-lg bg-muted/30 px-3 py-2">
+                    <span className="text-sm text-muted-foreground">
+                      목표 본세트
+                    </span>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="h-7 w-7 p-0"
+                        onClick={() => changeTargetMainSetCount(i, -1)}
+                      >
+                        -
+                      </Button>
+                      <span className="w-8 text-center font-semibold">
+                        {ex.targetMainSetCount || 0}
+                      </span>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="h-7 w-7 p-0"
+                        onClick={() => changeTargetMainSetCount(i, +1)}
+                      >
+                        +
+                      </Button>
+                    </div>
+                  </div>
+                </div>
                 <div className="space-y-3">
                   {ex.sets.map((set, j) => (
                     <Row
@@ -115,6 +224,7 @@ export function WorkoutSessionClient({
                       reps={set.reps}
                       memo={set.memo || ""}
                       done={set.done}
+                      setType={set.setType || "main"}
                       exId={ex.id}
                       deleteSet={deleteSet}
                       onWeightChange={changeWeight}
@@ -125,6 +235,7 @@ export function WorkoutSessionClient({
                       nextWeight={nextWeight}
                       changeEquipment={changeEquipment}
                       changeUnit={changeUnit}
+                      changeSetType={changeSetType}
                       unit={set.unit}
                     />
                   ))}
@@ -168,27 +279,6 @@ export function WorkoutSessionClient({
       </div>
     </main>
   );
-
-  function PlusButton({
-    exerciseIndex,
-    addSet,
-  }: {
-    exerciseIndex: number;
-    addSet: (exIdx: number) => void;
-  }) {
-    return (
-      <Button
-        type="button"
-        className="h-9 w-9 rounded-full p-0 text-lg active:scale-95 transition-transform"
-        onClick={(e) => {
-          e.stopPropagation();
-          addSet(exerciseIndex);
-        }}
-      >
-        +
-      </Button>
-    );
-  }
 }
 
 function Row({
@@ -199,6 +289,7 @@ function Row({
   equipment,
   reps,
   done,
+  setType,
   onWeightChange,
   onRepsDelta,
   onToggleDone,
@@ -209,6 +300,7 @@ function Row({
   nextWeight,
   changeEquipment,
   changeUnit,
+  changeSetType,
   unit,
 }: {
   exId: string;
@@ -218,6 +310,7 @@ function Row({
   equipment: string;
   reps: number;
   done: boolean;
+  setType: "warmup" | "main";
   onWeightChange: (exIdx: number, setIdx: number, nextWeight: number) => void;
   onRepsDelta: (exIdx: number, setIdx: number, delta: number) => void;
   onToggleDone: (exIdx: number, setIdx: number) => void;
@@ -235,6 +328,11 @@ function Row({
   ) => number;
   changeEquipment: (exIdx: number, setIdx: number, equipment: string) => void;
   changeUnit: (exIdx: number, setIdx: number, unit: "kg" | "lb") => void;
+  changeSetType: (
+    exIdx: number,
+    setIdx: number,
+    setType: "warmup" | "main",
+  ) => void;
   unit: "kg" | "lb";
 }) {
   const { displayWeight, displayUnit } = displayWeightUnit(weight, unit);
@@ -325,6 +423,26 @@ function Row({
           transition: isCollapsed ? "none" : "all 0.3s ease-in-out",
         }}
       >
+        {!isCollapsed && (
+          <div className="flex items-center gap-1 mb-2">
+            <Button
+              type="button"
+              variant={setType === "warmup" ? "default" : "outline"}
+              className="h-6 px-2 text-xs"
+              onClick={() => changeSetType(exerciseIndex, setIndex, "warmup")}
+            >
+              웜업
+            </Button>
+            <Button
+              type="button"
+              variant={setType === "main" ? "default" : "outline"}
+              className="h-6 px-2 text-xs"
+              onClick={() => changeSetType(exerciseIndex, setIndex, "main")}
+            >
+              본세트
+            </Button>
+          </div>
+        )}
         <div className="flex items-center justify-between">
           <div
             className={`relative flex items-center gap-2 flex-wrap`}
@@ -523,99 +641,6 @@ function Row({
   );
 }
 
-function createDefaultSet(equipment?: string): SetItem {
-  return {
-    weight: 0,
-    reps: 0,
-    done: false,
-    synced: false,
-    equipment: equipment || "cable-machine",
-    memo: "",
-    unit: equipment === "cable-machine" ? "lb" : "kg",
-  };
-}
-
-function getPreviousRecord(
-  exerciseName: string,
-  equipment?: string,
-): SetItem[] {
-  try {
-    const sessionKey = "workout.sessions.v1";
-    const sessionsData = localStorage.getItem(sessionKey);
-
-    if (!sessionsData) {
-      return [createDefaultSet(equipment)];
-    }
-
-    const sessions: Session[] = JSON.parse(sessionsData);
-
-    if (!Array.isArray(sessions) || sessions.length === 0) {
-      return [createDefaultSet(equipment)];
-    }
-
-    // savedAt 기준으로 내림차순 정렬 (최신 순)
-    const sortedSessions = [...sessions].sort((a, b) => {
-      const dateA = new Date(a.savedAt).getTime();
-      const dateB = new Date(b.savedAt).getTime();
-      return dateB - dateA;
-    });
-
-    // 1차 시도: 운동명 + Equipment 모두 일치하는 기록 찾기
-    if (equipment) {
-      for (const session of sortedSessions) {
-        const foundExercise = session.exercises.find(
-          (ex) =>
-            ex.name === exerciseName &&
-            ex.sets.some((set) => set.equipment === equipment),
-        );
-
-        if (foundExercise && foundExercise.sets.length > 0) {
-          const matchingSets = foundExercise.sets.filter(
-            (set) => set.equipment === equipment,
-          );
-          if (matchingSets.length > 0) {
-            return matchingSets.map((set) => ({
-              weight: set.weight,
-              reps: set.reps,
-              done: false,
-              synced: false,
-              equipment: set.equipment,
-              memo: "",
-              unit: ruleDecision(set.equipment).unit,
-            }));
-          }
-        }
-      }
-    }
-
-    // 2차 시도: 운동명만 일치하는 기록 찾기
-    for (const session of sortedSessions) {
-      const foundExercise = session.exercises.find(
-        (ex) => ex.name === exerciseName,
-      );
-
-      if (foundExercise && foundExercise.sets.length > 0) {
-        return foundExercise.sets.map((set) => ({
-          weight: set.weight,
-          reps: set.reps,
-          done: false,
-          synced: false,
-          equipment: set.equipment || equipment || "cable-machine",
-          memo: "",
-          unit: ruleDecision(set.equipment || equipment || "cable-machine")
-            .unit,
-        }));
-      }
-    }
-
-    // 이전 기록을 찾지 못한 경우
-    return [createDefaultSet(equipment)];
-  } catch (error) {
-    console.error("Failed to load previous record:", error);
-    return [createDefaultSet(equipment)];
-  }
-}
-
 function AddExerciseBottomSheet({
   exercises: currentExercises,
   addExercisesToSession,
@@ -665,12 +690,21 @@ function AddExerciseBottomSheet({
     for (const id of selectedIds) {
       const libraryEx = exerciseMap.get(id);
       if (libraryEx) {
+        const sets = getPreviousRecord(libraryEx.name, libraryEx.equipment);
+        const mainSetCount = sets.filter(
+          (s) => (s.setType ?? "main") === "main",
+        ).length;
+        const warmupSetCount = sets.filter(
+          (s) => s.setType === "warmup",
+        ).length;
         newExercises.push({
           id: libraryEx.id,
           name: libraryEx.name,
-          sets: getPreviousRecord(libraryEx.name, libraryEx.equipment),
+          sets,
           part: libraryEx.category as string,
           exercisePageId: libraryEx.notionPageId,
+          targetMainSetCount: mainSetCount,
+          targetWarmupSetCount: warmupSetCount,
         });
       }
     }

@@ -237,6 +237,7 @@ export function RootClient() {
       equipment: string;
       memo: string;
       unit?: "kg" | "lb";
+      setType?: "warmup" | "main";
     } {
       if (!isObject(v)) return false;
       return (
@@ -246,7 +247,8 @@ export function RootClient() {
         typeof v.synced === "boolean" &&
         typeof v.equipment === "string" &&
         typeof v.memo === "string" &&
-        (v.unit === undefined || v.unit === "kg" || v.unit === "lb")
+        (v.unit === undefined || v.unit === "kg" || v.unit === "lb") &&
+        (v.setType === undefined || v.setType === "warmup" || v.setType === "main")
       );
     }
     function isExercise(
@@ -308,14 +310,20 @@ export function RootClient() {
       if (storedDraft) {
         const parsedDraft = JSON.parse(storedDraft);
         if (isSessionDraft(parsedDraft)) {
-          const migratedExercises = parsedDraft.exercises.map((ex) => ({
-            ...ex,
-            sets: ex.sets.map((set) => ({
-              ...set,
-              unit:
-                set.unit ?? (set.equipment === "cable-machine" ? "lb" : "kg"),
-            })),
-          }));
+          const migratedExercises = parsedDraft.exercises.map((ex) => {
+            const mainSetCount = ex.sets.filter((s) => (s.setType ?? "main") === "main").length;
+            const warmupSetCount = ex.sets.filter((s) => s.setType === "warmup").length;
+            return {
+              ...ex,
+              sets: ex.sets.map((set) => ({
+                ...set,
+                unit: set.unit ?? (set.equipment === "cable-machine" ? "lb" : "kg"),
+                setType: set.setType ?? "main",
+              })),
+              targetMainSetCount: ex.targetMainSetCount ?? mainSetCount,
+              targetWarmupSetCount: ex.targetWarmupSetCount ?? warmupSetCount,
+            };
+          });
           setExercises(migratedExercises);
           setSessionMetadata(parsedDraft.session);
         } else {
@@ -324,15 +332,21 @@ export function RootClient() {
       } else if (oldStoredEx) {
         const parsedEx = JSON.parse(oldStoredEx);
         if (isLegacySession(parsedEx)) {
-          const migratedExercises = parsedEx.exercises.map((ex) => ({
-            ...ex,
-            sets: ex.sets.map((set) => ({
-              ...set,
-              unit:
-                set.unit ?? (set.equipment === "cable-machine" ? "lb" : "kg"),
-            })),
-            part: parsedEx.selectedPart,
-          }));
+          const migratedExercises = parsedEx.exercises.map((ex) => {
+            const mainSetCount = ex.sets.filter((s) => (s.setType ?? "main") === "main").length;
+            const warmupSetCount = ex.sets.filter((s) => s.setType === "warmup").length;
+            return {
+              ...ex,
+              sets: ex.sets.map((set) => ({
+                ...set,
+                unit: set.unit ?? (set.equipment === "cable-machine" ? "lb" : "kg"),
+                setType: set.setType ?? "main",
+              })),
+              part: parsedEx.selectedPart,
+              targetMainSetCount: ex.targetMainSetCount ?? mainSetCount,
+              targetWarmupSetCount: ex.targetWarmupSetCount ?? warmupSetCount,
+            };
+          });
           setExercises(migratedExercises);
         }
         localStorage.removeItem("workout.session.v1");
@@ -401,8 +415,25 @@ export function RootClient() {
       return prev.map((ex) => {
         if (ex.id !== exId) return ex;
         if (ex.sets.length === 1) return ex;
+        
+        const deletedSet = ex.sets[setIdx];
+        if (!deletedSet) return ex;
+        
+        const deletedSetType = deletedSet.setType ?? "main";
+        
+        let newTargetWarmup = ex.targetWarmupSetCount ?? 0;
+        let newTargetMain = ex.targetMainSetCount ?? 0;
+        
+        if (deletedSetType === "warmup") {
+          newTargetWarmup = Math.max(0, newTargetWarmup - 1);
+        } else if (deletedSetType === "main") {
+          newTargetMain = Math.max(1, newTargetMain - 1);
+        }
+        
         return {
           ...ex,
+          targetWarmupSetCount: newTargetWarmup,
+          targetMainSetCount: newTargetMain,
           sets: ex.sets.filter((set, idx) => idx !== setIdx),
         };
       });
@@ -514,9 +545,132 @@ export function RootClient() {
               equipment: ex.sets[ex.sets.length - 1].equipment,
               memo: "",
               unit: ex.sets[ex.sets.length - 1].unit,
+              setType: ex.sets[ex.sets.length - 1].setType || "main",
             },
           ],
         };
+      }),
+    );
+  }
+
+  function changeSetType(exIdx: number, setIdx: number, newSetType: "warmup" | "main") {
+    setExercises((prev) =>
+      prev.map((ex, i) => {
+        if (i !== exIdx) return ex;
+        
+        const oldSetType = ex.sets[setIdx]?.setType ?? "main";
+        
+        if (oldSetType === newSetType) return ex;
+        
+        let newTargetWarmup = ex.targetWarmupSetCount ?? 0;
+        let newTargetMain = ex.targetMainSetCount ?? 0;
+        
+        if (oldSetType === "main" && newSetType === "warmup") {
+          newTargetMain = Math.max(1, newTargetMain - 1);
+          newTargetWarmup = newTargetWarmup + 1;
+        } else if (oldSetType === "warmup" && newSetType === "main") {
+          newTargetWarmup = Math.max(0, newTargetWarmup - 1);
+          newTargetMain = newTargetMain + 1;
+        }
+        
+        return {
+          ...ex,
+          targetWarmupSetCount: newTargetWarmup,
+          targetMainSetCount: newTargetMain,
+          sets: ex.sets.map((s, j) => {
+            if (j !== setIdx) return s;
+            return { ...s, setType: newSetType, synced: false };
+          }),
+        };
+      }),
+    );
+  }
+
+  function changeTargetMainSetCount(exIdx: number, delta: number) {
+    setExercises((prev) =>
+      prev.map((ex, i) => {
+        if (i !== exIdx) return ex;
+        const currentTarget = ex.targetMainSetCount || 0;
+        const nextTarget = Math.max(1, currentTarget + delta);
+        
+        if (delta > 0) {
+          const lastMainIndex = ex.sets.map((s, idx) => ({ s, idx }))
+            .reverse()
+            .find(({ s }) => (s.setType ?? "main") === "main")?.idx ?? ex.sets.length - 1;
+          
+          const templateSet = ex.sets[lastMainIndex] || ex.sets[ex.sets.length - 1];
+          
+          const newSet = {
+            weight: templateSet.weight,
+            reps: templateSet.reps,
+            done: false,
+            synced: false,
+            equipment: templateSet.equipment,
+            memo: "",
+            unit: templateSet.unit,
+            setType: "main" as const,
+          };
+          
+          const newSets = [...ex.sets];
+          newSets.splice(lastMainIndex + 1, 0, newSet);
+          
+          return {
+            ...ex,
+            targetMainSetCount: nextTarget,
+            sets: newSets,
+          };
+        } else {
+          return {
+            ...ex,
+            targetMainSetCount: nextTarget,
+          };
+        }
+      }),
+    );
+  }
+
+  function changeTargetWarmupSetCount(exIdx: number, delta: number) {
+    setExercises((prev) =>
+      prev.map((ex, i) => {
+        if (i !== exIdx) return ex;
+        const currentTarget = ex.targetWarmupSetCount || 0;
+        const nextTarget = Math.max(0, currentTarget + delta);
+        
+        if (delta > 0) {
+          const lastWarmupIndex = ex.sets.map((s, idx) => ({ s, idx }))
+            .reverse()
+            .find(({ s }) => (s.setType ?? "main") === "warmup")?.idx ?? -1;
+          
+          const templateSet = lastWarmupIndex >= 0 
+            ? ex.sets[lastWarmupIndex]
+            : ex.sets[0];
+          
+          const newSet = {
+            weight: templateSet?.weight ?? 0,
+            reps: templateSet?.reps ?? 0,
+            done: false,
+            synced: false,
+            equipment: templateSet?.equipment ?? "cable-machine",
+            memo: "",
+            unit: templateSet?.unit ?? "kg",
+            setType: "warmup" as const,
+          };
+          
+          const insertIndex = lastWarmupIndex + 1;
+          const newSets = [...ex.sets];
+          newSets.splice(insertIndex, 0, newSet);
+          
+          return {
+            ...ex,
+            targetWarmupSetCount: nextTarget,
+            sets: newSets,
+          };
+        } else {
+          return {
+            ...ex,
+            targetWarmupSetCount: nextTarget,
+          };
+        }
       }),
     );
   }
@@ -880,6 +1034,9 @@ export function RootClient() {
             nextWeight={nextWeight}
             changeEquipment={changeEquipment}
             changeUnit={changeUnit}
+            changeSetType={changeSetType}
+            changeTargetMainSetCount={changeTargetMainSetCount}
+            changeTargetWarmupSetCount={changeTargetWarmupSetCount}
             sessionMetadata={sessionMetadata}
             addExercisesToSession={addExercisesToSession}
             onSave={saveSession}
