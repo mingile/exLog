@@ -31,6 +31,16 @@ import { nextWeight } from "@/lib/weightUnit";
 import { useExerciseLibrary } from "@/hooks/useExerciseLibrary";
 import { groupExercisesByCategory } from "@/lib/library";
 import { getPreviousRecord, createDefaultSet } from "@/lib/previous-record";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 function getCompletedMainSetCount(exercise: Exercise): number {
   return exercise.sets.filter(
@@ -42,6 +52,18 @@ function isExerciseCompleted(exercise: Exercise): boolean {
   const completedMainSets = getCompletedMainSetCount(exercise);
   const targetMainSets = exercise.targetMainSetCount || 0;
   return completedMainSets >= targetMainSets && targetMainSets > 0;
+}
+
+function formatElapsedTime(seconds: number): string {
+  const hours = Math.floor(seconds / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
+  const secs = seconds % 60;
+
+  if (hours > 0) {
+    return `${hours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
+  }
+
+  return `${minutes.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
 }
 
 export function WorkoutSessionClient({
@@ -101,6 +123,35 @@ export function WorkoutSessionClient({
   );
   const autoCollapsedExercisesRef = useRef<Set<string>>(new Set());
 
+  const [exerciseElapsedSeconds, setExerciseElapsedSeconds] = useState<
+    Record<string, number>
+  >({});
+  const [activeExerciseId, setActiveExerciseId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const intervalId = setInterval(() => {
+      if (activeExerciseId) {
+        setExerciseElapsedSeconds((prev) => ({
+          ...prev,
+          [activeExerciseId]: (prev[activeExerciseId] || 0) + 1,
+        }));
+      }
+    }, 1000);
+
+    return () => clearInterval(intervalId);
+  }, [activeExerciseId]);
+
+  useEffect(() => {
+    if (openAccordionIndex !== null) {
+      const exercise = exercises[openAccordionIndex];
+      if (exercise && exercise.id !== activeExerciseId) {
+        setActiveExerciseId(exercise.id);
+      }
+    } else {
+      setActiveExerciseId(null);
+    }
+  }, [openAccordionIndex, exercises]);
+
   useEffect(() => {
     exercises.forEach((ex, i) => {
       const completed = isExerciseCompleted(ex);
@@ -152,9 +203,16 @@ export function WorkoutSessionClient({
                       <CheckCircle2 className="h-4 w-4 text-green-600" />
                     )}
                   </div>
-                  <span className={`text-sm ${completed ? "text-green-700 font-semibold" : "text-muted-foreground"}`}>
-                    {completedCount} / {targetCount}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    {exerciseElapsedSeconds[ex.id] !== undefined && exerciseElapsedSeconds[ex.id] > 0 && (
+                      <span className="text-sm font-mono text-muted-foreground">
+                        {formatElapsedTime(exerciseElapsedSeconds[ex.id])}
+                      </span>
+                    )}
+                    <span className={`text-sm ${completed ? "text-green-700 font-semibold" : "text-muted-foreground"}`}>
+                      {completedCount} / {targetCount}
+                    </span>
+                  </div>
                 </div>
               </AccordionTrigger>
 
@@ -341,6 +399,7 @@ function Row({
   const [swipeOffset, setSwipeOffset] = useState<number>(0);
   const [isSwiping, setIsSwiping] = useState<boolean>(false);
   const [isCollapsed, setIsCollapsed] = useState<boolean>(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState<boolean>(false);
 
   useEffect(() => {
     if (isEditingWeight) return;
@@ -396,9 +455,19 @@ function Row({
 
   function handleTouchEnd() {
     if (swipeOffset < -50) {
-      deleteSet(exId, setIndex);
+      setIsDeleteDialogOpen(true);
     }
     setIsSwiping(false);
+    setSwipeOffset(0);
+  }
+
+  function handleConfirmDelete() {
+    deleteSet(exId, setIndex);
+    setIsDeleteDialogOpen(false);
+  }
+
+  function handleCancelDelete() {
+    setIsDeleteDialogOpen(false);
     setSwipeOffset(0);
   }
 
@@ -474,7 +543,7 @@ function Row({
                 className="ml-3 size-8"
                 onClick={(e) => {
                   e.stopPropagation();
-                  deleteSet(exId, setIndex);
+                  setIsDeleteDialogOpen(true);
                 }}
               >
                 <TrashIcon className="h-5 w-5" />
@@ -637,6 +706,30 @@ function Row({
           </>
         )}
       </div>
+
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>세트를 삭제할까요?</AlertDialogTitle>
+            <AlertDialogDescription>
+              세트 {setIndex + 1} ({setType === "warmup" ? "웜업세트" : "본세트"})
+              <br />
+              <br />
+              삭제된 세트는 복구할 수 없습니다.
+              <br />
+              목표 세트 수도 함께 조정됩니다.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={handleCancelDelete}>
+              취소
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmDelete} variant="destructive">
+              삭제
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

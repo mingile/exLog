@@ -14,6 +14,18 @@ import { Settings, History } from "lucide-react";
 import { WorkoutHistoryClient } from "./WorkoutHistoryClient";
 import { toast } from "sonner";
 
+function formatDuration(seconds: number): string {
+  const minutes = Math.floor(seconds / 60);
+  const hours = Math.floor(minutes / 60);
+  const remainingMinutes = minutes % 60;
+
+  if (hours > 0) {
+    return `${hours}시간 ${remainingMinutes}분`;
+  }
+
+  return `${minutes}분`;
+}
+
 export function HeaderControls({
   notionReady,
   setNotionReady,
@@ -24,6 +36,7 @@ export function HeaderControls({
   showHistory,
   setShowHistory,
   historyVersion,
+  currentDurationSeconds,
 }: {
   notionReady: boolean;
   setNotionReady: (notionReady: boolean) => void;
@@ -34,6 +47,7 @@ export function HeaderControls({
   showHistory: boolean;
   setShowHistory: (show: boolean) => void;
   historyVersion: number;
+  currentDurationSeconds: number;
 }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -185,14 +199,21 @@ export function HeaderControls({
       <div className="px-2 py-2 space-y-2">
         {/* 첫 번째 행: 세션 이름 입력 */}
         <div className="flex items-center gap-2">
-          <input
-            type="text"
-            value={sessionNameInput}
-            onChange={(e) => setSessionNameInput(e.target.value)}
-            onBlur={handleSessionNameBlur}
-            placeholder="세션 이름을 입력하세요"
-            className="flex-1 px-1 py-1.5 text-xl font-medium rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
+          <div className="flex-1">
+            <input
+              type="text"
+              value={sessionNameInput}
+              onChange={(e) => setSessionNameInput(e.target.value)}
+              onBlur={handleSessionNameBlur}
+              placeholder="세션 이름을 입력하세요"
+              className="w-full px-1 py-1.5 text-xl font-medium rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+            {currentDurationSeconds > 0 && (
+              <div className="text-sm text-muted-foreground px-1">
+                {formatDuration(currentDurationSeconds)} 진행 중
+              </div>
+            )}
+          </div>
           {/* 설정 메뉴 */}
           <div
             className="relative hover:bg-accent rounded-full p-1"

@@ -10,6 +10,18 @@ function getLocalDateString(isoString: string): string {
   return new Date(isoString).toLocaleDateString("sv-SE");
 }
 
+function formatDuration(seconds: number): string {
+  const minutes = Math.floor(seconds / 60);
+  const hours = Math.floor(minutes / 60);
+  const remainingMinutes = minutes % 60;
+
+  if (hours > 0) {
+    return `${hours}시간 ${remainingMinutes}분`;
+  }
+
+  return `${minutes}분`;
+}
+
 export function WorkoutHistoryClient({
   showHistory,
   historyVersion,
@@ -91,7 +103,8 @@ export function WorkoutHistoryClient({
       new Set(session.exercises.map((ex) => ex.part || "기타")),
     );
     const partsStr = parts.join(" · ");
-    return { exerciseCount, totalSets, partsStr };
+    const durationStr = session.durationSeconds ? formatDuration(session.durationSeconds) : null;
+    return { exerciseCount, totalSets, partsStr, durationStr };
   }
 
   function groupExercisesByPart(
@@ -239,7 +252,7 @@ export function WorkoutHistoryClient({
             </h2>
 
             {sortedSessions.map((session) => {
-              const { exerciseCount, totalSets, partsStr } =
+              const { exerciseCount, totalSets, partsStr, durationStr } =
                 getSessionSummary(session);
               const partGrouped = groupExercisesByPart(session.exercises);
               const parts = Array.from(partGrouped.keys());
@@ -255,8 +268,8 @@ export function WorkoutHistoryClient({
                         {session.sessionName || "운동 세션"}
                       </h3>
                       <p className="text-sm text-gray-600">
-                        {partsStr} · {exerciseCount} exercises · {totalSets}{" "}
-                        sets
+                        {partsStr} · {exerciseCount} exercises · {totalSets} sets
+                        {durationStr && ` · ${durationStr}`}
                       </p>
                     </div>
                     <button

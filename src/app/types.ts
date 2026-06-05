@@ -8,6 +8,7 @@ export type Session = {
     sessionName?: string;
     part?: Part;
     exercises: (SavedExercise & { part?: string })[];
+    durationSeconds?: number;
 };
 export type SavedExercise = {
     id: string;

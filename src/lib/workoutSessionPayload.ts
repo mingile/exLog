@@ -43,17 +43,20 @@ export function createHistoryPayload(params: {
   sessionName: string;
   savedAt: string;
   localExercises: (SavedExercise & { part: string })[];
+  durationSeconds?: number;
 }): {
   id: string;
   savedAt: string;
   sessionName: string;
   exercises: (SavedExercise & { part: string })[];
+  durationSeconds?: number;
 } {
   return {
     id: params.sessionId,
     savedAt: params.savedAt,
     sessionName: params.sessionName,
     exercises: params.localExercises,
+    durationSeconds: params.durationSeconds,
   };
 }
 
