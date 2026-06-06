@@ -319,58 +319,6 @@ export default function NotionSettingsPage({
               세트 기록이 저장될 데이터베이스를 선택합니다.
             </p>
           </div>
-        </div>
-
-        <div className="rounded-xl border bg-gray-50 p-6 space-y-4">
-          <div>
-            <h2 className="text-base font-semibold">선택 요약</h2>
-            <p className="mt-1 text-sm text-gray-600">
-              아래 내용이 맞는지 확인한 뒤 연결 완료 버튼을 누르세요.
-            </p>
-          </div>
-
-          <div className="space-y-3 text-sm">
-            <div className="rounded-md border bg-white p-4">
-              <div className="font-medium">Worktout Set DB</div>
-              <div className="mt-1 text-gray-700">
-                {selectedSetsDb ? selectedSetsDb.title : "아직 선택 안 됨"}
-              </div>
-              {selectedSetsDb && (
-                <div className="mt-1 break-all text-xs text-gray-500">
-                  {selectedSetsDb.id}
-                </div>
-              )}
-            </div>
-
-            <div className="rounded-md border bg-white p-4">
-              <div className="font-medium">Workout Exercise DB</div>
-              <div className="mt-1 text-gray-700">
-                {selectedExerciseDb
-                  ? selectedExerciseDb.title
-                  : "아직 선택 안 됨"}
-              </div>
-              {selectedExerciseDb && (
-                <div className="mt-1 break-all text-xs text-gray-500">
-                  {selectedExerciseDb.id}
-                </div>
-              )}
-            </div>
-
-            <div className="rounded-md border bg-white p-4">
-              <div className="font-medium">Workout Session DB</div>
-              <div className="mt-1 text-gray-700">
-                {selectedSessionDb
-                  ? selectedSessionDb.title
-                  : "아직 선택 안 됨"}
-              </div>
-              {selectedSessionDb && (
-                <div className="mt-1 break-all text-xs text-gray-500">
-                  {selectedSessionDb.id}
-                </div>
-              )}
-            </div>
-          </div>
-
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <p className="text-xs text-gray-500">
               같은 데이터베이스는 여러 역할에 중복 선택할 수 없습니다.
