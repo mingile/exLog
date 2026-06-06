@@ -130,7 +130,9 @@ export async function GET(request: Request) {
         path: "/",
       });
 
-      return NextResponse.redirect(new URL("/", process.env.APP_BASE_URL));
+      return NextResponse.redirect(
+        new URL("/settings/notion", process.env.APP_BASE_URL),
+      );
     } catch (error) {
       console.error("Notion temp 정보 저장 중 예외", error);
       return NextResponse.redirect(
