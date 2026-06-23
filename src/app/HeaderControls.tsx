@@ -10,7 +10,8 @@ import {
 } from "@/components/ui/sheet";
 import type { Session, SessionMetadata, DateInfo } from "./types";
 import React, { useState, useRef, useEffect, useMemo } from "react";
-import { Settings, History } from "lucide-react";
+import { Settings, History, Moon, Sun, Monitor } from "lucide-react";
+import { useTheme } from "next-themes";
 import { WorkoutHistoryClient } from "./WorkoutHistoryClient";
 import { toast } from "sonner";
 
@@ -54,6 +55,12 @@ export function HeaderControls({
   const [sessionNameInput, setSessionNameInput] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
   const [showAllHistory, setShowAllHistory] = useState(false);
+  const { theme, setTheme } = useTheme();
+  const [themeMounted, setThemeMounted] = useState(false);
+
+  useEffect(() => {
+    setThemeMounted(true);
+  }, []);
 
   useEffect(() => {
     if (sessionMetadata) {
@@ -206,7 +213,7 @@ export function HeaderControls({
               onChange={(e) => setSessionNameInput(e.target.value)}
               onBlur={handleSessionNameBlur}
               placeholder="세션 이름을 입력하세요"
-              className="w-full px-1 py-1.5 text-xl font-medium rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-1 py-1.5 text-xl font-medium rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
             />
             {currentDurationSeconds > 0 && (
               <div className="text-sm text-muted-foreground px-1">
@@ -223,7 +230,7 @@ export function HeaderControls({
               variant="ghost"
               size="icon"
               onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="relative "
+              className="relative"
             >
               <Settings className="size-6" />
               {/* 연결 상태 인디케이터 */}
@@ -236,8 +243,8 @@ export function HeaderControls({
 
             {/* 드롭다운 메뉴 */}
             {isMenuOpen && (
-              <div className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
-                <div className="px-4 py-3 border-b border-gray-100">
+              <div className="absolute right-0 top-full mt-2 w-64 bg-popover rounded-lg shadow-lg border border-border py-2 z-50">
+                <div className="px-4 py-3 border-b border-border">
                   <div className="flex items-center gap-2">
                     <div
                       className={`w-3 h-3 rounded-full ${
@@ -249,6 +256,40 @@ export function HeaderControls({
                     </span>
                   </div>
                 </div>
+
+                {themeMounted && (
+                  <div className="px-4 py-3 border-b border-border">
+                    <span className="text-sm font-medium mb-2 block">테마</span>
+                    <div
+                      className="grid grid-cols-3 gap-1"
+                      role="group"
+                      aria-label="테마 선택"
+                    >
+                      {(
+                        [
+                          { value: "light", icon: Sun, label: "라이트" },
+                          { value: "dark", icon: Moon, label: "다크" },
+                          { value: "system", icon: Monitor, label: "시스템" },
+                        ] as const
+                      ).map(({ value, icon: Icon, label }) => (
+                        <Button
+                          key={value}
+                          type="button"
+                          variant={theme === value ? "default" : "outline"}
+                          size="sm"
+                          className="h-auto flex-col gap-1 py-2 px-1"
+                          aria-label={label}
+                          aria-pressed={theme === value}
+                          onClick={() => setTheme(value)}
+                        >
+                          <Icon className="size-4" />
+                          <span className="text-xs">{label}</span>
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
                 <div className="px-2 py-1">
                   <Button
                     variant="ghost"
@@ -342,10 +383,10 @@ export function HeaderControls({
                         dateInfo.isFuture
                           ? "cursor-not-allowed"
                           : dateInfo.isToday
-                            ? "bg-blue-500 text-white border-blue-600"
+                            ? "bg-primary text-primary-foreground border-primary"
                             : isSelected
-                              ? "bg-blue-100 border-blue-400"
-                              : "bg-white text-gray-700 border-gray-200 hover:bg-gray-50"
+                              ? "bg-accent border-primary text-foreground"
+                              : "bg-card text-foreground border-border hover:bg-accent"
                       }
                     `}
                   >
@@ -356,7 +397,7 @@ export function HeaderControls({
                           dateInfo.hasSession &&
                           !dateInfo.isToday &&
                           !dateInfo.isFuture
-                            ? "bg-green-100 text-green-700"
+                            ? "bg-green-100 text-green-700 dark:bg-green-950/40 dark:text-green-400"
                             : ""
                         }
                       `}
