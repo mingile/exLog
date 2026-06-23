@@ -220,7 +220,7 @@ export function WorkoutHistoryClient({
 
   if (sessions.length === 0) {
     return (
-      <main className="p-4 text-center text-gray-500">
+      <main className="p-4 text-center text-muted-foreground">
         저장된 운동 기록이 없습니다.
       </main>
     );
@@ -247,7 +247,7 @@ export function WorkoutHistoryClient({
 
         return (
           <div key={dateStr} className="space-y-4">
-            <h2 className="text-xl font-bold text-gray-800 sticky top-0 bg-white py-2">
+            <h2 className="text-xl font-bold text-foreground sticky top-0 bg-background py-2">
               {formatDateHeader(dateStr)}
             </h2>
 
@@ -260,21 +260,21 @@ export function WorkoutHistoryClient({
               return (
                 <div
                   key={session.id}
-                  className="border rounded-lg p-4 bg-white shadow-sm"
+                  className="border rounded-lg p-4 bg-card shadow-sm"
                 >
                   <div className="flex justify-between items-start mb-2">
                     <div>
                       <h3 className="text-lg font-semibold">
                         {session.sessionName || "운동 세션"}
                       </h3>
-                      <p className="text-sm text-gray-600">
+                      <p className="text-sm text-muted-foreground">
                         {partsStr} · {exerciseCount} exercises · {totalSets} sets
                         {durationStr && ` · ${durationStr}`}
                       </p>
                     </div>
                     <button
                       onClick={() => deleteSession(session.id)}
-                      className="text-red-500 hover:text-red-700 p-2"
+                      className="text-destructive hover:text-destructive/80 p-2"
                       title="세션 삭제"
                     >
                       <TrashIcon className="size-5" />
@@ -287,16 +287,16 @@ export function WorkoutHistoryClient({
                       return (
                         <div
                           key={part}
-                          className="border-l-4 border-blue-500 pl-3"
+                          className="border-l-4 border-primary pl-3"
                         >
-                          <h4 className="text-md font-bold text-gray-700 mb-2">
+                          <h4 className="text-md font-bold text-foreground mb-2">
                             {part}
                           </h4>
 
                           <div className="space-y-3">
                             {partExercises.map((ex) => (
                               <div key={ex.id} className="pl-2">
-                                <p className="text-sm font-medium text-gray-800 mb-1">
+                                <p className="text-sm font-medium text-foreground mb-1">
                                   {ex.name}
                                 </p>
 
@@ -338,11 +338,11 @@ export function WorkoutHistoryClient({
                                         }
                                         onMouseLeave={handleMouseLeave}
                                       >
-                                        <div className="absolute inset-0 bg-red-500 flex items-center justify-end pr-4">
+                                        <div className="absolute inset-0 bg-destructive flex items-center justify-end pr-4">
                                           <TrashIcon className="size-4 text-white" />
                                         </div>
                                         <div
-                                          className="bg-white text-sm text-gray-700 py-1 transition-transform"
+                                          className="bg-card text-sm text-foreground py-1 transition-transform"
                                           style={{
                                             transform: `translateX(${offset}px)`,
                                           }}

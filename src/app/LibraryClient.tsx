@@ -119,7 +119,7 @@ export function LibraryClient({ onConfirmSelection }: LibraryClientProps) {
   if (libraryState.status === "loading") {
     return (
       <div className="flex flex-col h-screen items-center justify-center">
-        <p className="text-gray-500">운동 목록을 불러오는 중...</p>
+        <p className="text-muted-foreground">운동 목록을 불러오는 중...</p>
       </div>
     );
   }
@@ -127,8 +127,8 @@ export function LibraryClient({ onConfirmSelection }: LibraryClientProps) {
   if (libraryState.status === "error") {
     return (
       <div className="flex flex-col h-screen items-center justify-center px-4">
-        <p className="text-red-500 mb-4">운동 목록을 불러오지 못했습니다</p>
-        <p className="text-sm text-gray-500 mb-4">{libraryState.message}</p>
+        <p className="text-destructive mb-4">운동 목록을 불러오지 못했습니다</p>
+        <p className="text-sm text-muted-foreground mb-4">{libraryState.message}</p>
         <Button onClick={refetch}>다시 시도</Button>
       </div>
     );
@@ -137,8 +137,8 @@ export function LibraryClient({ onConfirmSelection }: LibraryClientProps) {
   if (libraryState.status === "empty") {
     return (
       <div className="flex flex-col h-screen items-center justify-center px-4">
-        <p className="text-gray-500 mb-4">등록된 운동이 없습니다</p>
-        <p className="text-sm text-gray-400">
+        <p className="text-muted-foreground mb-4">등록된 운동이 없습니다</p>
+        <p className="text-sm text-muted-foreground">
           Exercise DB에 운동을 추가해주세요
         </p>
       </div>
@@ -158,14 +158,14 @@ export function LibraryClient({ onConfirmSelection }: LibraryClientProps) {
         {libraryState.status === "success" &&
           libraryState.source === "builtin" &&
           libraryState.message && (
-            <div className="mt-2 px-3 py-2 bg-blue-50 border border-blue-200 rounded text-xs text-blue-700">
+            <div className="mt-2 px-3 py-2 bg-primary/10 border border-primary/30 rounded text-xs text-primary">
               {libraryState.message}
             </div>
           )}
       </header>
 
       <div className="flex-1 overflow-y-auto">
-        <div className="sticky top-0 bg-white border-b z-10">
+        <div className="sticky top-0 bg-background border-b z-10">
           <div className="flex overflow-x-auto p-2 gap-2">
             {categories.map((category) => (
               <button
@@ -173,8 +173,8 @@ export function LibraryClient({ onConfirmSelection }: LibraryClientProps) {
                 onClick={() => setSelectedCategory(category)}
                 className={`px-4 py-2 rounded-lg whitespace-nowrap text-sm font-medium transition-colors ${
                   selectedCategory === category
-                    ? "bg-blue-500 text-white"
-                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-muted text-foreground hover:bg-accent"
                 }`}
               >
                 {category}
@@ -185,7 +185,7 @@ export function LibraryClient({ onConfirmSelection }: LibraryClientProps) {
 
         <div className="p-4 space-y-2">
           {currentExercises.length === 0 ? (
-            <p className="text-center text-gray-500 py-8">
+            <p className="text-center text-muted-foreground py-8">
               {selectedCategory}에 등록된 운동이 없습니다
             </p>
           ) : (
@@ -195,23 +195,23 @@ export function LibraryClient({ onConfirmSelection }: LibraryClientProps) {
                 onClick={() => toggleExerciseSelection(exercise.id)}
                 className={`p-4 border rounded-lg cursor-pointer transition-colors ${
                   selectedExercises.has(exercise.id)
-                    ? "bg-blue-50 border-blue-500"
-                    : "bg-white hover:bg-gray-50"
+                    ? "bg-accent border-primary"
+                    : "bg-card hover:bg-accent"
                 }`}
               >
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
-                    <h3 className="font-medium text-gray-900">
+                    <h3 className="font-medium text-foreground">
                       {exercise.name}
                     </h3>
                     <div className="flex gap-2 mt-1">
                       {exercise.equipment && (
-                        <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
+                        <span className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded">
                           {exercise.equipment}
                         </span>
                       )}
                       {exercise.primaryEffect && (
-                        <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
+                        <span className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded">
                           {exercise.primaryEffect}
                         </span>
                       )}
@@ -219,9 +219,9 @@ export function LibraryClient({ onConfirmSelection }: LibraryClientProps) {
                   </div>
                   <div className="ml-2">
                     {selectedExercises.has(exercise.id) && (
-                      <div className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center">
+                      <div className="w-6 h-6 bg-primary rounded-full flex items-center justify-center">
                         <svg
-                          className="w-4 h-4 text-white"
+                          className="w-4 h-4 text-primary-foreground"
                           fill="none"
                           stroke="currentColor"
                           viewBox="0 0 24 24"
@@ -243,10 +243,10 @@ export function LibraryClient({ onConfirmSelection }: LibraryClientProps) {
         </div>
       </div>
 
-      <div className="border-t p-4 bg-white">
+      <div className="border-t p-4 bg-background">
         {validationError && (
-          <div className="mb-3 p-3 bg-red-50 border border-red-200 rounded-lg">
-            <p className="text-sm text-red-600">{validationError}</p>
+          <div className="mb-3 p-3 bg-destructive/10 border border-destructive/30 rounded-lg">
+            <p className="text-sm text-destructive">{validationError}</p>
           </div>
         )}
         <Button

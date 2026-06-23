@@ -144,11 +144,11 @@ export default function NotionSettingsPage({
     return (
       <div className="mx-auto max-w-3xl p-6">
         <div className="space-y-6">
-          <div className="rounded-xl border bg-white p-6 shadow-sm">
+          <div className="rounded-xl border bg-card p-6 shadow-sm">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
               <div>
                 <h1 className="text-2xl font-semibold">Notion 연결</h1>
-                <p className="mt-2 text-sm text-gray-600">
+                <p className="mt-2 text-sm text-muted-foreground">
                   먼저 Notion OAuth 연결을 완료해야 데이터베이스를 선택할 수
                   있습니다.
                 </p>
@@ -163,10 +163,10 @@ export default function NotionSettingsPage({
             </div>
           </div>
 
-          <div className="rounded-xl border bg-white p-6 shadow-sm space-y-4">
+          <div className="rounded-xl border bg-card p-6 shadow-sm space-y-4">
             <div>
               <h2 className="text-lg font-semibold">1단계. Notion 계정 연결</h2>
-              <p className="mt-2 text-sm text-gray-600">
+              <p className="mt-2 text-sm text-muted-foreground">
                 아래 버튼을 눌러 Notion 계정을 연결한 뒤 다시 돌아오세요.
               </p>
             </div>
@@ -174,7 +174,7 @@ export default function NotionSettingsPage({
             <div>
               <a
                 href="/api/notion/auth"
-                className="inline-flex rounded-md bg-black px-4 py-2 text-sm font-medium text-white"
+                className="inline-flex rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground"
               >
                 Notion 연동하기
               </a>
@@ -188,9 +188,9 @@ export default function NotionSettingsPage({
   if (loading) {
     return (
       <div className="mx-auto max-w-3xl p-6">
-        <div className="rounded-xl border bg-white p-6 shadow-sm">
+        <div className="rounded-xl border bg-card p-6 shadow-sm">
           <h1 className="text-2xl font-semibold">Notion DB 연결</h1>
-          <p className="mt-2 text-sm text-gray-600">
+          <p className="mt-2 text-sm text-muted-foreground">
             Notion 데이터베이스 목록을 불러오는 중입니다.
           </p>
         </div>
@@ -201,11 +201,11 @@ export default function NotionSettingsPage({
   return (
     <div className="mx-auto max-w-3xl p-6">
       <div className="space-y-6">
-        <div className="rounded-xl border bg-white p-6 shadow-sm">
+        <div className="rounded-xl border bg-card p-6 shadow-sm">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <div>
               <h1 className="text-2xl font-semibold">Notion DB 연결</h1>
-              <p className="mt-2 text-sm text-gray-600">
+              <p className="mt-2 text-sm text-muted-foreground">
                 운동 기록용 DB, 운동 목록 DB, 세션 DB를 각각 선택하세요.
               </p>
             </div>
@@ -231,20 +231,20 @@ export default function NotionSettingsPage({
         </div>
 
         {error && (
-          <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700 space-y-3">
+          <div className="rounded-xl border border-destructive/30 bg-destructive/10 p-4 text-sm text-destructive space-y-3">
             <div>에러: {error}</div>
 
             <div className="flex gap-2">
               <a
                 href="/api/notion/auth"
-                className="inline-flex rounded-md border border-red-300 bg-white px-4 py-2 text-sm font-medium text-red-700"
+                className="inline-flex rounded-md border border-destructive/30 bg-background px-4 py-2 text-sm font-medium text-destructive"
               >
                 Notion 연동 다시 하기
               </a>
 
               <Link
                 href="/"
-                className="inline-flex rounded-md border border-red-300 bg-white px-4 py-2 text-sm font-medium text-red-700"
+                className="inline-flex rounded-md border border-destructive/30 bg-background px-4 py-2 text-sm font-medium text-destructive"
               >
                 홈으로
               </Link>
@@ -252,7 +252,7 @@ export default function NotionSettingsPage({
           </div>
         )}
 
-        <div className="rounded-xl border bg-white p-6 shadow-sm space-y-5">
+        <div className="rounded-xl border bg-card p-6 shadow-sm space-y-5">
           <div className="space-y-2">
             <label htmlFor="exercise-db" className="block text-sm font-medium">
               Workout Exercise DB
@@ -270,7 +270,7 @@ export default function NotionSettingsPage({
                 </option>
               ))}
             </select>
-            <p className="text-xs text-gray-500">
+            <p className="text-xs text-muted-foreground">
               운동 목록과 카테고리 정보를 읽어올 데이터베이스를 선택합니다.
             </p>
           </div>
@@ -292,7 +292,7 @@ export default function NotionSettingsPage({
                 </option>
               ))}
             </select>
-            <p className="text-xs text-gray-500">
+            <p className="text-xs text-muted-foreground">
               세션 정보가 저장될 데이터베이스를 선택합니다. (Sets를 묶는 상위
               레코드)
             </p>
@@ -315,12 +315,12 @@ export default function NotionSettingsPage({
                 </option>
               ))}
             </select>
-            <p className="text-xs text-gray-500">
+            <p className="text-xs text-muted-foreground">
               세트 기록이 저장될 데이터베이스를 선택합니다.
             </p>
           </div>
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <p className="text-xs text-gray-500">
+            <p className="text-xs text-muted-foreground">
               같은 데이터베이스는 여러 역할에 중복 선택할 수 없습니다.
             </p>
 
@@ -328,7 +328,7 @@ export default function NotionSettingsPage({
               type="button"
               onClick={handleCompleteConnection}
               disabled={!isCompleteEnabled || submitting}
-              className="rounded-md bg-black px-4 py-2 text-sm font-medium text-white disabled:cursor-not-allowed disabled:bg-gray-300"
+              className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground disabled:cursor-not-allowed disabled:opacity-50"
             >
               {submitting ? "저장 중..." : "연결 완료"}
             </button>
@@ -336,7 +336,7 @@ export default function NotionSettingsPage({
         </div>
 
         {submitError && (
-          <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+          <div className="rounded-xl border border-destructive/30 bg-destructive/10 p-4 text-sm text-destructive">
             에러: {submitError}
           </div>
         )}

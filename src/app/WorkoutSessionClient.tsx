@@ -189,18 +189,18 @@ export function WorkoutSessionClient({
               value={`item-${i}`}
               className={`rounded-lg border px-2 transition-colors ${
                 completed
-                  ? "bg-green-50 border-green-300"
+                  ? "bg-green-50 border-green-300 dark:bg-green-950/30 dark:border-green-800"
                   : ""
               }`}
             >
               <AccordionTrigger className="py-3">
                 <div className="flex w-full items-center justify-between pr-2">
                   <div className="flex items-center gap-2">
-                    <span className={`text-base font-medium ${completed ? "text-green-700" : ""}`}>
+                    <span className={`text-base font-medium ${completed ? "text-green-700 dark:text-green-400" : ""}`}>
                       {ex.name}
                     </span>
                     {completed && (
-                      <CheckCircle2 className="h-4 w-4 text-green-600" />
+                      <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-400" />
                     )}
                   </div>
                   <div className="flex items-center gap-2">
@@ -209,7 +209,7 @@ export function WorkoutSessionClient({
                         {formatElapsedTime(exerciseElapsedSeconds[ex.id])}
                       </span>
                     )}
-                    <span className={`text-sm ${completed ? "text-green-700 font-semibold" : "text-muted-foreground"}`}>
+                    <span className={`text-sm ${completed ? "text-green-700 dark:text-green-400 font-semibold" : "text-muted-foreground"}`}>
                       {completedCount} / {targetCount}
                     </span>
                   </div>
@@ -482,11 +482,11 @@ function Row({
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
     >
-      <div className="absolute inset-0 bg-red-500 flex items-center justify-end pr-4">
+      <div className="absolute inset-0 bg-destructive flex items-center justify-end pr-4">
         <TrashIcon className="size-6 text-white" />
       </div>
       <div
-        className={`rounded-xl border bg-card p-3 space-y-3 ${isCollapsed ? "bg-green-100" : "bg-card"}`}
+        className={`rounded-xl border bg-card p-3 space-y-3 ${isCollapsed ? "bg-green-100 dark:bg-green-950/40" : "bg-card"}`}
         style={{
           transform: `translateX(${swipeOffset}px)`,
           transition: isCollapsed ? "none" : "all 0.3s ease-in-out",
@@ -514,25 +514,21 @@ function Row({
         )}
         <div className="flex items-center justify-between">
           <div
-            className={`relative flex items-center gap-2 flex-wrap`}
-            style={{
-              color: isCollapsed ? "black" : "",
-              fontWeight: isCollapsed ? "bold" : "normal",
-            }}
+            className={`relative flex items-center gap-2 flex-wrap ${isCollapsed ? "text-foreground font-bold" : ""}`}
           >
             <span
-              className={`${isCollapsed ? "text-green-700" : "text-black"}`}
+              className={isCollapsed ? "text-green-700 dark:text-green-400" : "text-foreground"}
             >
               세트 {setIndex + 1}
             </span>
             {isCollapsed ? (
-              <div className="flex items-center gap-2 flex-wrap ml-auto text-green-700">
+              <div className="flex items-center gap-2 flex-wrap ml-auto text-green-700 dark:text-green-400">
                 <span className="font-semibold text-md">
                   {displayWeight}
                   {displayUnit} × {reps}회
                 </span>
                 {memo.trim() !== "" && (
-                  <span className="text-md text-green-800 italic truncate max-w-[150px]">
+                  <span className="text-md text-green-800 dark:text-green-300 italic truncate max-w-[150px]">
                     "{memo}"
                   </span>
                 )}
@@ -551,13 +547,12 @@ function Row({
             )}
           </div>
           <label
-            className="flex items-center gap-2 text-sm text-muted-foreground"
-            style={{ color: isCollapsed ? "black" : "" }}
+            className={`flex items-center gap-2 text-sm text-muted-foreground ${isCollapsed ? "text-foreground" : ""}`}
           >
             {done ? "완료" : "진행중"}
             <input
               type="checkbox"
-              className="h-5 w-5 accent-blue-500"
+              className="h-5 w-5 accent-primary"
               checked={done}
               onChange={() => onToggleDone(exerciseIndex, setIndex)}
             />
@@ -608,7 +603,7 @@ function Row({
                       type="number"
                       inputMode="decimal"
                       step={displayUnit === "kg" ? "0.1" : "1"}
-                      className="flex-1 min-w-0 rounded-md border bg-background px-2 py-1 text-center text-base font-semibold outline-none focus:border-blue-400"
+                      className="flex-1 min-w-0 rounded-md border bg-background px-2 py-1 text-center text-base font-semibold outline-none focus:border-ring"
                       value={draftWeight}
                       onChange={(e) => setDraftWeight(e.currentTarget.value)}
                       onFocus={(e) => e.target.select()}
@@ -677,7 +672,7 @@ function Row({
             </div>
             <div>
               <select
-                className="w-full rounded-md border px-3 py-2 text-sm outline-none focus:border-blue-400"
+                className="w-full rounded-md border px-3 py-2 text-sm outline-none focus:border-ring"
                 value={equipment}
                 onChange={(e) =>
                   changeEquipment(exerciseIndex, setIndex, e.target.value)
@@ -694,7 +689,7 @@ function Row({
             <div className="space-y-1">
               <div className="text-xs text-muted-foreground">메모</div>
               <input
-                className="w-full rounded-md border px-3 py-2 text-sm outline-none focus:border-blue-400"
+                className="w-full rounded-md border px-3 py-2 text-sm outline-none focus:border-ring"
                 type="text"
                 value={memo}
                 onChange={(e) =>
@@ -810,7 +805,7 @@ function AddExerciseBottomSheet({
   if (libraryState.status === "loading") {
     return (
       <div className="flex items-center justify-center py-8">
-        <p className="text-gray-500">운동 목록을 불러오는 중...</p>
+        <p className="text-muted-foreground">운동 목록을 불러오는 중...</p>
       </div>
     );
   }
@@ -818,8 +813,8 @@ function AddExerciseBottomSheet({
   if (libraryState.status === "error") {
     return (
       <div className="flex flex-col items-center justify-center py-8 px-4">
-        <p className="text-red-500 mb-2">운동 목록을 불러오지 못했습니다</p>
-        <p className="text-sm text-gray-500">{libraryState.message}</p>
+        <p className="text-destructive mb-2">운동 목록을 불러오지 못했습니다</p>
+        <p className="text-sm text-muted-foreground">{libraryState.message}</p>
       </div>
     );
   }
@@ -827,8 +822,8 @@ function AddExerciseBottomSheet({
   if (libraryState.status === "empty") {
     return (
       <div className="flex flex-col items-center justify-center py-8 px-4">
-        <p className="text-gray-500 mb-2">등록된 운동이 없습니다</p>
-        <p className="text-sm text-gray-400">
+        <p className="text-muted-foreground mb-2">등록된 운동이 없습니다</p>
+        <p className="text-sm text-muted-foreground">
           Exercise DB에 운동을 추가해주세요
         </p>
       </div>
@@ -868,11 +863,11 @@ function AddExerciseBottomSheet({
             placeholder="운동 이름 검색..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
           />
         </div>
 
-        <div className="sticky top-0 bg-white border-b z-10 pb-2">
+        <div className="sticky top-0 bg-background border-b z-10 pb-2">
           <div className="flex overflow-x-auto gap-2">
             {categories.map((category) => (
               <button
@@ -880,8 +875,8 @@ function AddExerciseBottomSheet({
                 onClick={() => setSelectedCategory(category)}
                 className={`px-4 py-2 rounded-lg whitespace-nowrap text-sm font-medium transition-colors ${
                   selectedCategory === category
-                    ? "bg-blue-500 text-white"
-                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-muted text-foreground hover:bg-accent"
                 }`}
               >
                 {category}
@@ -892,7 +887,7 @@ function AddExerciseBottomSheet({
 
         <div className="mt-4 space-y-2">
           {filteredExercises.length === 0 ? (
-            <p className="text-center text-gray-500 py-8">
+            <p className="text-center text-muted-foreground py-8">
               {searchQuery
                 ? "검색 결과가 없습니다"
                 : existingPageIds.size > 0 && availableExercises.length === 0
@@ -908,23 +903,23 @@ function AddExerciseBottomSheet({
                   onClick={() => toggleExerciseSelection(exercise.id)}
                   className={`p-4 border rounded-lg cursor-pointer transition-colors ${
                     isSelected
-                      ? "bg-blue-50 border-blue-500"
-                      : "bg-white hover:bg-gray-50"
+                      ? "bg-accent border-primary"
+                      : "bg-card hover:bg-accent"
                   }`}
                 >
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
-                      <h3 className="font-medium text-gray-900">
+                      <h3 className="font-medium text-foreground">
                         {exercise.name}
                       </h3>
                       <div className="flex gap-2 mt-1">
                         {exercise.equipment && (
-                          <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
+                          <span className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded">
                             {exercise.equipment}
                           </span>
                         )}
                         {exercise.primaryEffect && (
-                          <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
+                          <span className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded">
                             {exercise.primaryEffect}
                           </span>
                         )}
@@ -932,9 +927,9 @@ function AddExerciseBottomSheet({
                     </div>
                     <div className="ml-2">
                       {isSelected && (
-                        <div className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center">
+                        <div className="w-6 h-6 bg-primary rounded-full flex items-center justify-center">
                           <svg
-                            className="w-4 h-4 text-white"
+                            className="w-4 h-4 text-primary-foreground"
                             fill="none"
                             stroke="currentColor"
                             viewBox="0 0 24 24"
