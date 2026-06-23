@@ -3,11 +3,15 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
 import type { Viewport } from "next";
+import { ThemeSwitcher } from "@/components/theme-provider";
 
 export const viewport: Viewport = {
   width: "device-width",
-
   initialScale: 1,
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
+    { media: "(prefers-color-scheme: dark)", color: "#18181b" },
+  ],
 };
 
 const geistSans = Geist({
@@ -31,12 +35,14 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        {children}
-        <Toaster position="top-center" />
+        <ThemeSwitcher attribute="class">
+          {children}
+          <Toaster position="top-center" />
+        </ThemeSwitcher>
       </body>
     </html>
   );
