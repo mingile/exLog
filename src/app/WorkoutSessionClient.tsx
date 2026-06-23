@@ -196,7 +196,9 @@ export function WorkoutSessionClient({
               <AccordionTrigger className="py-3">
                 <div className="flex w-full items-center justify-between pr-2">
                   <div className="flex items-center gap-2">
-                    <span className={`text-base font-medium ${completed ? "text-green-700 dark:text-green-400" : ""}`}>
+                    <span
+                      className={`text-base font-medium ${completed ? "text-green-700 dark:text-green-400" : ""}`}
+                    >
                       {ex.name}
                     </span>
                     {completed && (
@@ -204,12 +206,15 @@ export function WorkoutSessionClient({
                     )}
                   </div>
                   <div className="flex items-center gap-2">
-                    {exerciseElapsedSeconds[ex.id] !== undefined && exerciseElapsedSeconds[ex.id] > 0 && (
-                      <span className="text-sm font-mono text-muted-foreground">
-                        {formatElapsedTime(exerciseElapsedSeconds[ex.id])}
-                      </span>
-                    )}
-                    <span className={`text-sm ${completed ? "text-green-700 dark:text-green-400 font-semibold" : "text-muted-foreground"}`}>
+                    {exerciseElapsedSeconds[ex.id] !== undefined &&
+                      exerciseElapsedSeconds[ex.id] > 0 && (
+                        <span className="text-sm font-mono text-muted-foreground">
+                          {formatElapsedTime(exerciseElapsedSeconds[ex.id])}
+                        </span>
+                      )}
+                    <span
+                      className={`text-sm ${completed ? "text-green-700 dark:text-green-400 font-semibold" : "text-muted-foreground"}`}
+                    >
                       {completedCount} / {targetCount}
                     </span>
                   </div>
@@ -517,7 +522,11 @@ function Row({
             className={`relative flex items-center gap-2 flex-wrap ${isCollapsed ? "text-foreground font-bold" : ""}`}
           >
             <span
-              className={isCollapsed ? "text-green-700 dark:text-green-400" : "text-foreground"}
+              className={
+                isCollapsed
+                  ? "text-green-700 dark:text-green-400"
+                  : "text-foreground"
+              }
             >
               세트 {setIndex + 1}
             </span>
@@ -549,7 +558,7 @@ function Row({
           <label
             className={`flex items-center gap-2 text-sm text-muted-foreground ${isCollapsed ? "text-foreground" : ""}`}
           >
-            {done ? "완료" : "진행중"}
+            {done ? "완료" : "완료 체크"}
             <input
               type="checkbox"
               className="h-5 w-5 accent-primary"
@@ -702,12 +711,16 @@ function Row({
         )}
       </div>
 
-      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+      <AlertDialog
+        open={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>세트를 삭제할까요?</AlertDialogTitle>
             <AlertDialogDescription>
-              세트 {setIndex + 1} ({setType === "warmup" ? "웜업세트" : "본세트"})
+              세트 {setIndex + 1} (
+              {setType === "warmup" ? "웜업세트" : "본세트"})
               <br />
               <br />
               삭제된 세트는 복구할 수 없습니다.
@@ -719,7 +732,10 @@ function Row({
             <AlertDialogCancel onClick={handleCancelDelete}>
               취소
             </AlertDialogCancel>
-            <AlertDialogAction onClick={handleConfirmDelete} variant="destructive">
+            <AlertDialogAction
+              onClick={handleConfirmDelete}
+              variant="destructive"
+            >
               삭제
             </AlertDialogAction>
           </AlertDialogFooter>

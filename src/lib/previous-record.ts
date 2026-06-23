@@ -53,16 +53,18 @@ export function getPreviousRecord(
             (set) => set.equipment === equipment,
           );
           if (matchingSets.length > 0) {
-            // 첫번째 세트만 가져오기
+            // 마지막 세트만 가져오기
             return [
               {
-                weight: matchingSets[0].weight,
-                reps: matchingSets[0].reps,
+                weight: matchingSets[matchingSets.length - 1].weight,
+                reps: matchingSets[matchingSets.length - 1].reps,
                 done: false,
                 synced: false,
-                equipment: matchingSets[0].equipment,
+                equipment: matchingSets[matchingSets.length - 1].equipment,
                 memo: "",
-                unit: ruleDecision(matchingSets[0].equipment).unit,
+                unit: ruleDecision(
+                  matchingSets[matchingSets.length - 1].equipment,
+                ).unit,
                 setType: "main",
               },
             ];
