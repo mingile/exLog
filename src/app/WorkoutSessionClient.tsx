@@ -21,6 +21,7 @@ import {
   Exercise,
   SetItem,
   Session,
+  ExerciseTimers,
 } from "./types";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useRef } from "react";
@@ -31,6 +32,13 @@ import { nextWeight } from "@/lib/weightUnit";
 import { useExerciseLibrary } from "@/hooks/useExerciseLibrary";
 import { groupExercisesByCategory } from "@/lib/library";
 import { getPreviousRecord, createDefaultSet } from "@/lib/previous-record";
+import { useTimerTick } from "@/hooks/useTimerTick";
+import {
+  createRunningExerciseTimer,
+  getExerciseElapsedSeconds,
+  pauseExerciseTimer,
+  resumeExerciseTimer,
+} from "@/lib/timer";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -81,6 +89,8 @@ export function WorkoutSessionClient({
   changeTargetMainSetCount,
   changeTargetWarmupSetCount,
   sessionMetadata,
+  exerciseTimers,
+  onExerciseTimersChange,
   addExercisesToSession,
   onSave,
   onStartNewSession,
@@ -112,6 +122,10 @@ export function WorkoutSessionClient({
   changeTargetMainSetCount: (exIdx: number, delta: number) => void;
   changeTargetWarmupSetCount: (exIdx: number, delta: number) => void;
   sessionMetadata: SessionMetadata | null;
+  exerciseTimers: ExerciseTimers;
+  onExerciseTimersChange: (
+    updater: (prev: ExerciseTimers) => ExerciseTimers,
+  ) => void;
   addExercisesToSession: (newExercises: Exercises) => void;
   onSave: () => void;
   onStartNewSession: () => void;
@@ -122,35 +136,56 @@ export function WorkoutSessionClient({
     null,
   );
   const autoCollapsedExercisesRef = useRef<Set<string>>(new Set());
+  const prevActiveExerciseIdRef = useRef<string | null>(null);
 
-  const [exerciseElapsedSeconds, setExerciseElapsedSeconds] = useState<
-    Record<string, number>
-  >({});
-  const [activeExerciseId, setActiveExerciseId] = useState<string | null>(null);
+  const activeExerciseId =
+    openAccordionIndex === null
+      ? null
+      : (exercises[openAccordionIndex]?.id ?? null);
+
+  useTimerTick(activeExerciseId !== null);
+
+  const displayElapsedSeconds: Record<string, number> = {};
+  for (const [exerciseId, timerState] of Object.entries(exerciseTimers)) {
+    displayElapsedSeconds[exerciseId] = getExerciseElapsedSeconds(timerState);
+  }
 
   useEffect(() => {
-    const intervalId = setInterval(() => {
+    const prevActiveExerciseId = prevActiveExerciseIdRef.current;
+    if (prevActiveExerciseId === activeExerciseId) return;
+
+    onExerciseTimersChange((prev) => {
+      let changed = false;
+      const next = { ...prev };
+
+      if (
+        prevActiveExerciseId &&
+        next[prevActiveExerciseId]?.status === "running"
+      ) {
+        next[prevActiveExerciseId] = pauseExerciseTimer(
+          next[prevActiveExerciseId],
+        );
+        changed = true;
+      }
+
       if (activeExerciseId) {
-        setExerciseElapsedSeconds((prev) => ({
-          ...prev,
-          [activeExerciseId]: (prev[activeExerciseId] || 0) + 1,
-        }));
+        const existing = next[activeExerciseId];
+        if (existing) {
+          if (existing.status !== "running") {
+            next[activeExerciseId] = resumeExerciseTimer(existing);
+            changed = true;
+          }
+        } else {
+          next[activeExerciseId] = createRunningExerciseTimer();
+          changed = true;
+        }
       }
-    }, 1000);
 
-    return () => clearInterval(intervalId);
-  }, [activeExerciseId]);
+      return changed ? next : prev;
+    });
 
-  useEffect(() => {
-    if (openAccordionIndex !== null) {
-      const exercise = exercises[openAccordionIndex];
-      if (exercise && exercise.id !== activeExerciseId) {
-        setActiveExerciseId(exercise.id);
-      }
-    } else {
-      setActiveExerciseId(null);
-    }
-  }, [openAccordionIndex, exercises]);
+    prevActiveExerciseIdRef.current = activeExerciseId;
+  }, [activeExerciseId, onExerciseTimersChange]);
 
   useEffect(() => {
     exercises.forEach((ex, i) => {
@@ -206,10 +241,10 @@ export function WorkoutSessionClient({
                     )}
                   </div>
                   <div className="flex items-center gap-2">
-                    {exerciseElapsedSeconds[ex.id] !== undefined &&
-                      exerciseElapsedSeconds[ex.id] > 0 && (
+                    {displayElapsedSeconds[ex.id] !== undefined &&
+                      displayElapsedSeconds[ex.id] > 0 && (
                         <span className="text-sm font-mono text-muted-foreground">
-                          {formatElapsedTime(exerciseElapsedSeconds[ex.id])}
+                          {formatElapsedTime(displayElapsedSeconds[ex.id])}
                         </span>
                       )}
                     <span

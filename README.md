@@ -1,4 +1,4 @@
-Workout Logger
+Daily Set
 
 운동 기록에 집중한 미니멀 웹앱
 

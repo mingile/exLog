@@ -29,9 +29,18 @@ export type SessionMetadata = {
     startedAt: string;
 };
 
+export type ExerciseTimerState = {
+    status: "running" | "paused";
+    accumulatedElapsedSeconds: number;
+    segmentStartedAt: string | null;
+};
+
+export type ExerciseTimers = Record<string, ExerciseTimerState>;
+
 export type SessionDraft = {
     session: SessionMetadata;
     exercises: Exercises;
+    exerciseTimers?: ExerciseTimers;
 };
 
 export type LibraryCategory = "등" | "가슴" | "하체" | "어깨" | "팔" | "코어" | "유산소" | "기타";

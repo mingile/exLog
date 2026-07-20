@@ -10,7 +10,10 @@ import {
   SessionMetadata,
   Session,
   SavedExercise,
+  ExerciseTimers,
 } from "./types";
+import { elapsedSecondsFromStartedAt, reconcileStoredExerciseTimers } from "@/lib/timer";
+import { useTimerTick } from "@/hooks/useTimerTick";
 import { WorkoutHistoryClient } from "./WorkoutHistoryClient";
 import { LibraryClient } from "./LibraryClient";
 import { kgToLb, lbToKg, nextWeight } from "@/lib/weightUnit";
@@ -34,11 +37,18 @@ export function RootClient() {
   );
   const [sessionMetadata, setSessionMetadata] =
     useState<SessionMetadata | null>(null);
+  const [exerciseTimers, setExerciseTimers] = useState<ExerciseTimers>({});
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
 
   const [notionStatusLoading, setNotionStatusLoading] = useState<boolean>(true);
   const [notionConnected, setNotionConnected] = useState<boolean>(false);
   const [dbConnected, setDbConnected] = useState<boolean>(false);
+
+  useTimerTick(!!sessionMetadata);
+
+  const currentDurationSeconds = sessionMetadata
+    ? elapsedSecondsFromStartedAt(sessionMetadata.startedAt)
+    : 0;
 
   useEffect(() => {
     if (!hydrated) return;
@@ -333,6 +343,11 @@ export function RootClient() {
           });
           setExercises(migratedExercises);
           setSessionMetadata(parsedDraft.session);
+          if (parsedDraft.exerciseTimers) {
+            setExerciseTimers(
+              reconcileStoredExerciseTimers(parsedDraft.exerciseTimers),
+            );
+          }
         } else {
           localStorage.removeItem("workout.currentSession.v1");
         }
@@ -368,6 +383,8 @@ export function RootClient() {
       localStorage.removeItem("workout.currentSession.v1");
       localStorage.removeItem("workout.session.v1");
     } finally {
+      const hasDraft = !!localStorage.getItem("workout.currentSession.v1");
+      setEntryMode(hasDraft ? "session" : "library");
       setHydrated(true);
     }
   }, []);
@@ -375,18 +392,6 @@ export function RootClient() {
   useEffect(() => {
     if (!hydrated) return;
     refreshNotionStatus();
-  }, [hydrated]);
-
-  useEffect(() => {
-    if (hydrated === false) return;
-
-    const storedDraft = localStorage.getItem("workout.currentSession.v1");
-
-    if (storedDraft) {
-      setEntryMode("session");
-    } else {
-      setEntryMode("library");
-    }
   }, [hydrated]);
 
   useEffect(() => {
@@ -398,13 +403,15 @@ export function RootClient() {
     const draftData: SessionDraft = {
       session: sessionMetadata,
       exercises,
+      exerciseTimers:
+        Object.keys(exerciseTimers).length > 0 ? exerciseTimers : undefined,
     };
 
     localStorage.setItem(
       "workout.currentSession.v1",
       JSON.stringify(draftData),
     );
-  }, [exercises, sessionMetadata, hydrated, entryMode]);
+  }, [exercises, sessionMetadata, exerciseTimers, hydrated, entryMode]);
 
   function displayWeightUnit(
     weight: number,
@@ -743,6 +750,7 @@ export function RootClient() {
   function startNewSession() {
     localStorage.removeItem("workout.currentSession.v1");
     setSessionMetadata(null);
+    setExerciseTimers({});
     setEntryMode("library");
   }
 
@@ -795,6 +803,8 @@ export function RootClient() {
       const currentSessionSnapshot: SessionDraft = {
         session: sessionMetadata!,
         exercises: exercises,
+        exerciseTimers:
+          Object.keys(exerciseTimers).length > 0 ? exerciseTimers : undefined,
       };
       localStorage.setItem(
         "workout.currentSession.v1",
@@ -1011,32 +1021,6 @@ export function RootClient() {
     }
   }
 
-  const [date, setDate] = useState<string>(() => {
-    const today = new Date();
-    return `${today.getFullYear()}년 ${today.getMonth() + 1}월 ${today.getDate()}일`;
-  });
-
-  const [currentDurationSeconds, setCurrentDurationSeconds] = useState<number>(0);
-
-  useEffect(() => {
-    if (!sessionMetadata) {
-      setCurrentDurationSeconds(0);
-      return;
-    }
-
-    const updateDuration = () => {
-      const now = Date.now();
-      const startTime = new Date(sessionMetadata.startedAt).getTime();
-      const durationSeconds = Math.floor((now - startTime) / 1000);
-      setCurrentDurationSeconds(durationSeconds);
-    };
-
-    updateDuration();
-    const intervalId = setInterval(updateDuration, 10000);
-
-    return () => clearInterval(intervalId);
-  }, [sessionMetadata]);
-
   if (notionStatusLoading) {
     return (
       <div className="flex flex-col h-100vh min-h-screen text-center items-center justify-center">
@@ -1099,6 +1083,8 @@ export function RootClient() {
             changeTargetMainSetCount={changeTargetMainSetCount}
             changeTargetWarmupSetCount={changeTargetWarmupSetCount}
             sessionMetadata={sessionMetadata}
+            exerciseTimers={exerciseTimers}
+            onExerciseTimersChange={setExerciseTimers}
             addExercisesToSession={addExercisesToSession}
             onSave={saveSession}
             onStartNewSession={handleStartNewSession}
