@@ -8,9 +8,12 @@ import {
 } from "@/lib/library";
 import builtinExercises from "@/data/exercises.json";
 
-function transformBuiltinExerciseToLibraryExercise(
-  builtin: { id: string; name: string; part: string; equipment: string },
-): LibraryExercise {
+function transformBuiltinExerciseToLibraryExercise(builtin: {
+  id: string;
+  name: string;
+  part: string;
+  equipment: string;
+}): LibraryExercise {
   return {
     id: builtin.id,
     name: builtin.name,

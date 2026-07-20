@@ -128,7 +128,9 @@ export function LibraryClient({ onConfirmSelection }: LibraryClientProps) {
     return (
       <div className="flex flex-col h-screen items-center justify-center px-4">
         <p className="text-destructive mb-4">운동 목록을 불러오지 못했습니다</p>
-        <p className="text-sm text-muted-foreground mb-4">{libraryState.message}</p>
+        <p className="text-sm text-muted-foreground mb-4">
+          {libraryState.message}
+        </p>
         <Button onClick={refetch}>다시 시도</Button>
       </div>
     );
@@ -158,8 +160,17 @@ export function LibraryClient({ onConfirmSelection }: LibraryClientProps) {
         {libraryState.status === "success" &&
           libraryState.source === "builtin" &&
           libraryState.message && (
-            <div className="mt-2 px-3 py-2 bg-primary/10 border border-primary/30 rounded text-xs text-primary">
+            <div className="flex items-center gap-2 mt-2 px-3 py-2 bg-primary/10 border border-primary/30 rounded text-xs text-primary">
               {libraryState.message}
+              <Button
+                variant="ghost"
+                className="justify-end text-xs h-auto py-2 ml-auto"
+                onClick={() => {
+                  window.location.href = "/settings/notion";
+                }}
+              >
+                Notion 연동 설정
+              </Button>
             </div>
           )}
       </header>
