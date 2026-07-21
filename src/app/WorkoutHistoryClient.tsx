@@ -103,7 +103,9 @@ export function WorkoutHistoryClient({
       new Set(session.exercises.map((ex) => ex.part || "기타")),
     );
     const partsStr = parts.join(" · ");
-    const durationStr = session.durationSeconds ? formatDuration(session.durationSeconds) : null;
+    const durationStr = session.durationSeconds
+      ? formatDuration(session.durationSeconds)
+      : null;
     return { exerciseCount, totalSets, partsStr, durationStr };
   }
 
@@ -218,6 +220,10 @@ export function WorkoutHistoryClient({
 
   if (!showHistory) return null;
 
+  // console.log("Total sessions:", sessions.length);
+  // console.log("Date grouped:", dateGrouped);
+  // console.log("Date entries:", dateEntries);
+
   if (sessions.length === 0) {
     return (
       <main className="p-4 text-center text-muted-foreground">
@@ -231,10 +237,6 @@ export function WorkoutHistoryClient({
     b[0].localeCompare(a[0]),
   );
 
-  console.log("Total sessions:", sessions.length);
-  console.log("Date grouped:", dateGrouped);
-  console.log("Date entries:", dateEntries);
-
   return (
     <main className="p-4 space-y-6">
       {dateEntries.map(([dateStr, dateSessions]) => {
@@ -243,13 +245,13 @@ export function WorkoutHistoryClient({
             new Date(b.savedAt).getTime() - new Date(a.savedAt).getTime(),
         );
 
-        console.log(`Date ${dateStr}: ${sortedSessions.length} sessions`);
+        // console.log(`Date ${dateStr}: ${sortedSessions.length} sessions`);
 
         return (
           <div key={dateStr} className="space-y-4">
-            <h2 className="text-xl font-bold text-foreground sticky top-0 bg-background py-2">
+            <div className="text-xl font-bold text-foreground sticky top-0 bg-background py-2 z-10">
               {formatDateHeader(dateStr)}
-            </h2>
+            </div>
 
             {sortedSessions.map((session) => {
               const { exerciseCount, totalSets, partsStr, durationStr } =
@@ -268,7 +270,8 @@ export function WorkoutHistoryClient({
                         {session.sessionName || "운동 세션"}
                       </h3>
                       <p className="text-sm text-muted-foreground">
-                        {partsStr} · {exerciseCount} exercises · {totalSets} sets
+                        {partsStr} · {exerciseCount} exercises · {totalSets}{" "}
+                        sets
                         {durationStr && ` · ${durationStr}`}
                       </p>
                     </div>

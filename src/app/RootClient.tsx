@@ -12,7 +12,10 @@ import {
   SavedExercise,
   ExerciseTimers,
 } from "./types";
-import { elapsedSecondsFromStartedAt, reconcileStoredExerciseTimers } from "@/lib/timer";
+import {
+  elapsedSecondsFromStartedAt,
+  reconcileStoredExerciseTimers,
+} from "@/lib/timer";
 import { useTimerTick } from "@/hooks/useTimerTick";
 import { WorkoutHistoryClient } from "./WorkoutHistoryClient";
 import { LibraryClient } from "./LibraryClient";
@@ -618,7 +621,7 @@ export function RootClient() {
 
         if (delta > 0) {
           const currentMainSetCount = ex.sets.filter(
-            (s) => (s.setType ?? "main") === "main"
+            (s) => (s.setType ?? "main") === "main",
           ).length;
 
           if (currentMainSetCount < nextTarget) {
@@ -671,7 +674,7 @@ export function RootClient() {
 
         if (delta > 0) {
           const currentWarmupSetCount = ex.sets.filter(
-            (s) => s.setType === "warmup"
+            (s) => s.setType === "warmup",
           ).length;
 
           if (currentWarmupSetCount < nextTarget) {
@@ -759,7 +762,12 @@ export function RootClient() {
       ex.sets.some((set) => set.done && !set.synced),
     );
 
-    if (hasUnsavedChanges) {
+    const isSessionActive =
+      sessionMetadata &&
+      exercises.length > 0 &&
+      Object.keys(exerciseTimers).length > 0;
+
+    if (hasUnsavedChanges || isSessionActive) {
       const confirmed = window.confirm(
         "저장되지 않은 변경사항이 있습니다.\n새 세션을 시작하시겠습니까?\n(현재 세션이 종료됩니다)",
       );
@@ -813,8 +821,10 @@ export function RootClient() {
 
       // 2-2. workout.sessions.v1 저장
       const now = Date.now();
-      const durationSeconds = sessionMetadata?.startedAt 
-        ? Math.floor((now - new Date(sessionMetadata.startedAt).getTime()) / 1000)
+      const durationSeconds = sessionMetadata?.startedAt
+        ? Math.floor(
+            (now - new Date(sessionMetadata.startedAt).getTime()) / 1000,
+          )
         : undefined;
 
       const historyPayload = createHistoryPayload({
