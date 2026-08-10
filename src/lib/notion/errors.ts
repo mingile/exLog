@@ -7,3 +7,15 @@ export class NotionSyncError extends Error {
     this.statusCode = statusCode;
   }
 }
+
+export function isPermanentNotionSyncFailure(error: unknown): boolean {
+  if (!(error instanceof NotionSyncError)) {
+    return false;
+  }
+
+  if (error.statusCode === 429) {
+    return false;
+  }
+
+  return error.statusCode < 500;
+}
