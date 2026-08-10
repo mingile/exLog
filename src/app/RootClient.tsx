@@ -1,32 +1,31 @@
 "use client";
 
-import { WorkoutSessionClient } from "./WorkoutSessionClient";
-import { HeaderControls } from "./HeaderControls";
-import { useEffect, useState, useRef } from "react";
-import {
-  Exercises,
-  Part,
-  SessionDraft,
-  SessionMetadata,
-  Session,
-  SavedExercise,
-  ExerciseTimers,
-} from "./types";
+import { useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
+import { useTimerTick } from "@/hooks/useTimerTick";
 import {
   elapsedSecondsFromStartedAt,
   reconcileStoredExerciseTimers,
 } from "@/lib/timer";
-import { useTimerTick } from "@/hooks/useTimerTick";
-import { WorkoutHistoryClient } from "./WorkoutHistoryClient";
-import { LibraryClient } from "./LibraryClient";
 import { kgToLb, lbToKg, nextWeight } from "@/lib/weightUnit";
-import { toast } from "sonner";
 import {
-  createLocalExercisesPayload,
   createHistoryPayload,
+  createLocalExercisesPayload,
   createNotionExercisesPayload,
-  markSyncedSets,
 } from "@/lib/workoutSessionPayload";
+import { HeaderControls } from "./HeaderControls";
+import { LibraryClient } from "./LibraryClient";
+import {
+  type Exercises,
+  type ExerciseTimers,
+  type Part,
+  SavedExercise,
+  type Session,
+  type SessionDraft,
+  type SessionMetadata,
+} from "./types";
+import { WorkoutHistoryClient } from "./WorkoutHistoryClient";
+import { WorkoutSessionClient } from "./WorkoutSessionClient";
 
 export function RootClient() {
   const [exercises, setExercises] = useState<Exercises>([]);
@@ -421,7 +420,7 @@ export function RootClient() {
     unit: "kg" | "lb",
   ): { displayWeight: number; displayUnit: "kg" | "lb" } {
     let displayWeight = weight;
-    let displayUnit: "kg" | "lb" = unit;
+    const displayUnit: "kg" | "lb" = unit;
 
     if (unit === "lb") {
       displayWeight = Math.round(kgToLb(weight));
@@ -852,7 +851,7 @@ export function RootClient() {
 
       toast.success("로컬 저장 완료");
 
-      // ===== Phase 3: Notion 동기화 (선택적) =====
+      // ===== Phase 3: Notion 동기화 요청 (Queue enqueue) =====
       if (!dbConnected) {
         toast.info("Notion 미연결", {
           description: "로컬에만 저장되었습니다.",
@@ -890,10 +889,8 @@ export function RootClient() {
         return;
       }
 
-      // 3-1. Notion Session 확보
-      let sessionPageId: string;
       try {
-        const sessionResponse = await fetch("/api/notion/session-ensure", {
+        const enqueueResponse = await fetch("/api/sync/enqueue", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -902,81 +899,27 @@ export function RootClient() {
             sessionId: sessionMetadata.sessionId,
             sessionName: sessionMetadata.sessionName,
             startedAt: sessionMetadata.startedAt,
-          }),
-        });
-
-        if (!sessionResponse.ok) {
-          const errorData = await sessionResponse.json();
-          toast.warning("Notion Session 생성 실패", {
-            description: "로컬은 저장됨: " + errorData.error,
-            duration: 3000,
-          });
-          return;
-        }
-
-        const sessionDataResponse = await sessionResponse.json();
-        sessionPageId = sessionDataResponse.pageId;
-        console.log(
-          `Session ${sessionDataResponse.created ? "생성" : "조회"} 완료:`,
-          sessionPageId,
-        );
-      } catch (error) {
-        console.error("Session 확보 중 오류:", error);
-        toast.warning("Notion Session 확보 실패", {
-          description: "로컬은 저장됨, 네트워크 확인 필요",
-          duration: 3000,
-        });
-        return;
-      }
-
-      // 3-2. Notion Sets 저장
-      try {
-        const writeResponse = await fetch("/api/notion/write", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            saved_at: savedAt,
+            savedAt,
             exercises: notionExercises,
-            sessionPageId,
           }),
         });
 
-        if (!writeResponse.ok) {
-          const errorData = await writeResponse.json();
-          toast.warning("Notion Sets 저장 실패", {
+        if (!enqueueResponse.ok) {
+          const errorData = await enqueueResponse.json();
+          toast.warning("Notion 동기화 요청 실패", {
             description: "로컬은 저장됨: " + errorData.error,
             duration: 3000,
           });
           return;
         }
 
-        const data = await writeResponse.json();
-
-        // ===== Phase 4: synced 상태 업데이트 =====
-        // 4-1. exercises state 갱신
-        const updatedExercises = markSyncedSets(exercises);
-
-        // 4-2. currentSession만 재저장
-        const updatedCurrentSession: SessionDraft = {
-          session: sessionMetadata,
-          exercises: updatedExercises,
-        };
-        localStorage.setItem(
-          "workout.currentSession.v1",
-          JSON.stringify(updatedCurrentSession),
-        );
-
-        // 4-3. state 갱신
-        setExercises(updatedExercises);
-
-        toast.success(`Notion에 ${data.created_count}개 세트 동기화 완료`, {
+        toast.success("Notion 동기화 요청 완료", {
+          description: "백그라운드에서 저장됩니다.",
           duration: 2000,
         });
       } catch (error) {
-        console.error("Sets 저장 중 오류:", error);
-        toast.warning("Notion Sets 저장 중 오류", {
+        console.error("Sync enqueue 중 오류:", error);
+        toast.warning("Notion 동기화 요청 실패", {
           description: "로컬은 저장됨, 네트워크 확인 필요",
           duration: 3000,
         });
