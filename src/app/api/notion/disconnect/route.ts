@@ -26,9 +26,11 @@ export async function POST(req: Request){
 
         const db = cachedClient?.db('notion');
         const collection = db?.collection('connections_info');
+        const tempCollection = db?.collection('temp_info');
         const result = await collection?.findOneAndDelete(
             { user_key }
         );
+        await tempCollection?.deleteOne({ user_key });
 
         if(result){
             return NextResponse.json({message: "Notion 연결 해제 완료"}, {status:200});

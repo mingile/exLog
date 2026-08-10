@@ -1,165 +1,39 @@
-import { MongoClient } from "mongodb";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
+import { NotionSyncError } from "@/lib/notion/errors";
+import { writeNotionSets } from "@/lib/notion/writeSets";
 
-let cachedClient : MongoClient | null = null;
-
-export async function POST(req: Request){
- 
+export async function POST(req: Request) {
   const cookieStore = await cookies();
-  const user_key = cookieStore.get('user_key')?.value;
+  const user_key = cookieStore.get("user_key")?.value;
   const body = await req.json();
-  
-  const mongoUri = process.env.MONGODB_URI;
-  if(!mongoUri){
-    return NextResponse.json({error: "Missing MONGODB_URI"}, {status: 500});
-}
-  
-  if(!user_key){
-    return NextResponse.json({error: "Unauthorized"}, {status: 401});
+
+  if (!user_key) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   const saved_at = body.saved_at;
   const exercises = body.exercises;
   const sessionPageId = body.sessionPageId;
-  //return NextResponse.json({exercise_name, weight, reps});
-  
-  try{
- 
-    if(!cachedClient){
-      cachedClient = new MongoClient(mongoUri);
-      await cachedClient.connect();
-    }
-    const db = cachedClient?.db("notion");
-    const collection = db?.collection("connections_info");
-    const connection = await collection?.findOne({ user_key });
-    const accessToken = connection?.access_token;
-    const databaseId = connection?.workout_sets_db_id;
 
-    if(!accessToken){
-      return NextResponse.json({error:"No connection found"}, {status: 404});
-    }
-    if(!databaseId){
-      return NextResponse.json({error:"No databaseId found"}, {status: 404}); 
+  try {
+    const result = await writeNotionSets({
+      userKey: user_key,
+      savedAt: saved_at,
+      exercises,
+      sessionPageId,
+    });
+
+    return NextResponse.json(result);
+  } catch (error) {
+    if (error instanceof NotionSyncError) {
+      return NextResponse.json(
+        { error: error.message },
+        { status: error.statusCode },
+      );
     }
 
-    let created_count = 0;
-
-    const EQUIPMENT_TO_NOTION: Record<string, string> = {
-      "cable-machine": "케이블",
-      "smith-machine": "스미스",
-      "plate-machine": "원판",
-      barbell: "바벨",
-      dumbbell: "덤벨",
-    };
-
-    for(const exercise of exercises){
-      // 🔍 exercisePageId 검증 추가
-      if (!exercise.exercisePageId) {
-        console.error("❌ exercisePageId missing:", {
-          exerciseName: exercise.name,
-          exerciseId: exercise.id
-        });
-        return NextResponse.json({
-          error: `Exercise "${exercise.name}" has no exercisePageId. Please select from library.`
-        }, {status: 400});
-      }
-
-      for(const set of exercise.sets){
-        const notion_payload = {
-          parent: {
-            database_id: databaseId,
-          },
-          properties: {
-            "Name": {
-              "title": [
-                {
-                  "text": {
-                    "content": exercise.name + " - #" + set.setNo,
-                  },
-                },
-              ],
-            },
-            "Set No": {
-              "number": set.setNo,
-            },
-            "Weight": {
-              "number": set.weight,
-            },
-            "Reps": {
-              "number": set.reps
-            },
-            "Date":{
-              "date": {
-                "start": saved_at
-              }
-            },
-            "Part": {
-              "select": {
-                "name": exercise.part || "기타"
-              }
-            },
-            "Exercise": {
-              "relation": [
-                {
-                  "id": exercise.exercisePageId
-                }
-              ]
-            },
-            "Memo":{
-              "rich_text":[
-                {
-                  "text":{
-                    "content":set.memo
-                  }
-                }
-              ]
-            },
-            "Equipment": EQUIPMENT_TO_NOTION[set.equipment]
-            ? { "select": { "name": EQUIPMENT_TO_NOTION[set.equipment] } }
-            : undefined,
-            "Session": sessionPageId ? {
-              "relation": [
-                {
-                  "id": sessionPageId
-                }
-              ]
-            } : undefined
-          }
-        }
-        const response = await fetch('https://api.notion.com/v1/pages', {
-          method: "POST",
-          headers: {
-            "Authorization": `Bearer ${accessToken}`,
-            "Content-Type": "application/json",
-            "Notion-Version": "2022-06-28",
-          },
-          body: JSON.stringify(notion_payload),
-        })
-
-        console.log("Notion payload:", notion_payload);
-        console.log("Creating row:", exercise.name, "set", set.setNo);    
-    
-      if (!response.ok) {
-        const errorData = await response.json();
-        console.error("Notion API error:", {
-            payload: notion_payload,
-            status: response.status,
-            statusText: response.statusText,
-            error: errorData,
-        });
-        return NextResponse.json({error: "Failed to create database record"}, {status: response.status});
-    }
-    await response.json();
-    created_count++;
-      }
-    }
-
-  return NextResponse.json({ok: true, created_count: created_count});
+    console.error("Notion write failed", error);
+    return NextResponse.json({ error: "Notion write failed" }, { status: 500 });
   }
-  catch(e){
-    console.error('Notion write failed', e)
-    return NextResponse.json({error:'Notion write failed'}, {status:500});
-  }
-
 }
