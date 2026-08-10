@@ -45,6 +45,14 @@ export const POST = handleCallback(
       userKey: parsed.userKey,
     });
 
+    if (parsed.sessionId === "queue-test-session-001") {
+      console.log("Skipping test session sync job", {
+        messageId: metadata.messageId,
+        sessionId: parsed.sessionId,
+      });
+      return;
+    }
+
     try {
       const { pageId } = await ensureNotionSession({
         userKey: parsed.userKey,
