@@ -762,12 +762,7 @@ export function RootClient() {
       ex.sets.some((set) => set.done && !set.synced),
     );
 
-    const isSessionActive =
-      sessionMetadata &&
-      exercises.length > 0 &&
-      Object.keys(exerciseTimers).length > 0;
-
-    if (hasUnsavedChanges || isSessionActive) {
+    if (hasUnsavedChanges) {
       const confirmed = window.confirm(
         "저장되지 않은 변경사항이 있습니다.\n새 세션을 시작하시겠습니까?\n(현재 세션이 종료됩니다)",
       );
