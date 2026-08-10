@@ -1,5 +1,8 @@
 import { handleCallback } from "@vercel/queue";
-import { isPermanentNotionSyncFailure } from "@/lib/notion/errors";
+import {
+  getNotionSyncErrorStatusCode,
+  isPermanentNotionSyncFailure,
+} from "@/lib/notion/errors";
 import { ensureNotionSession } from "@/lib/notion/sessionEnsure";
 import { parseNotionSessionSyncMessage } from "@/lib/notion/syncMessage";
 import { writeNotionSets } from "@/lib/notion/writeSets";
@@ -44,16 +47,26 @@ export const POST = handleCallback(
         created_count: result.created_count,
       });
     } catch (error) {
+      const statusCode = getNotionSyncErrorStatusCode(error);
+
       if (isPermanentNotionSyncFailure(error)) {
         console.error("Permanent Notion sync failure; skipping retry", {
           messageId: metadata.messageId,
           sessionId: parsed.sessionId,
           userKey: parsed.userKey,
+          statusCode,
           error: error instanceof Error ? error.message : error,
         });
         return;
       }
 
+      console.error("Retryable Notion sync failure", {
+        messageId: metadata.messageId,
+        sessionId: parsed.sessionId,
+        userKey: parsed.userKey,
+        statusCode,
+        error: error instanceof Error ? error.message : error,
+      });
       throw error;
     }
   },
