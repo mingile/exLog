@@ -1,11 +1,31 @@
 import { handleCallback } from "@vercel/queue";
-import {
-  getNotionSyncErrorStatusCode,
-  isPermanentNotionSyncFailure,
-} from "@/lib/notion/errors";
 import { ensureNotionSession } from "@/lib/notion/sessionEnsure";
 import { parseNotionSessionSyncMessage } from "@/lib/notion/syncMessage";
 import { writeNotionSets } from "@/lib/notion/writeSets";
+
+function getErrorStatusCode(error: unknown): number | undefined {
+  if (typeof error !== "object" || error === null) {
+    return undefined;
+  }
+
+  const statusCode = (error as { statusCode?: unknown }).statusCode;
+  return typeof statusCode === "number" && Number.isFinite(statusCode)
+    ? statusCode
+    : undefined;
+}
+
+function isPermanentSyncFailure(error: unknown): boolean {
+  const statusCode = getErrorStatusCode(error);
+  if (statusCode === undefined) {
+    return false;
+  }
+
+  if (statusCode === 429) {
+    return false;
+  }
+
+  return statusCode < 500;
+}
 
 export const POST = handleCallback(
   async (message, metadata) => {
@@ -47,9 +67,9 @@ export const POST = handleCallback(
         created_count: result.created_count,
       });
     } catch (error) {
-      const statusCode = getNotionSyncErrorStatusCode(error);
+      const statusCode = getErrorStatusCode(error);
 
-      if (isPermanentNotionSyncFailure(error)) {
+      if (isPermanentSyncFailure(error)) {
         console.error("Permanent Notion sync failure; skipping retry", {
           messageId: metadata.messageId,
           sessionId: parsed.sessionId,

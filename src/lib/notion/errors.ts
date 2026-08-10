@@ -1,6 +1,5 @@
 export class NotionSyncError extends Error {
   statusCode: number;
-  readonly __notionSyncError = true;
 
   constructor(message: string, statusCode: number) {
     super(message);
@@ -17,16 +16,17 @@ export function getNotionSyncErrorStatusCode(
   }
 
   const candidate = error as {
-    __notionSyncError?: boolean;
+    name?: unknown;
     statusCode?: unknown;
   };
 
-  if (candidate.__notionSyncError !== true) {
+  if (candidate.name !== "NotionSyncError") {
     return undefined;
   }
 
-  return typeof candidate.statusCode === "number"
-    ? candidate.statusCode
+  const statusCode = candidate.statusCode;
+  return typeof statusCode === "number" && Number.isFinite(statusCode)
+    ? statusCode
     : undefined;
 }
 
