@@ -1,5 +1,5 @@
 import { getNotionConnection } from "@/lib/notion/connection";
-import { NotionSyncError } from "@/lib/notion/errors";
+import { notionSyncError } from "@/lib/notion/errors";
 
 const sessionPageIdCache = new Map<string, string>();
 
@@ -26,7 +26,7 @@ export async function ensureNotionSession(
   const sessionDatabaseId = connection.workoutSessionDbId;
 
   if (!sessionDatabaseId) {
-    throw new NotionSyncError("No Session database configured", 404);
+    throw notionSyncError("No Session database configured", 404);
   }
 
   const cacheKey = `${userKey}:${sessionId}`;
@@ -61,10 +61,7 @@ export async function ensureNotionSession(
   if (!queryResponse.ok) {
     const errorData = await queryResponse.json();
     console.error("Notion query error:", errorData);
-    throw new NotionSyncError(
-      "Failed to query Session DB",
-      queryResponse.status,
-    );
+    throw notionSyncError("Failed to query Session DB", queryResponse.status);
   }
 
   const queryData = await queryResponse.json();
@@ -122,7 +119,7 @@ export async function ensureNotionSession(
   if (!createResponse.ok) {
     const errorData = await createResponse.json();
     console.error("Notion Session create error:", errorData);
-    throw new NotionSyncError(
+    throw notionSyncError(
       "Failed to create Session row",
       createResponse.status,
     );

@@ -1,30 +1,34 @@
 import { handleCallback } from "@vercel/queue";
+import { getNotionSyncErrorStatusCode } from "@/lib/notion/errors";
 import { ensureNotionSession } from "@/lib/notion/sessionEnsure";
 import { parseNotionSessionSyncMessage } from "@/lib/notion/syncMessage";
 import { writeNotionSets } from "@/lib/notion/writeSets";
 
-function getErrorStatusCode(error: unknown): number | undefined {
-  if (typeof error !== "object" || error === null) {
-    return undefined;
+const MAX_DELIVERY_COUNT = 3;
+
+function shouldAckWithoutRetry(error: unknown): boolean {
+  const statusCode = getNotionSyncErrorStatusCode(error);
+  if (statusCode !== undefined) {
+    if (statusCode === 429) {
+      return false;
+    }
+    return statusCode < 500;
   }
 
-  const statusCode = (error as { statusCode?: unknown }).statusCode;
-  return typeof statusCode === "number" && Number.isFinite(statusCode)
-    ? statusCode
-    : undefined;
+  if (!(error instanceof Error)) {
+    return false;
+  }
+
+  return (
+    error.message === "No connection found" ||
+    error.message === "No Session database configured" ||
+    error.message === "No databaseId found" ||
+    error.message.includes("has no exercisePageId")
+  );
 }
 
-function isPermanentSyncFailure(error: unknown): boolean {
-  const statusCode = getErrorStatusCode(error);
-  if (statusCode === undefined) {
-    return false;
-  }
-
-  if (statusCode === 429) {
-    return false;
-  }
-
-  return statusCode < 500;
+function getRetryDelaySeconds(deliveryCount: number): number {
+  return Math.min(300, 2 ** deliveryCount * 5);
 }
 
 export const POST = handleCallback(
@@ -43,15 +47,11 @@ export const POST = handleCallback(
       messageId: metadata.messageId,
       sessionId: parsed.sessionId,
       userKey: parsed.userKey,
+      deliveryCount: metadata.deliveryCount,
+      consumerGroup: metadata.consumerGroup,
+      region: metadata.region,
+      deploymentId: process.env.VERCEL_DEPLOYMENT_ID,
     });
-
-    if (parsed.sessionId === "queue-test-session-001") {
-      console.log("Skipping test session sync job", {
-        messageId: metadata.messageId,
-        sessionId: parsed.sessionId,
-      });
-      return;
-    }
 
     try {
       const { pageId } = await ensureNotionSession({
@@ -75,9 +75,9 @@ export const POST = handleCallback(
         created_count: result.created_count,
       });
     } catch (error) {
-      const statusCode = getErrorStatusCode(error);
+      const statusCode = getNotionSyncErrorStatusCode(error);
 
-      if (isPermanentSyncFailure(error)) {
+      if (shouldAckWithoutRetry(error)) {
         console.error("Permanent Notion sync failure; skipping retry", {
           messageId: metadata.messageId,
           sessionId: parsed.sessionId,
@@ -93,6 +93,7 @@ export const POST = handleCallback(
         sessionId: parsed.sessionId,
         userKey: parsed.userKey,
         statusCode,
+        deliveryCount: metadata.deliveryCount,
         error: error instanceof Error ? error.message : error,
       });
       throw error;
@@ -100,5 +101,17 @@ export const POST = handleCallback(
   },
   {
     visibilityTimeoutSeconds: 600,
+    retry: (error, metadata) => {
+      if (metadata.deliveryCount > MAX_DELIVERY_COUNT) {
+        console.error("Notion sync job abandoned after max retries", {
+          messageId: metadata.messageId,
+          deliveryCount: metadata.deliveryCount,
+          error: error instanceof Error ? error.message : error,
+        });
+        return { acknowledge: true };
+      }
+
+      return { afterSeconds: getRetryDelaySeconds(metadata.deliveryCount) };
+    },
   },
 );

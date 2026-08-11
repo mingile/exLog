@@ -93,6 +93,7 @@ export function WorkoutSessionClient({
   onExerciseTimersChange,
   addExercisesToSession,
   onSave,
+  onCompleteWorkout,
   onStartNewSession,
   saving,
 }: {
@@ -128,6 +129,7 @@ export function WorkoutSessionClient({
   ) => void;
   addExercisesToSession: (newExercises: Exercises) => void;
   onSave: () => void;
+  onCompleteWorkout: () => void;
   onStartNewSession: () => void;
   saving: boolean;
 }) {
@@ -375,6 +377,14 @@ export function WorkoutSessionClient({
         </Button>
         <Button onClick={onStartNewSession}>새 세션</Button>
       </div>
+
+      <Button
+        onClick={onCompleteWorkout}
+        disabled={saving}
+        className="w-full mt-2 bg-green-700 text-white hover:bg-green-600 dark:bg-green-700 dark:hover:bg-green-500"
+      >
+        {saving ? "처리중..." : "운동 완료"}
+      </Button>
     </main>
   );
 }

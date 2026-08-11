@@ -97,11 +97,11 @@ export function parseNotionSessionSyncMessage(
 
   return {
     type: NOTION_SESSION_SYNC_TYPE,
-    userKey: payload.userKey,
-    sessionId: payload.sessionId,
-    sessionName: payload.sessionName,
-    startedAt: payload.startedAt,
-    savedAt: payload.savedAt,
+    userKey: (payload.userKey as string).trim(),
+    sessionId: (payload.sessionId as string).trim(),
+    sessionName: (payload.sessionName as string).trim(),
+    startedAt: (payload.startedAt as string).trim(),
+    savedAt: (payload.savedAt as string).trim(),
     exercises: payload.exercises,
   };
 }

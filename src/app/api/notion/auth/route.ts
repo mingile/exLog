@@ -1,6 +1,6 @@
+import crypto from "crypto";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
-import crypto from "crypto";
 
 export async function GET() {
   // state 생성 (랜덤)

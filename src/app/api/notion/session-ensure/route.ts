@@ -1,6 +1,6 @@
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
-import { NotionSyncError } from "@/lib/notion/errors";
+import { getNotionSyncErrorStatusCode } from "@/lib/notion/errors";
 import { ensureNotionSession } from "@/lib/notion/sessionEnsure";
 
 export async function POST(req: Request) {
@@ -31,10 +31,14 @@ export async function POST(req: Request) {
 
     return NextResponse.json(result);
   } catch (error) {
-    if (error instanceof NotionSyncError) {
+    const statusCode = getNotionSyncErrorStatusCode(error);
+    if (statusCode !== undefined) {
       return NextResponse.json(
-        { error: error.message },
-        { status: error.statusCode },
+        {
+          error:
+            error instanceof Error ? error.message : "Session ensure failed",
+        },
+        { status: statusCode },
       );
     }
 

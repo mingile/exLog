@@ -1,4 +1,4 @@
-import { Exercises, SavedExercise } from "@/app/types";
+import { Exercises, SavedExercise, Session } from "@/app/types";
 
 /**
  * done=true인 세트만 추출하여 로컬 저장용 payload를 생성한다.
@@ -58,6 +58,35 @@ export function createHistoryPayload(params: {
     exercises: params.localExercises,
     durationSeconds: params.durationSeconds,
   };
+}
+
+/**
+ * 현재 exercises가 workout.sessions.v1에 저장된 내용과 다른지 판별한다.
+ * done 세트가 없으면 false, history에 해당 sessionId가 없거나 payload가 다르면 true.
+ */
+export function computeHistoryDirty(
+  sessionId: string,
+  exercises: Exercises,
+): boolean {
+  const localPayload = createLocalExercisesPayload(exercises);
+  if (localPayload.length === 0) return false;
+
+  if (typeof window === "undefined") return true;
+
+  try {
+    const raw = localStorage.getItem("workout.sessions.v1");
+    if (!raw) return true;
+
+    const sessions = JSON.parse(raw) as Session[];
+    if (!Array.isArray(sessions)) return true;
+
+    const saved = sessions.find((s) => s.id === sessionId);
+    if (!saved) return true;
+
+    return JSON.stringify(localPayload) !== JSON.stringify(saved.exercises);
+  } catch {
+    return true;
+  }
 }
 
 /**

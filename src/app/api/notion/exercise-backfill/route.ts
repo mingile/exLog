@@ -1,9 +1,9 @@
 // Notion Exercise DB 마이그레이션용 백필(backfill) API
 
-import { getMongoDb } from "@/lib/mongodb";
+import { randomBytes } from "crypto";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
-import { randomBytes } from "crypto";
+import { getMongoDb } from "@/lib/mongodb";
 
 function generateExerciseId(): string {
   const randomStr = randomBytes(8).toString("hex");
@@ -64,7 +64,7 @@ export async function POST() {
     };
 
     let hasMore = true;
-    let startCursor: string | undefined = undefined;
+    let startCursor: string | undefined;
 
     while (hasMore) {
       const queryBody: any = {

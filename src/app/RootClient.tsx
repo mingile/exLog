@@ -9,6 +9,7 @@ import {
 } from "@/lib/timer";
 import { kgToLb, lbToKg, nextWeight } from "@/lib/weightUnit";
 import {
+  computeHistoryDirty,
   createHistoryPayload,
   createLocalExercisesPayload,
   createNotionExercisesPayload,
@@ -42,6 +43,7 @@ export function RootClient() {
   const [exerciseTimers, setExerciseTimers] = useState<ExerciseTimers>({});
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
 
+  const [historyDirty, setHistoryDirty] = useState<boolean>(false);
   const [notionStatusLoading, setNotionStatusLoading] = useState<boolean>(true);
   const [notionConnected, setNotionConnected] = useState<boolean>(false);
   const [dbConnected, setDbConnected] = useState<boolean>(false);
@@ -345,6 +347,13 @@ export function RootClient() {
           });
           setExercises(migratedExercises);
           setSessionMetadata(parsedDraft.session);
+          setHistoryDirty(
+            parsedDraft.historyDirty ??
+              computeHistoryDirty(
+                parsedDraft.session.sessionId,
+                migratedExercises,
+              ),
+          );
           if (parsedDraft.exerciseTimers) {
             setExerciseTimers(
               reconcileStoredExerciseTimers(parsedDraft.exerciseTimers),
@@ -407,13 +416,25 @@ export function RootClient() {
       exercises,
       exerciseTimers:
         Object.keys(exerciseTimers).length > 0 ? exerciseTimers : undefined,
+      historyDirty,
     };
 
     localStorage.setItem(
       "workout.currentSession.v1",
       JSON.stringify(draftData),
     );
-  }, [exercises, sessionMetadata, exerciseTimers, hydrated, entryMode]);
+  }, [
+    exercises,
+    sessionMetadata,
+    exerciseTimers,
+    historyDirty,
+    hydrated,
+    entryMode,
+  ]);
+
+  function markHistoryDirty() {
+    setHistoryDirty(true);
+  }
 
   function displayWeightUnit(
     weight: number,
@@ -432,6 +453,7 @@ export function RootClient() {
   }
 
   function deleteSet(exId: string, setIdx: number) {
+    markHistoryDirty();
     setExercises((prev) => {
       return prev.map((ex) => {
         if (ex.id !== exId) return ex;
@@ -462,6 +484,7 @@ export function RootClient() {
   }
 
   function changeReps(exIdx: number, setIdx: number, delta: number) {
+    markHistoryDirty();
     setExercises((prev) =>
       prev.map((ex, i) => {
         if (i !== exIdx) return ex;
@@ -477,6 +500,7 @@ export function RootClient() {
   }
 
   function changeWeight(exIdx: number, setIdx: number, nextWeight: number) {
+    markHistoryDirty();
     setExercises((prev) =>
       prev.map((ex, i) => {
         if (i !== exIdx) return ex;
@@ -492,6 +516,7 @@ export function RootClient() {
   }
 
   function changeMemo(exIdx: number, setIdx: number, value: string) {
+    markHistoryDirty();
     setExercises((prev) =>
       prev.map((ex, i) => {
         if (i !== exIdx) return ex;
@@ -507,6 +532,7 @@ export function RootClient() {
   }
 
   function changeEquipment(exIdx: number, setIdx: number, equipment: string) {
+    markHistoryDirty();
     setExercises((prev) =>
       prev.map((ex, i) => {
         if (i !== exIdx) return ex;
@@ -522,6 +548,7 @@ export function RootClient() {
   }
 
   function changeUnit(exIdx: number, setIdx: number, unit: "kg" | "lb") {
+    markHistoryDirty();
     setExercises((prev) =>
       prev.map((ex, i) => {
         if (i !== exIdx) return ex;
@@ -537,6 +564,7 @@ export function RootClient() {
   }
 
   function toggleDone(exIdx: number, setIdx: number) {
+    markHistoryDirty();
     setExercises((prev) =>
       prev.map((ex, i) => {
         if (i !== exIdx) return ex;
@@ -579,6 +607,7 @@ export function RootClient() {
     setIdx: number,
     newSetType: "warmup" | "main",
   ) {
+    markHistoryDirty();
     setExercises((prev) =>
       prev.map((ex, i) => {
         if (i !== exIdx) return ex;
@@ -733,6 +762,7 @@ export function RootClient() {
 
   function clearDoneStatus() {
     if (confirm("체크 상태를 초기화하시겠습니까?")) {
+      markHistoryDirty();
       setExercises((prev) =>
         prev.map((ex) => ({
           ...ex,
@@ -753,15 +783,13 @@ export function RootClient() {
     localStorage.removeItem("workout.currentSession.v1");
     setSessionMetadata(null);
     setExerciseTimers({});
+    setHistoryDirty(false);
     setEntryMode("library");
   }
 
   function handleStartNewSession() {
-    const hasUnsavedChanges = exercises.some((ex) =>
-      ex.sets.some((set) => set.done && !set.synced),
-    );
-
-    if (hasUnsavedChanges) {
+    console.log("historyDirty", historyDirty);
+    if (historyDirty) {
       const confirmed = window.confirm(
         "저장되지 않은 변경사항이 있습니다.\n새 세션을 시작하시겠습니까?\n(현재 세션이 종료됩니다)",
       );
@@ -772,6 +800,144 @@ export function RootClient() {
     toast.success("새 세션을 시작합니다", {
       duration: 1000,
     });
+  }
+
+  async function enqueueNotionSessionSync(savedAt: string): Promise<boolean> {
+    if (!dbConnected) {
+      toast.info("Notion 미연결", {
+        description: "로컬에만 저장되었습니다.",
+        duration: 2000,
+      });
+      return false;
+    }
+
+    if (!sessionMetadata) {
+      toast.warning("세션 정보가 없어 Notion 동기화를 건너뜁니다.", {
+        duration: 2000,
+      });
+      return true;
+    }
+
+    const notionExercises = createNotionExercisesPayload(exercises);
+
+    if (notionExercises.length === 0) {
+      toast.info("모든 세트가 이미 동기화됨", {
+        duration: 2000,
+      });
+      return true;
+    }
+
+    const hasInvalidExercise = notionExercises.some(
+      (ex) => !ex.exercisePageId,
+    );
+    if (hasInvalidExercise) {
+      toast.warning("일부 운동에 Exercise 정보가 없습니다.", {
+        description: "로컬은 저장됨, Notion 동기화는 건너뜀",
+        duration: 3000,
+      });
+      return true;
+    }
+
+    try {
+      const enqueueResponse = await fetch("/api/sync/enqueue", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          sessionId: sessionMetadata.sessionId,
+          sessionName: sessionMetadata.sessionName,
+          startedAt: sessionMetadata.startedAt,
+          savedAt,
+          exercises: notionExercises,
+        }),
+      });
+
+      if (!enqueueResponse.ok) {
+        const errorData = await enqueueResponse.json();
+        toast.warning("Notion 동기화 요청 실패", {
+          description: "로컬은 저장됨: " + errorData.error,
+          duration: 3000,
+        });
+        return false;
+      }
+
+      toast.success("Notion 동기화 요청 완료", {
+        description: "백그라운드에서 저장됩니다.",
+        duration: 2000,
+      });
+      return true;
+    } catch (error) {
+      console.error("Sync enqueue 중 오류:", error);
+      toast.warning("Notion 동기화 요청 실패", {
+        description: "로컬은 저장됨, 네트워크 확인 필요",
+        duration: 3000,
+      });
+      return false;
+    }
+  }
+
+  function persistSessionLocally():
+    | { ok: true; savedAt: string }
+    | { ok: false } {
+    const savedAt = new Date().toISOString();
+    const sessionId = sessionMetadata?.sessionId || new Date().toISOString();
+    const sessionName = sessionMetadata?.sessionName || "세션";
+
+    const localExercises = createLocalExercisesPayload(exercises);
+
+    if (localExercises.length === 0) {
+      return { ok: false };
+    }
+
+    const currentSessionSnapshot: SessionDraft = {
+      session: sessionMetadata!,
+      exercises: exercises,
+      exerciseTimers:
+        Object.keys(exerciseTimers).length > 0 ? exerciseTimers : undefined,
+    };
+    localStorage.setItem(
+      "workout.currentSession.v1",
+      JSON.stringify(currentSessionSnapshot),
+    );
+
+    const now = Date.now();
+    const durationSeconds = sessionMetadata?.startedAt
+      ? Math.floor(
+          (now - new Date(sessionMetadata.startedAt).getTime()) / 1000,
+        )
+      : undefined;
+
+    const historyPayload = createHistoryPayload({
+      sessionId,
+      sessionName,
+      savedAt,
+      localExercises,
+      durationSeconds,
+    });
+
+    const sessionKey = "workout.sessions.v1";
+    let sessionData: Session[] = [];
+    try {
+      const session = localStorage.getItem(sessionKey);
+      if (session) {
+        sessionData = JSON.parse(session);
+        if (!Array.isArray(sessionData)) {
+          sessionData = [];
+        }
+      }
+    } catch (e) {
+      console.error("올바르지 않은 JSON 데이터", e);
+      sessionData = [];
+    }
+
+    const filtered = sessionData.filter((s) => s.id !== sessionId);
+    const nextSessions = [historyPayload, ...filtered];
+    localStorage.setItem(sessionKey, JSON.stringify(nextSessions));
+    onSavedHistory();
+    setHistoryDirty(false);
+
+    return { ok: true, savedAt };
   }
 
   async function saveSession() {
@@ -785,145 +951,16 @@ export function RootClient() {
     setSaving(true);
 
     try {
-      const savedAt = new Date().toISOString();
-      const sessionId = sessionMetadata?.sessionId || new Date().toISOString();
-      const sessionName = sessionMetadata?.sessionName || "세션";
+      const result = persistSessionLocally();
 
-      // ===== Phase 1: 로컬 저장용 데이터 준비 =====
-      // done=true 세트만 추출 (history 저장용)
-      const localExercises = createLocalExercisesPayload(exercises);
-
-      if (localExercises.length === 0) {
+      if (!result.ok) {
         toast.error("저장할 내용이 없습니다.", {
           duration: 1000,
         });
         return;
       }
 
-      // ===== Phase 2: localStorage 우선 저장 =====
-      // 2-1. currentSession snapshot 생성 및 저장
-      const currentSessionSnapshot: SessionDraft = {
-        session: sessionMetadata!,
-        exercises: exercises,
-        exerciseTimers:
-          Object.keys(exerciseTimers).length > 0 ? exerciseTimers : undefined,
-      };
-      localStorage.setItem(
-        "workout.currentSession.v1",
-        JSON.stringify(currentSessionSnapshot),
-      );
-
-      // 2-2. workout.sessions.v1 저장
-      const now = Date.now();
-      const durationSeconds = sessionMetadata?.startedAt
-        ? Math.floor(
-            (now - new Date(sessionMetadata.startedAt).getTime()) / 1000,
-          )
-        : undefined;
-
-      const historyPayload = createHistoryPayload({
-        sessionId,
-        sessionName,
-        savedAt,
-        localExercises,
-        durationSeconds,
-      });
-
-      const sessionKey = "workout.sessions.v1";
-      let sessionData: Session[] = [];
-      try {
-        const session = localStorage.getItem(sessionKey);
-        if (session) {
-          sessionData = JSON.parse(session);
-          if (!Array.isArray(sessionData)) {
-            sessionData = [];
-          }
-        }
-      } catch (e) {
-        console.error("올바르지 않은 JSON 데이터", e);
-        sessionData = [];
-      }
-
-      const filtered = sessionData.filter((s) => s.id !== sessionId);
-      const nextSessions = [historyPayload, ...filtered];
-      localStorage.setItem(sessionKey, JSON.stringify(nextSessions));
-      onSavedHistory();
-
       toast.success("로컬 저장 완료");
-
-      // ===== Phase 3: Notion 동기화 요청 (Queue enqueue) =====
-      if (!dbConnected) {
-        toast.info("Notion 미연결", {
-          description: "로컬에만 저장되었습니다.",
-          duration: 2000,
-        });
-        return;
-      }
-
-      if (!sessionMetadata) {
-        toast.warning("세션 정보가 없어 Notion 동기화를 건너뜁니다.", {
-          duration: 2000,
-        });
-        return;
-      }
-
-      // 저장된 snapshot에서 synced=false 세트만 추출
-      const notionExercises = createNotionExercisesPayload(exercises);
-
-      if (notionExercises.length === 0) {
-        toast.info("모든 세트가 이미 동기화됨", {
-          duration: 2000,
-        });
-        return;
-      }
-
-      // exercisePageId 없는 운동 체크
-      const hasInvalidExercise = notionExercises.some(
-        (ex) => !ex.exercisePageId,
-      );
-      if (hasInvalidExercise) {
-        toast.warning("일부 운동에 Exercise 정보가 없습니다.", {
-          description: "로컬은 저장됨, Notion 동기화는 건너뜀",
-          duration: 3000,
-        });
-        return;
-      }
-
-      try {
-        const enqueueResponse = await fetch("/api/sync/enqueue", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            sessionId: sessionMetadata.sessionId,
-            sessionName: sessionMetadata.sessionName,
-            startedAt: sessionMetadata.startedAt,
-            savedAt,
-            exercises: notionExercises,
-          }),
-        });
-
-        if (!enqueueResponse.ok) {
-          const errorData = await enqueueResponse.json();
-          toast.warning("Notion 동기화 요청 실패", {
-            description: "로컬은 저장됨: " + errorData.error,
-            duration: 3000,
-          });
-          return;
-        }
-
-        toast.success("Notion 동기화 요청 완료", {
-          description: "백그라운드에서 저장됩니다.",
-          duration: 2000,
-        });
-      } catch (error) {
-        console.error("Sync enqueue 중 오류:", error);
-        toast.warning("Notion 동기화 요청 실패", {
-          description: "로컬은 저장됨, 네트워크 확인 필요",
-          duration: 3000,
-        });
-      }
     } catch (error) {
       console.error("저장 중 예상치 못한 오류:", error);
       toast.error("저장 중 오류 발생", {
@@ -935,7 +972,46 @@ export function RootClient() {
     }
   }
 
+  async function handleCompleteWorkout() {
+    if (savingRef.current) {
+      console.log("이미 저장 중입니다");
+      return;
+    }
+
+    savingRef.current = true;
+    setSaving(true);
+
+    try {
+      const result = persistSessionLocally();
+
+      if (!result.ok) {
+        toast.error("저장할 내용이 없습니다.", {
+          duration: 1000,
+        });
+        return;
+      }
+
+      if (dbConnected) {
+        await enqueueNotionSessionSync(result.savedAt);
+      }
+
+      startNewSession();
+      toast.success("운동을 완료했습니다", {
+        duration: 1000,
+      });
+    } catch (error) {
+      console.error("운동 완료 처리 중 오류:", error);
+      toast.error("운동 완료 처리 중 오류 발생", {
+        duration: 2000,
+      });
+    } finally {
+      savingRef.current = false;
+      setSaving(false);
+    }
+  }
+
   function changeSessionName(newName: string) {
+    markHistoryDirty();
     setSessionMetadata((prev) => {
       if (!prev) return prev;
       return {
@@ -991,6 +1067,7 @@ export function RootClient() {
         onConfirmSelection={(draft) => {
           setExercises(draft.exercises);
           setSessionMetadata(draft.session);
+          setHistoryDirty(false);
           setEntryMode("session");
         }}
       />
@@ -1035,6 +1112,7 @@ export function RootClient() {
             onExerciseTimersChange={setExerciseTimers}
             addExercisesToSession={addExercisesToSession}
             onSave={saveSession}
+            onCompleteWorkout={handleCompleteWorkout}
             onStartNewSession={handleStartNewSession}
             saving={saving}
           />

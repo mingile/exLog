@@ -1,5 +1,5 @@
 import { getMongoDb } from "@/lib/mongodb";
-import { NotionSyncError } from "@/lib/notion/errors";
+import { notionSyncError } from "@/lib/notion/errors";
 
 export type NotionConnection = {
   accessToken: string;
@@ -17,7 +17,7 @@ export async function getNotionConnection(
     .findOne({ user_key: userKey });
 
   if (!connection?.access_token) {
-    throw new NotionSyncError("No connection found", 404);
+    throw notionSyncError("No connection found", 404);
   }
 
   return {

@@ -25,10 +25,7 @@ export async function GET(req: Request) {
     const user_key = cookieStore.get("user_key")?.value;
 
     if (!user_key) {
-      return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const client = await getMongoClient();
@@ -43,14 +40,14 @@ export async function GET(req: Request) {
     if (!accessToken) {
       return NextResponse.json(
         { error: "No access token found" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
     if (!databaseId) {
       return NextResponse.json(
         { error: "No Workout Sets database connected" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -78,7 +75,7 @@ export async function GET(req: Request) {
             },
           ],
         }),
-      }
+      },
     );
 
     const data = await notionResponse.json();
@@ -87,7 +84,7 @@ export async function GET(req: Request) {
       console.error("Notion query failed:", data);
       return NextResponse.json(
         { error: "Failed to fetch notion records", detail: data },
-        { status: notionResponse.status }
+        { status: notionResponse.status },
       );
     }
 
@@ -97,13 +94,13 @@ export async function GET(req: Request) {
         has_more: data.has_more ?? false,
         next_cursor: data.next_cursor ?? null,
       },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (error) {
     console.error("Workout records fetch failed", error);
     return NextResponse.json(
       { error: "Workout records fetch failed" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

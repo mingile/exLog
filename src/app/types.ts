@@ -41,6 +41,7 @@ export type SessionDraft = {
     session: SessionMetadata;
     exercises: Exercises;
     exerciseTimers?: ExerciseTimers;
+    historyDirty?: boolean;
 };
 
 export type LibraryCategory = "등" | "가슴" | "하체" | "어깨" | "팔" | "코어" | "유산소" | "기타";

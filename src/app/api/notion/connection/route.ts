@@ -2,28 +2,28 @@
 // MongoDB에서 연결문서 1개를 조회
 // 있으면 {connected: true}, 없으면 {connected: false} 응답
 
-import { getMongoDb } from "@/lib/mongodb";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
+import { getMongoDb } from "@/lib/mongodb";
 
-export async function GET(){
-    try{
-        const cookieStore = await cookies();
-        const user_key = cookieStore.get("user_key")?.value;
+export async function GET() {
+  try {
+    const cookieStore = await cookies();
+    const user_key = cookieStore.get("user_key")?.value;
 
-        if(!user_key){
-            return NextResponse.json({ connected: false }, { status: 401 });
-        }
-
-        const db = await getMongoDb();
-        const collection = db.collection("connections_info");
-
-        const result = await collection.findOne({ user_key });
-        return NextResponse.json({ connected: !!result });
-    } catch (error) {
-        console.error("Notion connection status check failed:", error);
-        return NextResponse.json({ connected: false }, { status: 500 });
+    if (!user_key) {
+      return NextResponse.json({ connected: false }, { status: 401 });
     }
+
+    const db = await getMongoDb();
+    const collection = db.collection("connections_info");
+
+    const result = await collection.findOne({ user_key });
+    return NextResponse.json({ connected: !!result });
+  } catch (error) {
+    console.error("Notion connection status check failed:", error);
+    return NextResponse.json({ connected: false }, { status: 500 });
+  }
 }
 
 export async function POST(req: Request) {
@@ -31,7 +31,10 @@ export async function POST(req: Request) {
   const tempId = cookieStore.get("notion_temp_id")?.value;
 
   if (!tempId) {
-    return NextResponse.json({ error: "Missing temp session" }, { status: 401 });
+    return NextResponse.json(
+      { error: "Missing temp session" },
+      { status: 401 },
+    );
   }
 
   const body = await req.json();
@@ -39,19 +42,27 @@ export async function POST(req: Request) {
   const workout_exercise_db_id = body.workout_exercise_db_id;
   const workout_session_db_id = body.workout_session_db_id;
 
-  if (!workout_sets_db_id || !workout_exercise_db_id || !workout_session_db_id) {
+  if (
+    !workout_sets_db_id ||
+    !workout_exercise_db_id ||
+    !workout_session_db_id
+  ) {
     return NextResponse.json(
       { error: "Missing database ids" },
-      { status: 400 }
+      { status: 400 },
     );
   }
 
-  const ids = [workout_sets_db_id, workout_exercise_db_id, workout_session_db_id];
+  const ids = [
+    workout_sets_db_id,
+    workout_exercise_db_id,
+    workout_session_db_id,
+  ];
   const uniqueIds = new Set(ids);
   if (uniqueIds.size !== ids.length) {
     return NextResponse.json(
       { error: "Duplicate database ids are not allowed" },
-      { status: 400 }
+      { status: 400 },
     );
   }
 
@@ -63,7 +74,10 @@ export async function POST(req: Request) {
     const tempDoc = await tempCollection.findOne({ temp_id: tempId });
 
     if (!tempDoc) {
-      return NextResponse.json({ error: "Invalid temp session" }, { status: 401 });
+      return NextResponse.json(
+        { error: "Invalid temp session" },
+        { status: 401 },
+      );
     }
 
     if (tempDoc.expires_at && new Date(tempDoc.expires_at) < new Date()) {
@@ -91,7 +105,7 @@ export async function POST(req: Request) {
       },
       {
         upsert: true,
-      }
+      },
     );
 
     await tempCollection.deleteOne({ temp_id: tempId });
@@ -109,7 +123,7 @@ export async function POST(req: Request) {
     console.error("Notion connection save failed:", error);
     return NextResponse.json(
       { error: "Failed to save notion connection" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

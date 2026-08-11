@@ -1,10 +1,9 @@
 import { useEffect, useState } from "react";
-import { LibraryState, LibraryExercise, LibraryCategory } from "@/app/types";
+import type { LibraryCategory, LibraryExercise, LibraryState } from "@/app/types";
 import {
-  transformNotionRowToLibraryExercise,
-  groupExercisesByCategory,
   getOrderedCategories,
-  getFirstValidCategory,
+  groupExercisesByCategory,
+  transformNotionRowToLibraryExercise,
 } from "@/lib/library";
 import builtinExercises from "@/data/exercises.json";
 
@@ -19,6 +18,27 @@ function transformBuiltinExerciseToLibraryExercise(builtin: {
     name: builtin.name,
     category: builtin.part as LibraryCategory,
     equipment: builtin.equipment,
+  };
+}
+
+function createBuiltinLibraryState(message: string): LibraryState {
+  const exercises: LibraryExercise[] = builtinExercises.map(
+    transformBuiltinExerciseToLibraryExercise,
+  );
+
+  if (exercises.length === 0) {
+    return { status: "empty" };
+  }
+
+  const grouped = groupExercisesByCategory(exercises);
+  const categories = getOrderedCategories(grouped);
+
+  return {
+    status: "success",
+    exercises,
+    categories,
+    source: "builtin",
+    message,
   };
 }
 
@@ -47,25 +67,11 @@ export function useExerciseLibrary() {
       }
 
       if (!notionConnected || !dbConnected) {
-        const exercises: LibraryExercise[] = builtinExercises.map(
-          transformBuiltinExerciseToLibraryExercise,
+        setLibraryState(
+          createBuiltinLibraryState(
+            "노션 미연동 상태입니다. 기본 운동 목록을 사용 중입니다.",
+          ),
         );
-
-        if (exercises.length === 0) {
-          setLibraryState({ status: "empty" });
-          return;
-        }
-
-        const grouped = groupExercisesByCategory(exercises);
-        const categories = getOrderedCategories(grouped);
-
-        setLibraryState({
-          status: "success",
-          exercises,
-          categories,
-          source: "builtin",
-          message: "노션 미연동 상태입니다. 기본 운동 목록을 사용 중입니다.",
-        });
         return;
       }
 
@@ -116,6 +122,13 @@ export function useExerciseLibrary() {
       });
     } catch (error) {
       console.error("Failed to fetch exercises:", error);
+      const fallback = createBuiltinLibraryState(
+        "네트워크 연결 없음. 기본 운동 목록을 사용 중입니다.",
+      );
+      if (fallback.status === "success" || fallback.status === "empty") {
+        setLibraryState(fallback);
+        return;
+      }
       setLibraryState({
         status: "error",
         message: error instanceof Error ? error.message : "Unknown error",

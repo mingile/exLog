@@ -1,7 +1,7 @@
-import { getMongoDb } from "@/lib/mongodb";
 import { randomUUID } from "crypto";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
+import { getMongoDb } from "@/lib/mongodb";
 
 export async function GET(request: Request) {
   const url = new URL(request.url);
@@ -16,7 +16,7 @@ export async function GET(request: Request) {
 
   const cookieStore = await cookies();
   const savedState = cookieStore.get("notion_oauth_state")?.value;
-  let user_key = cookieStore.get("user_key")?.value;
+  const user_key = cookieStore.get("user_key")?.value;
   if (!user_key) {
     return NextResponse.redirect(
       new URL("/api/notion/auth", process.env.APP_BASE_URL),
