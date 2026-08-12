@@ -81,7 +81,7 @@ test.describe("PWA notion failure handling", () => {
       }),
     );
 
-    await page.goto("/");
+    await page.goto("/app");
     await page.getByRole("button", { name: "운동 완료" }).click();
 
     await expect(page.getByText("Notion 동기화 요청 실패")).toBeVisible();

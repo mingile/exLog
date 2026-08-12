@@ -8,7 +8,7 @@ export default defineConfig({
   workers: 1,
   reporter: "list",
   use: {
-    baseURL: "http://127.0.0.1:3000",
+    baseURL: "http://127.0.0.1:3000/dailyset",
     trace: "on-first-retry",
   },
   projects: [
@@ -19,7 +19,7 @@ export default defineConfig({
   ],
   webServer: {
     command: "npm run build && npm run start -- -H 127.0.0.1 -p 3000",
-    url: "http://127.0.0.1:3000",
+    url: "http://127.0.0.1:3000/dailyset",
     reuseExistingServer: !process.env.CI,
     timeout: 180_000,
   },

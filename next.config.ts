@@ -1,6 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  basePath: "/dailyset",
   headers: async () => [
     {
       source: "/sw.js",
@@ -11,7 +12,7 @@ const nextConfig: NextConfig = {
         },
         {
           key: "Service-Worker-Allowed",
-          value: "/",
+          value: "/dailyset/",
         },
       ],
     },

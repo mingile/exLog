@@ -5,6 +5,7 @@ import {
   groupExercisesByCategory,
   transformNotionRowToLibraryExercise,
 } from "@/lib/library";
+import { withBasePath } from "@/lib/base-path";
 import builtinExercises from "@/data/exercises.json";
 
 function transformBuiltinExerciseToLibraryExercise(builtin: {
@@ -51,7 +52,7 @@ export function useExerciseLibrary() {
     try {
       setLibraryState({ status: "loading" });
 
-      const statusRes = await fetch("/api/notion/status", {
+      const statusRes = await fetch(withBasePath("/api/notion/status"), {
         method: "GET",
         credentials: "include",
         cache: "no-store",
@@ -75,7 +76,7 @@ export function useExerciseLibrary() {
         return;
       }
 
-      const res = await fetch("/api/notion/exercise-read", {
+      const res = await fetch(withBasePath("/api/notion/exercise-read"), {
         method: "GET",
         credentials: "include",
         cache: "no-store",

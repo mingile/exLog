@@ -14,6 +14,7 @@ import { Settings, History, Moon, Sun, Monitor } from "lucide-react";
 import { useTheme } from "next-themes";
 import { WorkoutHistoryClient } from "./WorkoutHistoryClient";
 import { toast } from "sonner";
+import { withBasePath } from "@/lib/base-path";
 
 function formatDuration(seconds: number): string {
   const minutes = Math.floor(seconds / 60);
@@ -295,7 +296,7 @@ export function HeaderControls({
                     variant="ghost"
                     className="w-full justify-start text-sm h-auto py-2"
                     onClick={() => {
-                      window.location.href = "/settings/notion";
+                      window.location.href = withBasePath("/settings/notion");
                       setIsMenuOpen(false);
                     }}
                   >
@@ -305,7 +306,7 @@ export function HeaderControls({
                     variant="ghost"
                     className="w-full justify-start text-sm h-auto py-2"
                     onClick={() => {
-                      fetch("/api/notion/disconnect", {
+                      fetch(withBasePath("/api/notion/disconnect"), {
                         method: "POST",
                       })
                         .then((data) => {
@@ -418,7 +419,7 @@ export function HeaderControls({
   );
 
   async function checkNotionStatus() {
-    const response = await fetch("/api/notion/status");
+    const response = await fetch(withBasePath("/api/notion/status"));
     const data = await response.json();
     setNotionReady(data.notionConnected && data.dbConnected);
   }

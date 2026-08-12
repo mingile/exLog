@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import { withBasePath } from "@/lib/base-path";
 
 type DatabaseOption = {
   id: string;
@@ -40,7 +41,7 @@ export default function NotionSettingsPage({
       setSubmitting(true);
       setSubmitError(null);
 
-      const res = await fetch("/api/notion/connection", {
+      const res = await fetch(withBasePath("/api/notion/connection"), {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -59,7 +60,7 @@ export default function NotionSettingsPage({
       }
 
       await onConnectionComplete();
-      window.location.href = "/";
+      window.location.href = withBasePath("/app");
     } catch (err) {
       const message =
         err instanceof Error ? err.message : "알 수 없는 오류가 발생했습니다.";
@@ -81,7 +82,7 @@ export default function NotionSettingsPage({
 
       setError(null);
 
-      const res = await fetch("/api/notion/database-options", {
+      const res = await fetch(withBasePath("/api/notion/database-options"), {
         method: "GET",
         cache: "no-store",
       });
@@ -155,7 +156,7 @@ export default function NotionSettingsPage({
               </div>
 
               <Link
-                href="/"
+                href="/app"
                 className="rounded-md border px-4 py-2 text-sm font-medium"
               >
                 홈으로
@@ -173,7 +174,7 @@ export default function NotionSettingsPage({
 
             <div>
               <a
-                href="/api/notion/auth"
+                href={withBasePath("/api/notion/auth")}
                 className="inline-flex rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground"
               >
                 Notion 연동하기
@@ -221,7 +222,7 @@ export default function NotionSettingsPage({
               </button>
 
               <Link
-                href="/"
+                href="/app"
                 className="rounded-md border px-4 py-2 text-sm font-medium"
               >
                 홈으로
@@ -236,14 +237,14 @@ export default function NotionSettingsPage({
 
             <div className="flex gap-2">
               <a
-                href="/api/notion/auth"
+                href={withBasePath("/api/notion/auth")}
                 className="inline-flex rounded-md border border-destructive/30 bg-background px-4 py-2 text-sm font-medium text-destructive"
               >
                 Notion 연동 다시 하기
               </a>
 
               <Link
-                href="/"
+                href="/app"
                 className="inline-flex rounded-md border border-destructive/30 bg-background px-4 py-2 text-sm font-medium text-destructive"
               >
                 홈으로

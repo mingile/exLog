@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { dismissInstallPrompt, mockNotionDisconnected } from "./helpers";
+import { dismissInstallPrompt, mockNotionDisconnected, withBasePath } from "./helpers";
 
 test.describe("PWA manifest", () => {
   test("returns required manifest fields and icon URLs", async ({ request }) => {
@@ -9,7 +9,7 @@ test.describe("PWA manifest", () => {
     const manifest = await response.json();
     expect(manifest.name).toBe("Daily Set");
     expect(manifest.short_name).toBe("Daily Set");
-    expect(manifest.start_url).toBe("/");
+    expect(manifest.start_url).toBe(withBasePath("/app"));
     expect(manifest.display).toBe("standalone");
     expect(Array.isArray(manifest.icons)).toBeTruthy();
     expect(manifest.icons.length).toBeGreaterThan(0);
@@ -21,11 +21,20 @@ test.describe("PWA manifest", () => {
   });
 });
 
+test.describe("PWA landing", () => {
+  test("loads the landing page shell", async ({ page }) => {
+    await page.goto("/");
+    await expect(
+      page.getByRole("heading", { name: /기록은 가볍게/ }),
+    ).toBeVisible();
+  });
+});
+
 test.describe("PWA app loading", () => {
   test("loads the library shell", async ({ page }) => {
     await dismissInstallPrompt(page);
     await mockNotionDisconnected(page);
-    await page.goto("/");
+    await page.goto("/app");
 
     await expect(page.getByRole("heading", { name: "운동 라이브러리" })).toBeVisible();
     await expect(page.getByText("랫풀다운", { exact: true })).toBeVisible();

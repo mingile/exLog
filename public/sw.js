@@ -1,9 +1,10 @@
-const CACHE_VERSION = "daily-set-v1";
+const BASE_PATH = "/dailyset";
+const CACHE_VERSION = "daily-set-v2";
 const STATIC_CACHE = `${CACHE_VERSION}-static`;
 const PAGE_CACHE = `${CACHE_VERSION}-pages`;
 
 function shouldBypassCache(url) {
-  if (url.pathname.startsWith("/api/")) {
+  if (url.pathname.startsWith(`${BASE_PATH}/api/`)) {
     return true;
   }
   return false;
@@ -11,11 +12,11 @@ function shouldBypassCache(url) {
 
 function isStaticAsset(pathname) {
   return (
-    pathname.startsWith("/_next/static/") ||
-    pathname.startsWith("/icons/") ||
-    pathname === "/apple-touch-icon.png" ||
-    pathname === "/manifest.webmanifest" ||
-    pathname === "/favicon.ico" ||
+    pathname.startsWith(`${BASE_PATH}/_next/static/`) ||
+    pathname.startsWith(`${BASE_PATH}/icons/`) ||
+    pathname === `${BASE_PATH}/apple-touch-icon.png` ||
+    pathname === `${BASE_PATH}/manifest.webmanifest` ||
+    pathname === `${BASE_PATH}/favicon.ico` ||
     /\.(?:png|jpg|jpeg|svg|webp|woff2?|ico)$/i.test(pathname)
   );
 }
@@ -50,9 +51,9 @@ async function networkFirst(request, cacheName) {
     }
 
     if (request.mode === "navigate") {
-      const root = await cache.match("/");
-      if (root) {
-        return root;
+      const appShell = await cache.match(`${BASE_PATH}/app`);
+      if (appShell) {
+        return appShell;
       }
     }
 

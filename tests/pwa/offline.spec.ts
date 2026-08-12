@@ -1,22 +1,22 @@
 import { expect, test } from "@playwright/test";
-import { dismissInstallPrompt, mockNotionDisconnected } from "./helpers";
+import { dismissInstallPrompt, mockNotionDisconnected, withBasePath } from "./helpers";
 
 test.describe("PWA offline scenario", () => {
   test("reloads cached app shell while offline", async ({ page, context }) => {
     await dismissInstallPrompt(page);
     await mockNotionDisconnected(page);
 
-    await page.goto("/");
+    await page.goto("/app");
     await expect(
       page.getByRole("heading", { name: "운동 라이브러리" }),
     ).toBeVisible();
 
-    await page.evaluate(async () => {
+    await page.evaluate(async (swPath) => {
       if ("serviceWorker" in navigator) {
-        await navigator.serviceWorker.register("/sw.js");
+        await navigator.serviceWorker.register(swPath);
         await navigator.serviceWorker.ready;
       }
-    });
+    }, withBasePath("/sw.js"));
 
     await page.reload();
     await expect(

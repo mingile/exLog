@@ -5,6 +5,7 @@ import { PwaInstallPrompt } from "@/components/pwa-install-prompt";
 import { ServiceWorkerRegister } from "@/components/service-worker-register";
 import { ThemeSwitcher } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
+import { withBasePath } from "@/lib/base-path";
 
 export const viewport: Viewport = {
   width: "device-width",
@@ -25,7 +26,14 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+const siteUrl =
+  process.env.APP_BASE_URL ??
+  (process.env.VERCEL_URL
+    ? `https://${process.env.VERCEL_URL}`
+    : "http://localhost:3000");
+
 export const metadata: Metadata = {
+  metadataBase: new URL(siteUrl),
   title: {
     default: "Daily Set",
     template: "%s | Daily Set",
@@ -54,9 +62,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="ko" suppressHydrationWarning>
       <head>
-        <link rel="manifest" href="/manifest.webmanifest" />
+        <link rel="manifest" href={withBasePath("/manifest.webmanifest")} />
       </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}

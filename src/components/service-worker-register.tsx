@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { withBasePath } from "@/lib/base-path";
 
 export function ServiceWorkerRegister() {
   useEffect(() => {
@@ -12,7 +13,7 @@ export function ServiceWorkerRegister() {
       return;
     }
 
-    navigator.serviceWorker.register("/sw.js").catch((error) => {
+    navigator.serviceWorker.register(withBasePath("/sw.js")).catch((error) => {
       console.error("Service worker registration failed:", error);
     });
   }, []);

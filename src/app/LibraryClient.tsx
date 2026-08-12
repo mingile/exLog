@@ -12,6 +12,7 @@ import { createSessionMetadata } from "@/lib/session-utils";
 import { Button } from "@/components/ui/button";
 import { useExerciseLibrary } from "@/hooks/useExerciseLibrary";
 import { getPreviousRecord } from "@/lib/previous-record";
+import { withBasePath } from "@/lib/base-path";
 
 function convertLibraryExerciseToSessionExercise(
   libraryExercise: LibraryExercise,
@@ -166,7 +167,7 @@ export function LibraryClient({ onConfirmSelection }: LibraryClientProps) {
                 variant="ghost"
                 className="justify-end text-xs h-auto py-2 ml-auto"
                 onClick={() => {
-                  window.location.href = "/settings/notion";
+                  window.location.href = withBasePath("/settings/notion");
                 }}
               >
                 Notion 연동 설정

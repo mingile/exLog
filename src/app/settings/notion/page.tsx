@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import NotionSettingsClient from "./NotionSettingsClient";
+import { withBasePath } from "@/lib/base-path";
 
 export default function Page() {
   const [notionConnected, setNotionConnected] = useState(false);
@@ -12,7 +13,7 @@ export default function Page() {
     try {
       setNotionStatusLoading(true);
 
-      const res = await fetch("/api/notion/status", {
+      const res = await fetch(withBasePath("/api/notion/status"), {
         method: "GET",
         credentials: "include",
         cache: "no-store",

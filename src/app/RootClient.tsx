@@ -8,6 +8,7 @@ import {
   reconcileStoredExerciseTimers,
 } from "@/lib/timer";
 import { kgToLb, lbToKg, nextWeight } from "@/lib/weightUnit";
+import { withBasePath } from "@/lib/base-path";
 import {
   computeHistoryDirty,
   createHistoryPayload,
@@ -63,7 +64,7 @@ export function RootClient() {
 
     const fetchWorkoutRecords = async () => {
       try {
-        const res = await fetch("/api/notion/workout-records?limit=50", {
+        const res = await fetch(withBasePath("/api/notion/workout-records?limit=50"), {
           method: "GET",
           credentials: "include",
         });
@@ -839,7 +840,7 @@ export function RootClient() {
     }
 
     try {
-      const enqueueResponse = await fetch("/api/sync/enqueue", {
+      const enqueueResponse = await fetch(withBasePath("/api/sync/enqueue"), {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -1025,7 +1026,7 @@ export function RootClient() {
     try {
       setNotionStatusLoading(true);
 
-      const res = await fetch("/api/notion/status", {
+      const res = await fetch(withBasePath("/api/notion/status"), {
         method: "GET",
         credentials: "include",
         cache: "no-store",

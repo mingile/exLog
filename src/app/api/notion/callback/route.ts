@@ -2,6 +2,7 @@ import { randomUUID } from "crypto";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import { getMongoDb } from "@/lib/mongodb";
+import { appRedirectUrl } from "@/lib/base-path";
 
 export async function GET(request: Request) {
   const url = new URL(request.url);
@@ -10,7 +11,7 @@ export async function GET(request: Request) {
 
   if (!code || !state) {
     return NextResponse.redirect(
-      new URL("/api/notion/auth", process.env.APP_BASE_URL),
+      appRedirectUrl("/api/notion/auth"),
     );
   }
 
@@ -19,13 +20,13 @@ export async function GET(request: Request) {
   const user_key = cookieStore.get("user_key")?.value;
   if (!user_key) {
     return NextResponse.redirect(
-      new URL("/api/notion/auth", process.env.APP_BASE_URL),
+      appRedirectUrl("/api/notion/auth"),
     );
   }
 
   if (!savedState || savedState !== state) {
     return NextResponse.redirect(
-      new URL("/api/notion/auth", process.env.APP_BASE_URL),
+      appRedirectUrl("/api/notion/auth"),
     );
   } else {
     cookieStore.set("notion_oauth_state", "", {
@@ -49,7 +50,7 @@ export async function GET(request: Request) {
       hasRedirectUri: !!redirectUri,
     });
     return NextResponse.redirect(
-      new URL("/api/notion/auth", process.env.APP_BASE_URL),
+      appRedirectUrl("/api/notion/auth"),
     );
   }
 
@@ -87,7 +88,7 @@ export async function GET(request: Request) {
         tokenData,
       });
       return NextResponse.redirect(
-        new URL("/api/notion/auth", process.env.APP_BASE_URL),
+        appRedirectUrl("/api/notion/auth"),
       );
     }
 
@@ -130,19 +131,17 @@ export async function GET(request: Request) {
         path: "/",
       });
 
-      return NextResponse.redirect(
-        new URL("/settings/notion", process.env.APP_BASE_URL),
-      );
+      return NextResponse.redirect(appRedirectUrl("/settings/notion"));
     } catch (error) {
       console.error("Notion temp 정보 저장 중 예외", error);
       return NextResponse.redirect(
-        new URL("/api/notion/auth", process.env.APP_BASE_URL),
+        appRedirectUrl("/api/notion/auth"),
       );
     }
   } catch (error) {
     console.error("Notion token 교환 중 예외", error);
     return NextResponse.redirect(
-      new URL("/api/notion/auth", process.env.APP_BASE_URL),
+      appRedirectUrl("/api/notion/auth"),
     );
   }
 }
