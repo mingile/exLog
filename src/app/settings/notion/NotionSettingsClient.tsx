@@ -181,6 +181,24 @@ export default function NotionSettingsPage({
               </a>
             </div>
           </div>
+
+          <div className="rounded-xl border border-muted bg-muted/30 p-4 text-sm text-muted-foreground">
+            <p className="font-medium text-foreground">
+              Notion 앱이 바로 열리나요? (iOS)
+            </p>
+            <p className="mt-2">
+              연동 버튼을 눌렀을 때 브라우저 대신 Notion 앱이 열리면, Safari에서{" "}
+              <a
+                href="https://app.notion.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-medium text-foreground underline underline-offset-2"
+              >
+                app.notion.com
+              </a>
+              에 한 번 접속한 뒤 다시 시도해 보세요.
+            </p>
+          </div>
         </div>
       </div>
     );
