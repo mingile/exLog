@@ -122,12 +122,20 @@ export function LandingPage() {
         <div className="mx-auto flex max-w-5xl flex-col items-center gap-4 px-6 py-8 text-center text-sm text-muted-foreground sm:flex-row sm:justify-between sm:text-left">
           <span>© {new Date().getFullYear()} Daily Set</span>
           <div className="flex flex-col items-center gap-2 sm:items-end">
-            <Link
-              href="/privacy"
-              className="hover:text-foreground underline-offset-4 hover:underline"
-            >
-              개인정보 처리방침
-            </Link>
+            <div className="flex  flex-row items-center gap-4">
+              <Link
+                href="/termsofservice"
+                className="hover:text-foreground underline-offset-4 hover:underline"
+              >
+                Terms of Service
+              </Link>
+              <Link
+                href="/privacy"
+                className="hover:text-foreground underline-offset-4 hover:underline"
+              >
+                Privacy Policy
+              </Link>
+            </div>
             <span>운동 기록에 집중한 미니멀 웹앱</span>
           </div>
         </div>
