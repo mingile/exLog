@@ -64,7 +64,7 @@ export function RootClient() {
 
     const fetchWorkoutRecords = async () => {
       try {
-        const res = await fetch(withBasePath("/api/notion/workout-records?limit=50"), {
+        const res = await fetch(withBasePath("/api/notion/workout-records"), {
           method: "GET",
           credentials: "include",
         });
@@ -828,9 +828,7 @@ export function RootClient() {
       return true;
     }
 
-    const hasInvalidExercise = notionExercises.some(
-      (ex) => !ex.exercisePageId,
-    );
+    const hasInvalidExercise = notionExercises.some((ex) => !ex.exercisePageId);
     if (hasInvalidExercise) {
       toast.warning("일부 운동에 Exercise 정보가 없습니다.", {
         description: "로컬은 저장됨, Notion 동기화는 건너뜀",
@@ -904,9 +902,7 @@ export function RootClient() {
 
     const now = Date.now();
     const durationSeconds = sessionMetadata?.startedAt
-      ? Math.floor(
-          (now - new Date(sessionMetadata.startedAt).getTime()) / 1000,
-        )
+      ? Math.floor((now - new Date(sessionMetadata.startedAt).getTime()) / 1000)
       : undefined;
 
     const historyPayload = createHistoryPayload({
@@ -1090,6 +1086,7 @@ export function RootClient() {
             setShowHistory={setShowHistory}
             historyVersion={historyVersion}
             currentDurationSeconds={currentDurationSeconds}
+            onHistoryRestored={onSavedHistory}
           />
         </div>
         {!showHistory && (
@@ -1124,6 +1121,8 @@ export function RootClient() {
               showHistory={showHistory}
               historyVersion={historyVersion}
               selectedDate={selectedDate}
+              notionReady={dbConnected}
+              onHistoryRestored={onSavedHistory}
             />
           </div>
         )}

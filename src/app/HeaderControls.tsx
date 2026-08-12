@@ -39,6 +39,7 @@ export function HeaderControls({
   setShowHistory,
   historyVersion,
   currentDurationSeconds,
+  onHistoryRestored,
 }: {
   notionReady: boolean;
   setNotionReady: (notionReady: boolean) => void;
@@ -50,6 +51,7 @@ export function HeaderControls({
   setShowHistory: (show: boolean) => void;
   historyVersion: number;
   currentDurationSeconds: number;
+  onHistoryRestored?: () => void;
 }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -355,6 +357,8 @@ export function HeaderControls({
                   showHistory={true}
                   historyVersion={historyVersion}
                   selectedDate={null}
+                  notionReady={notionReady}
+                  onHistoryRestored={onHistoryRestored}
                 />
               </div>
             </SheetContent>

@@ -3,6 +3,9 @@
 import { useEffect, useState } from "react";
 import { Session, SavedExercise } from "./types";
 import { TrashIcon } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
+import { restoreHistoryFromNotion } from "@/lib/notion/restoreLocalHistory";
 
 const sessionKey = `workout.sessions.v1`;
 
@@ -26,14 +29,19 @@ export function WorkoutHistoryClient({
   showHistory,
   historyVersion,
   selectedDate,
+  notionReady = false,
+  onHistoryRestored,
 }: {
   showHistory: boolean;
   historyVersion: number;
   selectedDate: string | null;
+  notionReady?: boolean;
+  onHistoryRestored?: () => void;
 }) {
   const [sessions, setSessions] = useState<Session[]>([]);
   const [swipingSet, setSwipingSet] = useState<string | null>(null);
   const [swipeOffset, setSwipeOffset] = useState<number>(0);
+  const [restoring, setRestoring] = useState(false);
 
   useEffect(() => {
     if (!showHistory) return;
@@ -218,6 +226,54 @@ export function WorkoutHistoryClient({
     setSwipeOffset(0);
   }
 
+  async function handleRestoreFromNotion() {
+    if (!notionReady || restoring) return;
+
+    setRestoring(true);
+    try {
+      const result = await restoreHistoryFromNotion();
+
+      if (!result.ok) {
+        toast.error(result.error, { duration: 2000 });
+        return;
+      }
+
+      if (result.added === 0) {
+        toast.info(
+          result.skipped > 0
+            ? `추가할 기록이 없습니다. (${result.skipped}개 이미 있음)`
+            : "Notion에서 가져올 기록이 없습니다.",
+          { duration: 2000 },
+        );
+      } else {
+        toast.success(
+          `${result.added}개 세션을 가져왔습니다.${result.skipped > 0 ? ` (${result.skipped}개 건너뜀)` : ""}`,
+          { duration: 2000 },
+        );
+      }
+
+      onHistoryRestored?.();
+    } finally {
+      setRestoring(false);
+    }
+  }
+
+  function renderImportButton() {
+    if (!notionReady) return null;
+
+    return (
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        onClick={handleRestoreFromNotion}
+        disabled={restoring}
+      >
+        {restoring ? "가져오는 중..." : "Notion에서 가져오기"}
+      </Button>
+    );
+  }
+
   if (!showHistory) return null;
 
   // console.log("Total sessions:", sessions.length);
@@ -226,8 +282,14 @@ export function WorkoutHistoryClient({
 
   if (sessions.length === 0) {
     return (
-      <main className="p-4 text-center text-muted-foreground">
-        저장된 운동 기록이 없습니다.
+      <main className="p-4 text-center text-muted-foreground space-y-4">
+        <p>저장된 운동 기록이 없습니다.</p>
+        {notionReady && (
+          <p className="text-sm">
+            Notion에 기록이 있다면 로컬에 없는 세션만 가져올 수 있습니다.
+          </p>
+        )}
+        <div className="flex justify-center">{renderImportButton()}</div>
       </main>
     );
   }
@@ -239,6 +301,9 @@ export function WorkoutHistoryClient({
 
   return (
     <main className="p-4 space-y-6">
+      {notionReady && (
+        <div className="flex justify-end">{renderImportButton()}</div>
+      )}
       {dateEntries.map(([dateStr, dateSessions]) => {
         const sortedSessions = dateSessions.sort(
           (a, b) =>
