@@ -1,49 +1,45 @@
-import crypto from "crypto";
-import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
+import {
+  consumeOAuthHandoff,
+  HandoffExpiredError,
+  HandoffNotFoundError,
+} from "@/lib/notion-oauth-handoff";
+import {
+  buildHandoffErrorResponse,
+  prepareNotionOAuthRedirect,
+  resolveUserKey,
+} from "@/lib/notion-oauth-start";
 
-export async function GET() {
-  // state 생성 (랜덤)
-  const randomState = crypto.randomUUID();
-  // state를 HttpOnly 쿠키로 저장 (콜백에서 검증용)
-  const cookieStore = await cookies();
+export async function GET(request: Request) {
+  const url = new URL(request.url);
+  const handoff = url.searchParams.get("handoff");
 
-  let user_key = cookieStore.get("user_key")?.value;
-  if (!user_key) {
-    user_key = crypto.randomUUID();
-    cookieStore.set("user_key", user_key, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      maxAge: 60 * 60 * 24 * 30, // 30일
-      path: "/",
-    });
+  if (handoff) {
+    try {
+      const userKey = await consumeOAuthHandoff(handoff);
+      return prepareNotionOAuthRedirect(userKey);
+    } catch (error) {
+      if (error instanceof HandoffExpiredError) {
+        return buildHandoffErrorResponse(
+          "연결 링크가 만료됐어요",
+          "Dailyset 앱으로 돌아가서 Notion 연결을 다시 시작해 주세요.",
+        );
+      }
+
+      if (error instanceof HandoffNotFoundError) {
+        return buildHandoffErrorResponse(
+          "연결 링크가 유효하지 않아요",
+          "Dailyset 앱으로 돌아가서 Notion 연결을 다시 시작해 주세요.",
+        );
+      }
+
+      return buildHandoffErrorResponse(
+        "연결을 시작할 수 없어요",
+        "Dailyset 앱으로 돌아가서 Notion 연결을 다시 시작해 주세요.",
+      );
+    }
   }
 
-  cookieStore.set("notion_oauth_state", randomState, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    maxAge: 60 * 10,
-    path: "/",
-  });
-
-  console.log("AUTHORIZE:", process.env.NOTION_AUTHORIZE_URL);
-  // Notion authorize URL 구성
-  const authUrl = new URL(process.env.NOTION_AUTHORIZE_URL ?? "");
-  // client_id
-  authUrl.searchParams.set("client_id", process.env.NOTION_CLIENT_ID ?? "");
-  // redirect_uri
-  authUrl.searchParams.set(
-    "redirect_uri",
-    process.env.NOTION_REDIRECT_URI ?? "",
-  );
-  // response_type=code
-  authUrl.searchParams.set("response_type", "code");
-  // state
-  authUrl.searchParams.set("state", randomState);
-
-  // owner
-  authUrl.searchParams.set("owner", "user");
-
-  // 302 redirect 응답
-  return NextResponse.redirect(authUrl);
+  const userKey = await resolveUserKey();
+  return prepareNotionOAuthRedirect(userKey);
 }

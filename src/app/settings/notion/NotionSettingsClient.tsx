@@ -1,8 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { withBasePath } from "@/lib/base-path";
+import { shouldUseSafariHandoffFlow } from "@/lib/is-standalone-pwa";
+import { startNotionConnect } from "@/lib/notion-connect-session";
 
 type DatabaseOption = {
   id: string;
@@ -29,6 +31,27 @@ export default function NotionSettingsPage({
   const [selectedSetsDbId, setSelectedSetsDbId] = useState("");
   const [selectedExerciseDbId, setSelectedExerciseDbId] = useState("");
   const [selectedSessionDbId, setSelectedSessionDbId] = useState("");
+  const [connectLoading, setConnectLoading] = useState(false);
+  const [connectError, setConnectError] = useState<string | null>(null);
+  const [usesSafariHandoff, setUsesSafariHandoff] = useState(false);
+
+  useEffect(() => {
+    setUsesSafariHandoff(shouldUseSafariHandoffFlow());
+  }, []);
+
+  const handleNotionConnect = async () => {
+    try {
+      setConnectLoading(true);
+      setConnectError(null);
+      await startNotionConnect();
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "Notion 연결을 시작할 수 없습니다.";
+      setConnectError(message);
+    } finally {
+      setConnectLoading(false);
+    }
+  };
 
   const handleCompleteConnection = async () => {
     if (!selectedSetsDbId || !selectedExerciseDbId || !selectedSessionDbId)
@@ -173,32 +196,31 @@ export default function NotionSettingsPage({
             </div>
 
             <div>
-              <a
-                href={withBasePath("/api/notion/auth")}
-                className="inline-flex rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground"
+              <button
+                type="button"
+                onClick={handleNotionConnect}
+                disabled={connectLoading}
+                className="inline-flex rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground disabled:cursor-not-allowed disabled:opacity-50"
               >
-                Notion 연동하기
-              </a>
+                {connectLoading ? "연결 준비 중..." : "Notion 연동하기"}
+              </button>
+              {connectError && (
+                <p className="mt-2 text-sm text-destructive">{connectError}</p>
+              )}
             </div>
           </div>
 
-          <div className="rounded-xl border border-muted bg-muted/30 p-4 text-sm text-muted-foreground">
-            <p className="font-medium text-foreground">
-              Notion 앱이 바로 열리나요? (iOS)
-            </p>
-            <p className="mt-2">
-              연동 버튼을 눌렀을 때 브라우저 대신 Notion 앱이 열리면, Safari에서{" "}
-              <a
-                href="https://app.notion.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="font-medium text-foreground underline underline-offset-2"
-              >
-                app.notion.com
-              </a>
-              에 한 번 접속한 뒤 다시 시도해 보세요.
-            </p>
-          </div>
+          {usesSafariHandoff && (
+            <div className="rounded-xl border border-muted bg-muted/30 p-4 text-sm text-muted-foreground">
+              <p className="font-medium text-foreground">
+                iOS 홈 화면 앱에서 연결하기
+              </p>
+              <p className="mt-2">
+                Notion 연동은 Safari에서 진행됩니다. Safari에서 계정 승인과 DB
+                선택을 마친 뒤, 홈 화면 Dailyset 아이콘으로 돌아오세요.
+              </p>
+            </div>
+          )}
         </div>
       </div>
     );
@@ -254,12 +276,14 @@ export default function NotionSettingsPage({
             <div>에러: {error}</div>
 
             <div className="flex gap-2">
-              <a
-                href={withBasePath("/api/notion/auth")}
-                className="inline-flex rounded-md border border-destructive/30 bg-background px-4 py-2 text-sm font-medium text-destructive"
+              <button
+                type="button"
+                onClick={handleNotionConnect}
+                disabled={connectLoading}
+                className="inline-flex rounded-md border border-destructive/30 bg-background px-4 py-2 text-sm font-medium text-destructive disabled:cursor-not-allowed disabled:opacity-50"
               >
-                Notion 연동 다시 하기
-              </a>
+                {connectLoading ? "연결 준비 중..." : "Notion 연동 다시 하기"}
+              </button>
 
               <Link
                 href="/app"
