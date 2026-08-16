@@ -96,6 +96,7 @@ export function WorkoutSessionClient({
   onCompleteWorkout,
   onStartNewSession,
   saving,
+  hideSessionActions = false,
 }: {
   exercises: Exercises;
   displayWeightUnit: (
@@ -132,6 +133,7 @@ export function WorkoutSessionClient({
   onCompleteWorkout: () => void;
   onStartNewSession: () => void;
   saving: boolean;
+  hideSessionActions?: boolean;
 }) {
   const [isAddExerciseSheetOpen, setIsAddExerciseSheetOpen] = useState(false);
   const [openAccordionIndex, setOpenAccordionIndex] = useState<number | null>(
@@ -346,45 +348,49 @@ export function WorkoutSessionClient({
         );
       })}
 
-      <Sheet
-        open={isAddExerciseSheetOpen}
-        onOpenChange={setIsAddExerciseSheetOpen}
-      >
-        <SheetTrigger asChild>
-          <Button
-            variant="outline"
-            className="w-full h-14 border-2 border-dashed flex items-center justify-center gap-2"
+      {!hideSessionActions && (
+        <>
+          <Sheet
+            open={isAddExerciseSheetOpen}
+            onOpenChange={setIsAddExerciseSheetOpen}
           >
-            <Plus className="h-5 w-5" />
-            운동 추가
+            <SheetTrigger asChild>
+              <Button
+                variant="outline"
+                className="w-full h-14 border-2 border-dashed flex items-center justify-center gap-2"
+              >
+                <Plus className="h-5 w-5" />
+                운동 추가
+              </Button>
+            </SheetTrigger>
+            <SheetContent
+              side="bottom"
+              className="h-[85vh] overflow-hidden flex flex-col p-2"
+            >
+              <AddExerciseBottomSheet
+                exercises={exercises}
+                addExercisesToSession={addExercisesToSession}
+                onClose={() => setIsAddExerciseSheetOpen(false)}
+              />
+            </SheetContent>
+          </Sheet>
+
+          <div className="grid grid-cols-2 gap-2 pt-2">
+            <Button onClick={onSave} disabled={saving}>
+              {saving ? "저장중..." : "저장"}
+            </Button>
+            <Button onClick={onStartNewSession}>새 세션</Button>
+          </div>
+
+          <Button
+            onClick={onCompleteWorkout}
+            disabled={saving}
+            className="w-full mt-2 bg-green-700 text-white hover:bg-green-600 dark:bg-green-700 dark:hover:bg-green-500"
+          >
+            {saving ? "처리중..." : "운동 완료"}
           </Button>
-        </SheetTrigger>
-        <SheetContent
-          side="bottom"
-          className="h-[85vh] overflow-hidden flex flex-col p-2"
-        >
-          <AddExerciseBottomSheet
-            exercises={exercises}
-            addExercisesToSession={addExercisesToSession}
-            onClose={() => setIsAddExerciseSheetOpen(false)}
-          />
-        </SheetContent>
-      </Sheet>
-
-      <div className="grid grid-cols-2 gap-2 pt-2">
-        <Button onClick={onSave} disabled={saving}>
-          {saving ? "저장중..." : "저장"}
-        </Button>
-        <Button onClick={onStartNewSession}>새 세션</Button>
-      </div>
-
-      <Button
-        onClick={onCompleteWorkout}
-        disabled={saving}
-        className="w-full mt-2 bg-green-700 text-white hover:bg-green-600 dark:bg-green-700 dark:hover:bg-green-500"
-      >
-        {saving ? "처리중..." : "운동 완료"}
-      </Button>
+        </>
+      )}
     </main>
   );
 }

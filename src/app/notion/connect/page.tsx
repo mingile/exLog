@@ -166,9 +166,13 @@ export default function NotionConnectPage() {
 
     try {
       await navigator.clipboard.writeText(httpsAuthUrl);
-      setCopyMessage("연결 주소를 복사했어요. Safari 주소창에 붙여넣어 주세요.");
+      setCopyMessage(
+        "연결 주소를 복사했어요. Safari 주소창에 붙여넣어 주세요.",
+      );
     } catch {
-      setCopyMessage("주소 복사에 실패했어요. 아래 링크를 길게 눌러 복사해 주세요.");
+      setCopyMessage(
+        "주소 복사에 실패했어요. 아래 링크를 길게 눌러 복사해 주세요.",
+      );
     }
   };
 
@@ -182,7 +186,9 @@ export default function NotionConnectPage() {
       <div className="space-y-6 rounded-xl border bg-card p-6 shadow-sm">
         <div>
           <h1 className="text-2xl font-semibold">{copy.title}</h1>
-          <p className="mt-2 text-sm text-muted-foreground">{copy.description}</p>
+          <p className="mt-2 text-sm text-muted-foreground">
+            {copy.description}
+          </p>
         </div>
 
         {uiStatus === "notion_authorized" && (
@@ -201,37 +207,37 @@ export default function NotionConnectPage() {
 
         {(uiStatus === "handoff_started" || showSafariFallback) &&
           safariAuthUrl && (
-          <div className="space-y-3 rounded-lg border border-muted bg-muted/30 p-4 text-sm">
-            <p className="font-medium text-foreground">
-              {uiStatus === "handoff_started"
-                ? "Safari에서 연결을 이어가세요"
-                : "Safari가 자동으로 열리지 않나요?"}
-            </p>
-            <div className="flex flex-col gap-2">
-              <a
-                href={safariAuthUrl}
-                className="inline-flex rounded-md border bg-background px-4 py-2 text-sm font-medium"
-              >
-                Safari에서 다시 열기
-              </a>
-              <button
-                type="button"
-                onClick={handleCopyAuthUrl}
-                className="inline-flex rounded-md border bg-background px-4 py-2 text-sm font-medium"
-              >
-                연결 주소 복사
-              </button>
-            </div>
-            {copyMessage && (
-              <p className="text-xs text-muted-foreground">{copyMessage}</p>
-            )}
-            {httpsAuthUrl && (
-              <p className="break-all text-xs text-muted-foreground">
-                {httpsAuthUrl}
+            <div className="space-y-3 rounded-lg border border-muted bg-muted/30 p-4 text-sm">
+              <p className="font-medium text-foreground">
+                {uiStatus === "handoff_started"
+                  ? "Safari에서 연결을 이어가세요"
+                  : "Safari가 자동으로 열리지 않나요?"}
               </p>
-            )}
-          </div>
-        )}
+              <div className="flex flex-col gap-2">
+                <a
+                  href={safariAuthUrl}
+                  className="inline-flex rounded-md border bg-background px-4 py-2 text-sm font-medium"
+                >
+                  Safari에서 다시 열기
+                </a>
+                <button
+                  type="button"
+                  onClick={handleCopyAuthUrl}
+                  className="inline-flex rounded-md border bg-background px-4 py-2 text-sm font-medium"
+                >
+                  연결 주소 복사
+                </button>
+              </div>
+              {copyMessage && (
+                <p className="text-xs text-muted-foreground">{copyMessage}</p>
+              )}
+              {httpsAuthUrl && (
+                <p className="break-all text-xs text-muted-foreground">
+                  {httpsAuthUrl}
+                </p>
+              )}
+            </div>
+          )}
 
         {(uiStatus === "expired" || uiStatus === "failed") && (
           <div className="flex flex-col gap-2 sm:flex-row">
@@ -246,7 +252,7 @@ export default function NotionConnectPage() {
               </button>
             )}
             <Link
-              href={withBasePath("/settings/notion")}
+              href={"/settings/notion"}
               className="inline-flex rounded-md border px-4 py-2 text-sm font-medium"
             >
               Notion 설정으로
@@ -256,7 +262,7 @@ export default function NotionConnectPage() {
 
         {uiStatus === "connected" && (
           <Link
-            href={withBasePath("/app")}
+            href={"/app"}
             className="inline-flex rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground"
           >
             Dailyset 홈으로
@@ -265,8 +271,8 @@ export default function NotionConnectPage() {
 
         {uiStatus === "handoff_started" && (
           <p className="text-xs text-muted-foreground">
-            Safari에서 작업을 마친 뒤 홈 화면의 Dailyset 아이콘을 눌러 이 화면으로
-            돌아오세요.
+            Safari에서 작업을 마친 뒤 홈 화면의 Dailyset 아이콘을 눌러 이
+            화면으로 돌아오세요.
           </p>
         )}
       </div>
