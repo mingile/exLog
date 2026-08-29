@@ -9,10 +9,12 @@ import { restoreHistoryFromNotion } from "@/lib/notion/restoreLocalHistory";
 
 const sessionKey = `workout.sessions.v1`;
 
+// 로컬 표준 시간 가져오기, 근데 왜 스웨덴 시간?
 function getLocalDateString(isoString: string): string {
   return new Date(isoString).toLocaleDateString("sv-SE");
 }
 
+// 소요시간(초)을 분, 시 단위로 변환하기
 function formatDuration(seconds: number): string {
   const minutes = Math.floor(seconds / 60);
   const hours = Math.floor(minutes / 60);
@@ -30,49 +32,39 @@ export function WorkoutHistoryClient({
   historyVersion,
   selectedDate,
   notionReady = false,
-  onHistoryRestored,
+  onHistoryChanged,
 }: {
   showHistory: boolean;
   historyVersion: number;
   selectedDate: string | null;
   notionReady?: boolean;
-  onHistoryRestored?: () => void;
+  onHistoryChanged?: () => void;
 }) {
   const [sessions, setSessions] = useState<Session[]>([]);
   const [swipingSet, setSwipingSet] = useState<string | null>(null);
   const [swipeOffset, setSwipeOffset] = useState<number>(0);
   const [restoring, setRestoring] = useState(false);
 
+  // 사용자가 history를 보고 싶어하면(showHistory==true) 실행되는 이펙터, 로컬스토리지에 저장된 데이터를 가져와서 (배열)
+  // 선택된 날짜에 맞는 파싱 히스토리를 sessions state에 담는다.
   useEffect(() => {
-    if (!showHistory) return;
     const history = localStorage.getItem(sessionKey);
+    const parsedHistory: Session[] = history ? JSON.parse(history) : [];
+    if (!showHistory) return;
     try {
-      const parsedHistory: Session[] = history ? JSON.parse(history) : [];
-      console.log(
-        "Parsed history from localStorage:",
-        parsedHistory.length,
-        "sessions",
-      );
-      console.log("selectedDate prop:", selectedDate);
-
       if (history) {
         if (!Array.isArray(parsedHistory)) {
           return;
         }
 
-        // selectedDate가 있으면 필터링
         let filteredSessions = parsedHistory;
         if (selectedDate) {
           filteredSessions = parsedHistory.filter((session) => {
             const dateStr = getLocalDateString(session.savedAt);
-            console.log(
-              `Session ${session.id}: dateStr=${dateStr}, selectedDate=${selectedDate}, match=${dateStr === selectedDate}`,
-            );
             return dateStr === selectedDate;
           });
         }
 
-        console.log("Filtered sessions:", filteredSessions.length);
         setSessions(filteredSessions);
       } else {
         setSessions([]);
@@ -84,6 +76,7 @@ export function WorkoutHistoryClient({
     }
   }, [showHistory, historyVersion, selectedDate]);
 
+  // 가져온 세션 데이터를 로컬 시간에 맞춰 그룹화(중복 허용하지 않음, key는 세션의 savedAt)
   function groupByDate(sessions: Session[]): Map<string, Session[]> {
     const grouped = new Map<string, Session[]>();
     sessions.forEach((session) => {
@@ -96,11 +89,13 @@ export function WorkoutHistoryClient({
     return grouped;
   }
 
+  // 헤더 부분 날짜 포맷팅
   function formatDateHeader(dateStr: string): string {
     const [year, month, day] = dateStr.split("-");
     return `${year}년 ${parseInt(month)}월 ${parseInt(day)}일`;
   }
 
+  // 해당 세션 안에 저장된 운동의 개수와 운동 별 세트 개수, 수행 부위, 수행 시간을 세션 요약으로
   function getSessionSummary(session: Session) {
     const exerciseCount = session.exercises.length;
     const totalSets = session.exercises.reduce(
@@ -110,13 +105,14 @@ export function WorkoutHistoryClient({
     const parts = Array.from(
       new Set(session.exercises.map((ex) => ex.part || "기타")),
     );
-    const partsStr = parts.join(" · ");
+    const partsStr = parts.join(" · "); // 이거 join 조건 왜 이렇지?
     const durationStr = session.durationSeconds
       ? formatDuration(session.durationSeconds)
       : null;
     return { exerciseCount, totalSets, partsStr, durationStr };
   }
 
+  // 저장된 운동을 파트별로 그룹화
   function groupExercisesByPart(
     exercises: (SavedExercise & { part?: string })[],
   ): Map<string, (SavedExercise & { part?: string })[]> {
@@ -131,16 +127,22 @@ export function WorkoutHistoryClient({
     return grouped;
   }
 
+  // 세션 삭제(기준은 세션 아이디))
   function deleteSession(sessionId: string) {
-    const updatedSessions = sessions.filter(
+    const history = localStorage.getItem(sessionKey);
+    const parsedHistory: Session[] = history ? JSON.parse(history) : [];
+    const updatedSessions = parsedHistory.filter(
       (session) => session.id !== sessionId,
     );
     localStorage.setItem(sessionKey, JSON.stringify(updatedSessions));
-    setSessions(updatedSessions);
+    onHistoryChanged?.();
   }
 
+  // 세트 삭제(기준은 세션 아이디, 운동 아이디, 세트 번호)
   function deleteSet(sessionId: string, exerciseId: string, setNo: number) {
-    const updatedSessions = sessions
+    const history = localStorage.getItem(sessionKey);
+    const parsedHistory: Session[] = history ? JSON.parse(history) : [];
+    const updatedSessions = parsedHistory
       .map((session) => {
         if (session.id !== sessionId) return session;
 
@@ -160,9 +162,11 @@ export function WorkoutHistoryClient({
       .filter((session) => session.exercises.length > 0);
 
     localStorage.setItem(sessionKey, JSON.stringify(updatedSessions));
-    setSessions(updatedSessions);
+    onHistoryChanged?.();
+    console.log("onHistoryChanged exists?", !!onHistoryChanged);
   }
 
+  // 터치 시작 이벤트
   function handleTouchStart(e: React.TouchEvent, setKey: string) {
     const touch = e.touches[0];
     setSwipingSet(setKey);
@@ -170,6 +174,7 @@ export function WorkoutHistoryClient({
     (e.currentTarget as HTMLElement).dataset.startX = String(touch.clientX);
   }
 
+  // 터치 이벤트 이동 중 좌표 계산
   function handleTouchMove(e: React.TouchEvent, setKey: string) {
     if (swipingSet !== setKey) return;
 
@@ -183,6 +188,7 @@ export function WorkoutHistoryClient({
     }
   }
 
+  // 터치 끝날 때 이벤트
   function handleTouchEnd(
     sessionId: string,
     exerciseId: string,
@@ -195,12 +201,14 @@ export function WorkoutHistoryClient({
     setSwipeOffset(0);
   }
 
+  // 스와이핑에 대한 마우스 클릭 이벤트
   function handleMouseDown(e: React.MouseEvent, setKey: string) {
     setSwipingSet(setKey);
     setSwipeOffset(0);
     (e.currentTarget as HTMLElement).dataset.startX = String(e.clientX);
   }
 
+  // 스와이핑 마우스 이동 이벤트
   function handleMouseMove(e: React.MouseEvent, setKey: string) {
     if (swipingSet !== setKey) return;
 
@@ -213,6 +221,7 @@ export function WorkoutHistoryClient({
     }
   }
 
+  // 스와이핑 마우스 끝날 때 이벤트
   function handleMouseUp(sessionId: string, exerciseId: string, setNo: number) {
     if (swipeOffset < -50) {
       deleteSet(sessionId, exerciseId, setNo);
@@ -221,11 +230,13 @@ export function WorkoutHistoryClient({
     setSwipeOffset(0);
   }
 
+  // 마우스 커서가 html 요소 바깥으로 이동할 때
   function handleMouseLeave() {
     setSwipingSet(null);
     setSwipeOffset(0);
   }
 
+  // 노션으로부터 데이터 복원
   async function handleRestoreFromNotion() {
     if (!notionReady || restoring) return;
 
@@ -252,12 +263,13 @@ export function WorkoutHistoryClient({
         );
       }
 
-      onHistoryRestored?.();
+      onHistoryChanged?.();
     } finally {
       setRestoring(false);
     }
   }
 
+  // 노션 import 버튼 렌더링 함수
   function renderImportButton() {
     if (!notionReady) return null;
 
@@ -275,10 +287,6 @@ export function WorkoutHistoryClient({
   }
 
   if (!showHistory) return null;
-
-  // console.log("Total sessions:", sessions.length);
-  // console.log("Date grouped:", dateGrouped);
-  // console.log("Date entries:", dateEntries);
 
   if (sessions.length === 0) {
     return (
@@ -309,8 +317,6 @@ export function WorkoutHistoryClient({
           (a, b) =>
             new Date(b.savedAt).getTime() - new Date(a.savedAt).getTime(),
         );
-
-        // console.log(`Date ${dateStr}: ${sortedSessions.length} sessions`);
 
         return (
           <div key={dateStr} className="space-y-4">

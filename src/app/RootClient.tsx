@@ -789,7 +789,6 @@ export function RootClient() {
   }
 
   function handleStartNewSession() {
-    console.log("historyDirty", historyDirty);
     if (historyDirty) {
       const confirmed = window.confirm(
         "저장되지 않은 변경사항이 있습니다.\n새 세션을 시작하시겠습니까?\n(현재 세션이 종료됩니다)",
@@ -1032,7 +1031,6 @@ export function RootClient() {
 
       setNotionConnected(!!data.notionConnected);
       setDbConnected(!!data.dbConnected);
-      console.log(notionConnected, dbConnected);
     } catch (err) {
       console.error("Notion 상태 조회 중 오류", err);
       setNotionConnected(false);
@@ -1086,7 +1084,7 @@ export function RootClient() {
             setShowHistory={setShowHistory}
             historyVersion={historyVersion}
             currentDurationSeconds={currentDurationSeconds}
-            onHistoryRestored={onSavedHistory}
+            onHistoryChanged={onSavedHistory}
           />
         </div>
         {!showHistory && (
@@ -1122,7 +1120,7 @@ export function RootClient() {
               historyVersion={historyVersion}
               selectedDate={selectedDate}
               notionReady={dbConnected}
-              onHistoryRestored={onSavedHistory}
+              onHistoryChanged={onSavedHistory}
             />
           </div>
         )}

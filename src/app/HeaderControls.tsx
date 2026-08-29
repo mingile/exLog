@@ -39,7 +39,7 @@ export function HeaderControls({
   setShowHistory,
   historyVersion,
   currentDurationSeconds,
-  onHistoryRestored,
+  onHistoryChanged,
 }: {
   notionReady: boolean;
   setNotionReady: (notionReady: boolean) => void;
@@ -51,7 +51,7 @@ export function HeaderControls({
   setShowHistory: (show: boolean) => void;
   historyVersion: number;
   currentDurationSeconds: number;
-  onHistoryRestored?: () => void;
+  onHistoryChanged?: () => void;
 }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -87,6 +87,8 @@ export function HeaderControls({
         const dateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
         map.set(dateStr, true);
       });
+
+      console.log("[sessionsMap]", historyVersion, map.has("2026-08-19"));
 
       return map;
     } catch (e) {
@@ -124,7 +126,6 @@ export function HeaderControls({
     return dates;
   }, [sessionsMap]);
 
-  // 오늘 날짜로 자동 스크롤
   useEffect(() => {
     const scrollContainer = scrollRef.current;
     if (!scrollContainer) return;
@@ -174,11 +175,9 @@ export function HeaderControls({
     const dateStr = `${dateInfo.date.getFullYear()}-${String(dateInfo.date.getMonth() + 1).padStart(2, "0")}-${String(dateInfo.date.getDate()).padStart(2, "0")}`;
 
     if (dateInfo.isToday) {
-      // 오늘: 히스토리 닫기 (세션 화면으로)
       setSelectedDate(null);
       setShowHistory(false);
     } else {
-      // 과거 날짜: 히스토리 보기
       setSelectedDate(dateStr);
       setShowHistory(true);
     }
@@ -207,7 +206,6 @@ export function HeaderControls({
   return (
     <header className="sticky top-0 z-50 bg-background/95 backdrop-blur border-b supports-[backdrop-filter]:bg-background/60">
       <div className="px-2 py-2 space-y-2">
-        {/* 첫 번째 행: 세션 이름 입력 */}
         <div className="flex items-center gap-2">
           <div className="flex-1">
             <input
@@ -224,7 +222,6 @@ export function HeaderControls({
               </div>
             )}
           </div>
-          {/* 설정 메뉴 */}
           <div
             className="relative hover:bg-accent rounded-full p-1"
             ref={menuRef}
@@ -236,7 +233,6 @@ export function HeaderControls({
               className="relative"
             >
               <Settings className="size-6" />
-              {/* 연결 상태 인디케이터 */}
               <div
                 className={`absolute top-1 right-1.25 w-2 h-2 rounded-full ${
                   notionReady ? "bg-green-500" : "bg-red-500"
@@ -244,7 +240,6 @@ export function HeaderControls({
               />
             </Button>
 
-            {/* 드롭다운 메뉴 */}
             {isMenuOpen && (
               <div className="absolute right-0 top-full mt-2 w-64 bg-popover rounded-lg shadow-lg border border-border py-2 z-50">
                 <div className="px-4 py-3 border-b border-border">
@@ -338,9 +333,7 @@ export function HeaderControls({
           </div>
         </div>
 
-        {/* 두 번째 행: 날짜 네비게이션 */}
         <div className="flex items-center gap-2">
-          {/* 더 보기 버튼 */}
           <Sheet open={showAllHistory} onOpenChange={setShowAllHistory}>
             <SheetTrigger asChild>
               <Button variant="outline" size="sm" className="shrink-0">
@@ -358,13 +351,12 @@ export function HeaderControls({
                   historyVersion={historyVersion}
                   selectedDate={null}
                   notionReady={notionReady}
-                  onHistoryRestored={onHistoryRestored}
+                  onHistoryChanged={onHistoryChanged}
                 />
               </div>
             </SheetContent>
           </Sheet>
 
-          {/* 날짜 스크롤 */}
           <div
             ref={scrollRef}
             className="flex-1 overflow-x-auto scrollbar-hide"
