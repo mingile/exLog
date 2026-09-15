@@ -6,6 +6,7 @@ import {
 } from "@/lib/notion-oauth-handoff";
 import {
   buildHandoffErrorResponse,
+  prepareNotionOAuthJson,
   prepareNotionOAuthRedirect,
   resolveUserKey,
 } from "@/lib/notion-oauth-start";
@@ -13,6 +14,13 @@ import {
 export async function GET(request: Request) {
   const url = new URL(request.url);
   const handoff = url.searchParams.get("handoff");
+
+  // [SPIKE — spike/ul-js-nav] 302 대신 authUrl 을 JSON 으로 반환한다.
+  // /notion/spike 페이지 전용. 기존 경로에는 영향 없음.
+  if (url.searchParams.get("mode") === "json") {
+    const userKey = await resolveUserKey();
+    return prepareNotionOAuthJson(userKey);
+  }
 
   if (handoff) {
     try {
