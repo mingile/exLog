@@ -4,7 +4,7 @@
 
 🔗 **배포:** https://daily.mingile.com/dailyset
 
-![Daily Set 화면](./.github/assets/screenshot.png)
+<img src="./.github/assets/screenshot.jpg" alt="Daily Set 화면" width="300" />
 
 ## Stack
 
