@@ -239,16 +239,30 @@ export default function NotionConnectPage() {
             </div>
           )}
 
-        {(uiStatus === "expired" || uiStatus === "failed") && (
+        {/*
+          handoff 는 서버에서 1회만 소비된다(findOneAndDelete). Safari 를 다시
+          열거나 새로고침하면 그 id 는 이미 없어서 "유효하지 않은 링크"가 뜨는데,
+          PWA 쪽 sessionStorage 에는 launched=1 이 남아 있어 계속 handoff_started
+          로 보인다. 그 상태에서 화면에 남는 링크·복사 주소는 전부 죽은 id 를
+          가리키므로, 재시작 버튼이 없으면 10분을 기다리거나 PWA 를 완전히 종료하는
+          것 말고는 빠져나갈 방법이 없다. 그래서 handoff_started 에서도 노출한다.
+        */}
+        {(uiStatus === "expired" ||
+          uiStatus === "failed" ||
+          uiStatus === "handoff_started") && (
           <div className="flex flex-col gap-2 sm:flex-row">
-            {uiStatus === "expired" && (
+            {uiStatus !== "failed" && (
               <button
                 type="button"
                 onClick={handleRetry}
                 disabled={retryLoading}
                 className="inline-flex rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground disabled:cursor-not-allowed disabled:opacity-50"
               >
-                {retryLoading ? "다시 준비 중..." : "처음부터 다시 연결"}
+                {retryLoading
+                  ? "다시 준비 중..."
+                  : uiStatus === "handoff_started"
+                    ? "연결이 막혔나요? 처음부터 다시 연결"
+                    : "처음부터 다시 연결"}
               </button>
             )}
             <Link
